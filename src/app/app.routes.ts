@@ -1,0 +1,66 @@
+import { Routes } from '@angular/router';
+
+export const routes: Routes = [
+	{
+		path: '',
+		pathMatch: 'full',
+		redirectTo: 'dashboard',
+	},
+	{
+		path: 'dashboard',
+		data: { title: 'Dashboard' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'clients',
+		data: { title: 'Clienti' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'works',
+		data: { title: 'Lavori' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'events',
+		data: { title: 'Eventi' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'sales',
+		data: { title: 'Vendite' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'catalog',
+		data: { title: 'Catalogo' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'finance',
+		data: { title: 'Finanza' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'deadlines',
+		data: { title: 'Scadenze' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: 'settings',
+		data: { title: 'Impostazioni' },
+		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+	},
+	{
+		path: '404',
+		loadComponent: () => import('./features/error/error-pages').then((m) => m.NotFoundPage),
+	},
+	{
+		path: 'error',
+		loadComponent: () => import('./features/error/error-pages').then((m) => m.ErrorPage),
+	},
+	{
+		path: '**',
+		redirectTo: '404',
+	},
+];
