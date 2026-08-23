@@ -24,7 +24,7 @@ export const routes: Routes = [
 	{
 		path: 'events',
 		data: { title: 'Eventi' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/fairs/fairs-page').then((m) => m.FairsPage),
 	},
 	{
 		path: 'sales',

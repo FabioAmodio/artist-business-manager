@@ -6,17 +6,17 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { AppDatabase } from './core/persistence/app-database';
 import { AppStateService } from './core/state/app-state.service';
 import { AppNavigationService } from './core/navigation/app-navigation.service';
 import { AppErrorHandler } from './core/error/error-handler';
 import { routes } from './app.routes';
+import { environmentProviders } from './core/configuration/environment.providers';
+import { STORAGE_PROVIDER } from './core/configuration/environment.tokens';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    AppDatabase,
     AppStateService,
     AppNavigationService,
     {
@@ -24,10 +24,10 @@ export const appConfig: ApplicationConfig = {
       useClass: AppErrorHandler,
     },
     provideAppInitializer(() => {
-      const db = inject(AppDatabase);
       const appState = inject(AppStateService);
+      const storage = inject(STORAGE_PROVIDER);
 
-      return db.openDatabase().then(
+      return storage.open().then(
         () => {
           appState.notifyDatabaseReady();
         },
@@ -37,6 +37,7 @@ export const appConfig: ApplicationConfig = {
         },
       );
     }),
+    ...environmentProviders,
   ],
 };
 
