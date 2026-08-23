@@ -357,6 +357,224 @@ Per il routing si sceglie una strategia compatibile con l'hosting statico: prefe
 
 Il deploy non deve contenere token, dati personali, database esportati o configurazioni segrete. Il repository contiene soltanto codice e asset pubblicabili; i dati dell'utente restano nel browser.
 
+## Architettura di configurabilita
+
+La configurabilita e un principio fondamentale dell'applicazione: l'utente deve poter modificare categorie, tag, prodotti, bundle, prezzi e default senza interventi tecnici.
+
+### Livelli di configurazione
+
+**Livello 1: Globale (Workspace)**
+
+Configurazioni valide per l'intero workspace dell'utente:
+
+- Valuta predefinita
+- Data system (fuso orario, formato data)
+- Categorie e tag globali
+- Default globali di categoria
+
+**Livello 2: Prodotto**
+
+Configurazioni specifiche di ogni prodotto:
+
+- Categorie associate al prodotto
+- Override di default della categoria per quel prodotto
+- Prezzo base del prodotto
+- Valore libero suggerito
+
+**Livello 3: Bundle**
+
+Configurazioni specifiche di ogni bundle:
+
+- Composizione (prodotti e quantita)
+- Categorie ereditate
+- Override di categoria per il bundle
+- Prezzo bundle (opzionale)
+
+**Livello 4: Transazione (Runtime)**
+
+Scelte fatte dall'utente durante una vendita:
+
+- Tag scelti per ogni categoria
+- Valori liberi inseriti
+- Prezzo finale calcolato
+
+### Persistenza della configurazione
+
+Tutte le configurazioni sono persistite in IndexedDB tramite tabelle Dexie:
+
+- `categories` - categorie globali
+- `tags` - tag di ogni categoria
+- `products` - prodotto anagrafica
+- `productCategories` - associazione categoria-prodotto
+- `bundles` - bundle anagrafica
+- `bundleComponents` - composizione del bundle
+- `bundleOverrides` - personalizzazioni di categoria nel bundle
+
+Le migrazioni Dexie devono gestire l'aggiunta di nuove colonne senza perdere dati storici.
+
+### Interfaccia di configurazione
+
+Sezione "Configurazione" o "Impostazioni" accessibile dal menu principale, con sottosezioni:
+
+- **Categorie e tag:** CRUD per categorie e tag
+- **Prodotti:** CRUD per prodotti e loro associazioni a categorie
+- **Bundle:** CRUD per bundle
+- **Default globali:** configurazione di default per categoria
+- **Impostazioni workspace:** valuta, data system, preferenze UI
+
+Ogni pagina di configurazione deve offrire:
+
+- Vista elenco con ordinamento e filtro
+- Dettaglio con modulo di modifica
+- Pulsanti Aggiungi, Modifica, Elimina (logico), Ripristina (se applicabile)
+- Validazioni in tempo reale
+- Undo/Redo o almeno conferma prima di operazioni distruttive
+
+### Validazione della configurazione
+
+Prima di salvare una configurazione, il sistema deve validare:
+
+1. Identificativi unici (non duplicati)
+2. Integrità referenziale (nessun riferimento orfano)
+3. Coerenza (es: un prodotto non puo usare una categoria disattivata)
+4. Regole di business (es: prezzo non negativo)
+
+Errori di validazione devono bloccare il salvataggio e mostrare messaggi chiari e azionabili.
+
+## Architettura di theming e design token
+
+L'interfaccia deve supportare temi multipli e una gerarchia di variabili CSS per minimizzare il hardcode di colori e stili nei componenti.
+
+### Struttura di file
+
+```
+src/styles/
+├── global/
+│   ├── design-tokens.css      # Definizione variabili CSS globali
+│   ├── typography.css          # Stili tipografici base (h1-h6, p, code)
+│   ├── reset.css               # Reset e normalizzazione
+│   └── common.css              # Classi utility e comuni
+├── themes/
+│   ├── light-theme.css         # Light Mode (default)
+│   ├── dark-theme.css          # Dark Mode
+│   ├── artist-theme.css        # Tema Artist
+│   └── custom-theme.css        # Template per temi custom
+└── components/
+    └── [componenti senza hardcode colore]
+```
+
+### Variabili CSS globali
+
+In `design-tokens.css`, definire variabili per:
+
+- **Colore:** primari, secondari, stati, sfondo, bordi, testo
+- **Tipografia:** font family, dimensioni, weight, line-height
+- **Spaziatura:** scale di 4px (--space-1 = 4px, --space-4 = 16px)
+- **Elevazione:** ombre a piu livelli
+- **Border radius:** per angoli arrotondati coerenti
+
+**Esempio:**
+```css
+:root {
+  /* Colori primari */
+  --color-primary-cyan: #0B8FA0;
+  --color-primary-magenta: #C41D7F;
+  
+  /* Spaziatura */
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  
+  /* Tema */
+  --theme-bg-primary: var(--color-bg-light);
+  --theme-text-primary: var(--color-text-dark);
+}
+```
+
+### Tema Light (default)
+
+In `light-theme.css`, sovrascrivere le variabili di tema:
+
+```css
+:root,
+[data-theme="light"] {
+  --theme-bg-primary: #FFFFFF;
+  --theme-text-primary: #2C2C2C;
+  --theme-border: #DEE2E6;
+}
+```
+
+### Tema Dark
+
+In `dark-theme.css`:
+
+```css
+[data-theme="dark"] {
+  --theme-bg-primary: #1E1E1E;
+  --theme-text-primary: #E5E5E5;
+  --theme-border: #404040;
+}
+```
+
+### Tema Artist
+
+In `artist-theme.css`, utilizzare la palette CMYK piena:
+
+```css
+[data-theme="artist"] {
+  --theme-primary: #C41D7F;
+  --theme-accent: #0B8FA0;
+  --theme-highlight: #F5C614;
+}
+```
+
+### Selezione e persistenza del tema
+
+1. **Utente accede a Impostazioni > Tema**
+2. **Sceglie tra:** Light, Dark, Artist, Segui sistema
+3. **Salva in IndexedDB** (`settings.theme = 'dark'`)
+4. **App applica** `document.documentElement.setAttribute('data-theme', 'dark')`
+5. **CSS selector** `[data-theme="dark"]` attiva il tema
+
+Inoltre, il browser `prefers-color-scheme` puo essere usato per default iniziale:
+
+```javascript
+// Detect preferenza di sistema
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  setTheme('dark');
+}
+```
+
+### Linee guida per componenti
+
+Ogni componente deve usare variabili CSS, mai hardcode:
+
+**Vietato:**
+```css
+/* ❌ Hardcode */
+.button {
+  background-color: #0B8FA0;
+  color: #FFFFFF;
+}
+```
+
+**Consentito:**
+```css
+/* ✅ Variabili */
+.button {
+  background-color: var(--theme-primary);
+  color: var(--theme-text-inverse);
+}
+```
+
+### Supporto dark mode nel design
+
+Quando si progetta un componente, considerare:
+
+- Contrasto leggibile in light e dark
+- Ombre che rimangono visibili (possono scomparire in dark se non regolate)
+- Bordi che rimangono visibili (border-light puo scomparire su background scuro)
+- Icone e immagini che potrebbero necessitare inversione o variante
+
 ## Sicurezza, affidabilita e limiti
 
 - Nessun segreto o token deve essere incluso nel bundle o nei backup senza una decisione esplicita.

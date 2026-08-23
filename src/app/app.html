@@ -24,44 +24,7 @@
   <div class="shell-body">
     <aside class="sidebar" aria-label="Navigazione principale">
       <p class="nav-label">Workspace</p>
-      <nav>
-        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <span class="nav-icon">📊</span>
-          <span>Dashboard</span>
-        </a>
-        <a routerLink="/works" routerLinkActive="active">
-          <span class="nav-icon">✓</span>
-          <span>Lavori</span>
-        </a>
-        <a routerLink="/clients" routerLinkActive="active">
-          <span class="nav-icon">👥</span>
-          <span>Clienti</span>
-        </a>
-        <a routerLink="/events" routerLinkActive="active">
-          <span class="nav-icon">📅</span>
-          <span>Eventi</span>
-        </a>
-        <a routerLink="/sales" routerLinkActive="active">
-          <span class="nav-icon">💰</span>
-          <span>Vendite</span>
-        </a>
-        <a routerLink="/catalog" routerLinkActive="active">
-          <span class="nav-icon">📦</span>
-          <span>Catalogo</span>
-        </a>
-        <a routerLink="/finance" routerLinkActive="active">
-          <span class="nav-icon">💳</span>
-          <span>Finanza</span>
-        </a>
-        <a routerLink="/deadlines" routerLinkActive="active">
-          <span class="nav-icon">⏰</span>
-          <span>Scadenze</span>
-        </a>
-        <a routerLink="/settings" routerLinkActive="active">
-          <span class="nav-icon">⚙</span>
-          <span>Impostazioni</span>
-        </a>
-      </nav>
+      <app-responsive-nav></app-responsive-nav>
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span class="status-text">Offline first</span>
@@ -79,4 +42,5 @@
       <p class="footer-info">Dati salvati localmente • Nessun backend</p>
     </div>
   </footer>
+  <app-mobile-action-bar></app-mobile-action-bar>
 </div>

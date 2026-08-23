@@ -9,7 +9,7 @@ export const routes: Routes = [
 	{
 		path: 'dashboard',
 		data: { title: 'Dashboard' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
 	},
 	{
 		path: 'clients',
@@ -49,7 +49,7 @@ export const routes: Routes = [
 	{
 		path: 'settings',
 		data: { title: 'Impostazioni' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/settings/settings-page').then((m) => m.SettingsPage),
 	},
 	{
 		path: '404',

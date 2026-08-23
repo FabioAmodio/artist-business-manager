@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Creative Business Manager — Favicon Optimized</title>
+
+  <rect width="1024" height="1024" fill="#FFFFFF"></rect>
+
+  <!-- compact 3x3 grid -->
+  <g stroke="#FFFFFF" stroke-width="24" stroke-linejoin="round">
+    <rect x="150" y="210" width="210" height="210" rx="10" fill="#28A9E0"></rect>
+    <rect x="407" y="210" width="210" height="210" rx="10" fill="#D81B7D"></rect>
+    <rect x="664" y="210" width="210" height="210" rx="10" fill="#2D3748"></rect>
+
+    <rect x="150" y="467" width="210" height="210" rx="10" fill="#F6C21C"></rect>
+    <rect x="407" y="467" width="210" height="210" rx="10" fill="#2D3748"></rect>
+    <rect x="664" y="467" width="210" height="210" rx="10" fill="#2D3748"></rect>
+
+    <rect x="150" y="724" width="210" height="150" rx="10" fill="#2D3748"></rect>
+    <rect x="407" y="724" width="210" height="150" rx="10" fill="#2D3748"></rect>
+    <rect x="664" y="724" width="210" height="150" rx="10" fill="#2D3748"></rect>
+  </g>
+
+  <!-- brush integrated diagonally -->
+  <path d="M706 128
+       L818 240
+       L526 532
+       L414 420
+       Z" fill="#2D3748"></path>
+
+  <!-- ferrule -->
+  <path d="M414 420L526 532L457 601L345 489Z" fill="#2D3748" stroke="#FFFFFF" stroke-width="18"></path>
+
+  <!-- brush tip becomes the center cell -->
+  <path d="M345 489
+       L457 601
+       L379 679
+       C347 711 301 723 257 712
+       C284 685 300 651 304 613
+       C309 570 321 525 345 489Z" fill="#F6C21C"></path>
+
+  <!-- minimal CMY accent -->
+  <path d="M310 615
+       C337 597 362 586 389 581
+       L410 602
+       C381 610 355 625 329 643Z" fill="#28A9E0"></path>
+
+  <path d="M329 643
+       C354 626 381 616 408 613
+       L428 633
+       C398 640 373 652 348 668Z" fill="#D81B7D"></path>
+
+  <!-- handle hole -->
+  <circle cx="760" cy="184" r="18" fill="#FFFFFF"></circle>
+</svg>

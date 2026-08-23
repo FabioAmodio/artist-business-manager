@@ -230,42 +230,32 @@
     height: auto;
     padding: var(--spacing-4) var(--spacing-6);
     overflow: visible;
+    position: relative;
   }
 
   .nav-label {
     display: none;
   }
 
-  .sidebar nav {
+  /* Hide standard nav, show responsive nav's mobile version */
+  :host ::ng-deep .sidebar-nav,
+  :host ::ng-deep .nav-more-button {
+    display: none;
+  }
+
+  :host ::ng-deep .responsive-nav-wrapper {
+    width: 100%;
     flex-direction: row;
-    flex: 1;
-    padding: 0;
-    gap: 0;
-    margin-left: var(--spacing-6);
   }
 
-  .sidebar a {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-2);
-    padding: var(--spacing-2) var(--spacing-3);
-    border-left: none;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    font-size: var(--font-size-xs);
-    white-space: normal;
-    text-align: center;
-  }
-
-  .sidebar a:hover {
-    background-color: transparent;
-    border-bottom-color: var(--color-accent);
-  }
-
-  .sidebar a.active {
-    background-color: transparent;
-    border-bottom-color: var(--color-accent);
+  :host ::ng-deep .nav-more-menu {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    border-radius: 0 !important;
+    max-height: 70vh !important;
   }
 
   .sidebar-footer {
@@ -290,7 +280,7 @@
     min-height: 0;
   }
 
-  .nav-icon {
+  :host ::ng-deep .nav-icon {
     width: 1.25rem;
     height: 1.25rem;
   }

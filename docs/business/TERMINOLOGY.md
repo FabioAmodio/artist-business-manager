@@ -86,6 +86,122 @@ Classificazione del tipo di lavoro, ad esempio commissione privata, lavoro edito
 
 Concetto unificato e futuro per rappresentare lavori con elementi comuni come Party, Canale, stato, scadenze, consegne e valori economici. Commissione e Lavoro editoriale possono essere specializzazioni di Work; questa direzione non modifica ancora il modello dati definitivo.
 
+## Catalogo e configurazione
+
+### Categoria
+
+Raggruppamento configurabile che organizza opzioni e varianti di un prodotto. Una categoria rappresenta un aspetto mutabile come Formato, Tecnica, Colore o Confezione. Ogni categoria puo essere creata, modificata ed eliminata dall'utente senza intervento tecnico.
+
+Una categoria e definita da: nome, descrizione opzionale, modalita di selezione (singola o multipla), ordinamento, stato attivo/inattivo e un valore predefinito opzionale.
+
+Modalita di selezione singola: l'utente puo scegliere un solo tag della categoria.
+Modalita di selezione multipla: l'utente puo scegliere zero o piu tag della categoria.
+
+Esempio:
+- Categoria "Formato": modalita singola (scegli un formato tra A3, A4, A5, Altro)
+- Categoria "Tecnica": modalita multipla (scegli una o piu tecniche tra Matita, China, Acquerello, Digitale)
+
+### Tag
+
+Opzione configurabile appartenente a una categoria. Un tag rappresenta una scelta concreta che l'utente puo fare, come "A4" nella categoria "Formato" o "Acquerello" nella categoria "Tecnica".
+
+Un tag e definito da: nome, descrizione opzionale, ordinamento, stato attivo/inattivo, categoria di appartenenza, configurazione di prezzo opzionale e indicazione di supporto per campo libero.
+
+Un tag puo influenzare il prezzo finale attraverso un modificatore di prezzo.
+Un tag puo consentire un campo di testo libero inserito dall'utente al momento della vendita.
+
+### Modificatore di prezzo
+
+Configurazione numerica che definisce come un tag influenza il prezzo finale di un prodotto. Un modificatore e uno tra:
+
+- Percentuale: valore positivo o negativo che moltiplica il prezzo base (ad esempio +50%, -25%)
+- Valore fisso: importo positivo o negativo aggiunto al prezzo (ad esempio +10€, -5€)
+
+La formula di calcolo del prezzo finale e:
+prezzo finale = (prezzo base × (1 + Σ modificatori percentuali)) + Σ modificatori a valore fisso
+
+Esempio:
+- Prezzo base: €100
+- Tag "A3" (+50% modifier): €150
+- Tag "Copertina rigida" (+€10 modifier): €160
+
+### Associazione Categoria-Prodotto
+
+Legame esplicito che dichiara quali categorie siano rilevanti per un determinato prodotto. Rappresenta una scelta configurativa: il prodotto "Sketch" utilizza le categorie "Formato" e "Tecnica", mentre il prodotto "Fumetto" utilizza solo "Tecnica".
+
+Un'associazione include: prodotto, categoria, ordinamento, valore predefinito opzionale (che sovrascrive il default della categoria) e stato attivo/inattivo.
+
+### Default di categoria vs override di prodotto
+
+Gerarchia di risoluzione quando l'utente non ha scelto esplicitamente un valore per una categoria:
+
+1. Override del prodotto per quella categoria (se definito)
+2. Default della categoria (se definito)
+3. Nessun default: l'utente deve scegliere
+
+Esempio:
+- Categoria "Formato" ha default "A4"
+- Prodotto "Sketch" ha override "Formato" = "A5"
+- Utente vede "A5" come predefinito quando configura uno "Sketch", ma vede "A4" per altri prodotti
+
+### Campo libero
+
+Valore testuale libero inserito dall'utente durante la configurazione di un prodotto o la creazione di una vendita. Un campo libero e associato a un tag o a una configurazione di prodotto.
+
+Attributi: etichetta personalizzabile, placeholder opzionale, valore suggerito opzionale (a livello di prodotto), validazioni future opzionali.
+
+Esempio:
+- Categoria "Formato", Tag "Altro", consente un campo libero con etichetta "Dimensioni personalizzate" e placeholder "es. 17x24 cm"
+- Prodotto "Sketch" ha un valore suggerito "17x24 cm" per il campo libero del tag "Altro"
+
+### Bundle
+
+Prodotto virtuale composto da molteplici prodotti reali. Un bundle rappresenta un'offerta commerciale unica venduta come singola unita, ma contribuisce alle statistiche dei prodotti componenti.
+
+Un bundle e definito da: nome, descrizione, prezzo bundle opzionale, elenco di prodotti inclusi (ciascuno con quantita), categorie ereditate dai componenti, override personalizzati, stato attivo/inattivo.
+
+Esempio:
+- Bundle "Fumetto + Sketch": 1 Fumetto + 1 Sketch
+- Bundle "Artist Pack": 1 Sketchbook + 2 Print formato A4
+
+### Eredita di categorie nel bundle
+
+Un bundle eredita automaticamente tutte le categorie utilizzate dai prodotti che lo compongono. Categorie duplicate (ad esempio, se sia Fumetto che Sketch usano "Tecnica") sono consolidate a una singola categoria nel bundle.
+
+Esempio:
+- Prodotto "Fumetto" utilizza categorie: Tecnica
+- Prodotto "Sketch" utilizza categorie: Formato, Tecnica
+- Bundle "Fumetto + Sketch" eredita categorie: Formato, Tecnica
+
+### Override di bundle
+
+Personalizzazioni di bundle rispetto ai prodotti componenti. Un bundle puo definire:
+
+- default tag differente dai prodotti originali
+- valori liberi precompilati
+- configurazioni specifiche non presenti nei prodotti
+
+Esempio:
+- Bundle "Fumetto + Sketch" ha override "Formato" = "Altro" con valore libero precompilato "17x24 cm"
+
+Gerarchia di risoluzione per il default di una categoria in un bundle:
+
+1. Override esplicito del bundle per quella categoria
+2. Default del prodotto per quella categoria (se il bundle contiene un solo prodotto)
+3. Default della categoria globale
+4. Nessun default
+
+Se il bundle contiene piu prodotti con default diversi della stessa categoria, non esiste un unico default; l'utente deve scegliere.
+
+### Contabilizzazione del bundle
+
+Processo di registrazione delle vendite di bundle. Quando un bundle viene venduto, la vendita contribuisce alle statistiche dei prodotti reali che lo compongono.
+
+Esempio:
+- Vendita: 1 Bundle "Fumetto + Sketch"
+- Conseguenza: Fumetto incrementa il conteggio di vendite di 1 unita; Sketch incrementa il conteggio di 1 unita
+- Il ricavo totale del bundle puo essere ripartito tra i componenti (logica di ripartizione da definire caso per caso)
+
 ## Finanza
 
 ### Preventivo
@@ -152,3 +268,12 @@ Data limite associata a un obbligo o a un risultato da completare, con stato, pr
 - Preventivo, compenso concordato, importo fatturabile, importo incassato e residuo da ricevere rappresentano momenti diversi dello stesso rapporto economico.
 - Acconto e una parte ricevuta in anticipo; saldo e la parte residua o il pagamento che la estingue.
 - Scadenza descrive un limite temporale e non sostituisce l'entita o il lavoro a cui si riferisce.
+- Categoria rappresenta un raggruppamento configurabile; Tag rappresenta una scelta concreta dentro una categoria.
+- Modalita di selezione (singola o multipla) controlla quanti tag possono essere scelti dalla stessa categoria.
+- Modificatore di prezzo influenza il prezzo finale; puo essere percentuale o a valore fisso e applicato in ordine.
+- Associazione Categoria-Prodotto dichiara quale categoria e rilevante per un prodotto; un prodotto puo ignorare categorie globali non applicabili.
+- Default di categoria vs override di prodotto: l'override di prodotto ha priorita sul default globale.
+- Campo libero consente testo personalizzato da parte dell'utente; non sostituisce la scelta tra tag predefiniti.
+- Bundle e un prodotto virtuale; ha identita propria e prezzo opzionale, ma statistiche di vendita dei componenti.
+- Bundle eredita categorie dai componenti; puo definire override personalizzati della gerarchia di default.
+- Contabilizzazione di bundle: una vendita di bundle incrementa i contatori dei prodotti componenti.
