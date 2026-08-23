@@ -1,5 +1,7 @@
 # Architettura di configurazione
 
+> La persistenza delle configurazioni segue la strategia Offline First in [OFFLINE-FIRST-PERSISTENCE.md](OFFLINE-FIRST-PERSISTENCE.md). Export/import trasferisce dati manualmente e non equivale a sincronizzazione remota.
+
 ## Scopo
 
 Questo documento descrive l'architettura tecnica del sistema di configurazione dell'applicazione. Definisce come categorie, tag, prodotti, bundle e prezzi sono gestiti, persistiti, validati e utilizzati a runtime.
@@ -7,7 +9,8 @@ Questo documento descrive l'architettura tecnica del sistema di configurazione d
 ## Principi architetturali
 
 - **Configurabilita senza codice:** l'utente configura tutto via UI, nessun codice o file JSON
-- **Persistenza locale:** tutte le configurazioni in IndexedDB, sincronizzabili via export/import
+- **Persistenza locale:** tutte le configurazioni in IndexedDB, trasferibili via export/import; export/import non e sincronizzazione remota
+- **Separazione ambienti:** TEST e RELEASE usano `storagePrefix` e database distinti
 - **Immutabilita storica:** le vendite mantengono la configurazione al momento della transazione
 - **Minima complessita iniziale:** design scalabile per future evoluzioni
 - **Validazione rigorosa:** errori di configurazione rilevati immediatamente

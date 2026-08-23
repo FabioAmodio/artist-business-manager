@@ -13,6 +13,7 @@ Questa raccolta documenta le decisioni architetturali che vincolano il progetto.
 7. [Nessun backend](#adr-007-nessun-backend)
 8. [Party come anagrafica unica](#adr-008-party-come-anagrafica-unica)
 9. [Import/export come backup ufficiale](#adr-009-importexport-come-backup-ufficiale)
+10. [Branch, ambienti e promozione](adr/ADR-010-git-and-environments.md)
 
 ## Stato degli ADR
 

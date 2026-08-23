@@ -4,6 +4,8 @@
 
 Questa specifica integra e, dove necessario, sostituisce le assunzioni precedenti sul rapporto tra vendite, commissioni, fiere e contabilità gestionale. In caso di conflitto prevalgono le regole qui definite.
 
+La persistenza delle Operazioni deve rispettare la strategia Offline First definita in [../architecture/OFFLINE-FIRST-PERSISTENCE.md](../architecture/OFFLINE-FIRST-PERSISTENCE.md): il commit locale precede qualsiasi sincronizzazione e la rete non e prerequisito.
+
 ## Visione del prodotto
 
 Artist Business Manager e un assistente operativo per artisti, illustratori, fumettisti e creativi. Non e solamente un gestionale: deve assistere il lavoro quotidiano e soprattutto l'attivita durante fiere ed eventi.
@@ -180,3 +182,5 @@ La suite di dominio deve coprire almeno:
 - FAB primario e azione alternativa dentro e fuori fiera;
 - copertura costi e ricavi attribuiti;
 - distinzione di provenance manuale, assistita, generata e calcolata.
+
+I test devono inoltre verificare persistenza dopo reload, uso completamente offline, errori di quota e isolamento tra ambienti TEST e RELEASE.

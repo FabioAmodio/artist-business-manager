@@ -2,6 +2,8 @@
 
 > **Decisione prevalente:** l'architettura applicativa adotta Operazione come aggregate root per vendite, commissioni e prenotazioni. Le regole complete sono in [../business/OPERATIONS-DOMAIN-SPECIFICATION.md](../business/OPERATIONS-DOMAIN-SPECIFICATION.md).
 
+> **Persistenza Offline First:** storage locale, provider astratto, sincronizzazione e separazione TEST/RELEASE sono normati in [OFFLINE-FIRST-PERSISTENCE.md](OFFLINE-FIRST-PERSISTENCE.md). Il documento distingue l'architettura target dalle parti ancora non implementate.
+
 ## Obiettivo e principi
 
 L'applicazione e una web app personale, offline-first e senza backend, per gestire l'attivita artistica e fumettistica: progetti, commissioni, lavori editoriali, fumetti, clienti, eventi, vendite, prodotti, spese, pagamenti, scadenze e report.
@@ -23,7 +25,7 @@ Principi architetturali:
 - **Stato:** Signals per stato locale, stato di pagina e dati derivati; RxJS solo dove serve per integrazioni asincrone o stream esterni.
 - **Persistenza:** IndexedDB tramite Dexie.
 - **Backend:** assente. Nessun dato operativo dipende da una chiamata remota.
-- **PWA:** service worker per shell, asset statici e aggiornamenti controllati.
+- **PWA:** service worker previsto per shell, asset statici e aggiornamenti controllati; la configurazione effettiva deve essere verificata separatamente e non sostituisce IndexedDB.
 - **Deploy:** GitHub Pages come hosting statico.
 - **Lingua e formati:** date di sistema mostrate secondo le impostazioni dell'utente; istanti tecnici in ISO 8601 UTC; importi monetari in interi nella minima unita della valuta.
 
