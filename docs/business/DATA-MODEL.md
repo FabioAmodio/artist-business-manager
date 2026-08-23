@@ -2,6 +2,8 @@
 
 > **Decisione prevalente:** per il modello aggiornato di Operazione, commissioni, clienti soft e riferimenti fieristici consultare [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md). In caso di conflitto, quella specifica prevale.
 
+> **Domain Model v1:** entita, cardinalita, stati e regole consolidate sono raccolti in [DOMAIN-MODEL-V1.md](DOMAIN-MODEL-V1.md), che prevale sulle sezioni storiche di questo documento.
+
 ## Scopo e fonte
 
 Questo documento descrive esclusivamente il modello concettuale del dominio. Non definisce tabelle, database, schema Dexie, API o codice applicativo.

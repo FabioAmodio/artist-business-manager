@@ -1,0 +1,290 @@
+# Domain Model v1
+
+## Stato del documento
+
+Versione normativa del modello di dominio di Artist Business Manager. Questo documento consolida le decisioni su Operazioni, fiere, catalogo, clienti, finanza, persistenza e provenance. In caso di conflitto con documenti precedenti, prevale questo modello.
+
+## 1. Principi del dominio
+
+- L'applicazione e un assistente operativo per artisti, illustratori, fumettisti e creativi.
+- `Operazione` e l'aggregate root primaria per fatti commerciali e incarichi.
+- Vendita, commissione e prenotazione sono tipi o profili di Operazione, non cicli di vita separati.
+- Un'Operazione mantiene la propria identita mentre viene completata, pagata, consegnata o attribuita a una fiera.
+- I record incompleti sono validi, persistenti e ricercabili.
+- Lo stato operativo e distinto dallo stato economico.
+- Le date, gli importi, le provenienze e le relazioni storiche non vengono sovrascritti senza audit.
+- La persistenza locale e la fonte operativa primaria; rete e sync non sono prerequisiti.
+
+## 2. Value object e tipi comuni
+
+```text
+EntityId = identificativo stabile generato localmente
+IsoDateTime = istante ISO 8601 UTC
+CalendarDate = data ISO YYYY-MM-DD
+CurrencyAmount = importo intero nella minima unita della valuta
+CurrencyCode = codice ISO 4217
+```
+
+Metadati comuni a ogni entita persistente:
+
+- `id: EntityId`;
+- `createdAt: IsoDateTime`;
+- `updatedAt: IsoDateTime`;
+- `deletedAt?: IsoDateTime` per soft delete;
+- `revision: number`;
+- `syncStatus: local-only | pending | synced | sync-error | conflict`;
+- `sourceDeviceId?: string`;
+- `lastModifiedBy?: EntityId`.
+
+## 3. Entita
+
+### 3.1 Party
+
+Soggetto generale, persona o organizzazione, con uno o piu ruoli.
+
+Attributi: nome visualizzato, tipo `person | organization`, recapiti, note, ruoli `customer | commissioner | publisher | supplier | collaborator`, stato e metadati comuni.
+
+### 3.2 Cliente soft
+
+Riferimento cliente dentro un'Operazione. Puo contenere `partyId` di un Party registrato, `freeName` testuale oppure nessun riferimento. `freeName` non crea automaticamente un'anagrafica.
+
+### 3.3 Canale
+
+Origine commerciale o del contatto, ad esempio fiera, Instagram, sito, negozio, editore, marketplace, passaparola o altro.
+
+Attributi: nome, classificazione, descrizione, stato e metadati comuni. Non e luogo fisico e non e metodo di pagamento.
+
+### 3.4 Evento e Fiera
+
+`Evento` e un'occorrenza pianificata con nome, tipo, luogo, data inizio, data fine, note, stato e costi. `Fiera` e una specializzazione di Evento.
+
+Attributi specifici Fiera: nome, luogo, `startDate`, `endDate`, note, organizzatore, stand, partecipazione e stato.
+
+Una Fiera e attiva quando:
+
+`startDate <= currentDate <= endDate`
+
+Le date sono inclusive. Se piu fiere sono attive, il sistema deve mostrare l'ambiguita e chiedere il contesto; non deve scegliere silenziosamente.
+
+### 3.5 Operazione
+
+Aggregate root primaria per vendita immediata, commissione, prenotazione e futuri flussi.
+
+Attributi:
+
+- `type`: `immediate-sale | commission | reservation | commission-with-deposit | fair-delivery-commission | shipment-commission | future`;
+- `createdAt`, date dell'operazione, consegna e ultimo contatto;
+- `description`, note e testo libero;
+- `customer`: Cliente soft;
+- `commissionerId?` e `publisherId?`;
+- `channelId?`;
+- `productId?`, `bundleId?`, righe e quantita;
+- tag e configurazione applicata;
+- `plannedAmount?`, `agreedAmount?`, `invoicedAmount?`, `receivedAmount`, `outstandingAmount`;
+- valuta e metodo di pagamento quando applicabili;
+- `operationalStatus` e `economicStatus` separati;
+- stato di completezza, `missingFields`, `needsReview`, `nextAction`;
+- `originFairId?`, `deliveryFairId?`, `accountingFairId?`;
+- scadenze, incassi, allegati, audit e provenance.
+
+### 3.6 Profilo Commissione
+
+Specializzazione di Operazione con brief, risultato, revisioni, consegne e stato operativo della commissione. Non crea una seconda identita persistente.
+
+### 3.7 Profilo Lavoro editoriale
+
+Specializzazione di Operazione con editore, contratto, milestone, diritti, royalties, rimborsi e consegne.
+
+### 3.8 Preventivo
+
+Proposta precedente all'accettazione. Attributi: richiesta, Party, canale, voci, importo, valuta, condizioni, revisioni, emissione, validita, stato e `operationId?`.
+
+### 3.9 Progetto, Attivita e Task
+
+- `Progetto`: contenitore di obiettivi, Operazioni, attivita e risultati.
+- `Attivita`: lavoro significativo con obiettivo, periodo e risultato.
+- `Task`: azione atomica con stato, responsabile, data prevista e data completata.
+
+### 3.10 Scadenza
+
+Obbligo temporale associato a Operazione, progetto, attivita, task, fiera, spesa o incasso. Attributi: titolo, descrizione, `dueDate?`, priorita, stato, origine, completamento, rinvii e note.
+
+Una scadenza mancante puo essere evidenziata come dato da completare; una scadenza oltre data e ritardo solo se non completata.
+
+### 3.11 Prodotto
+
+Articolo o servizio vendibile. Attributi: nome, descrizione, categoria/tipo, variante, SKU, costo unitario, prezzo base, soglia, stato, date e metadati comuni.
+
+### 3.12 Lotto e Movimento di magazzino
+
+`Lotto` raggruppa produzione o acquisto con quantita, costo totale, costo unitario, data e note sulla qualita del dato.
+
+`Movimento di magazzino` registra entrata, uscita, reso o rettifica con prodotto/lotto, quantita, data, origine, Operazione, fiera e note.
+
+### 3.13 Categoria, Tag e pricing
+
+`Categoria` raggruppa opzioni con nome, descrizione, selezione `single | multiple`, ordine, stato e default globale.
+
+`Tag` appartiene a una Categoria e contiene nome, ordine, stato, modificatore di prezzo e configurazione di testo libero.
+
+`ProductCategoryAssociation` collega prodotto e categoria con ordine, stato, default locale e valore libero suggerito.
+
+`PriceModifier` e `percentage | fixed`, valore e valuta se fisso.
+
+### 3.14 Bundle
+
+Prodotto virtuale composto da prodotti reali. Contiene nome, descrizione, prezzo, componenti con quantita, categorie ereditate e override.
+
+`BundleComponent` collega bundle e prodotto. `BundleOverride` personalizza default, tag e valori liberi senza modificare i componenti.
+
+### 3.15 Riga di Operazione
+
+Dettaglio di prodotto o bundle con quantita, descrizione, prezzo storico, sconto, coupon, categorie/tag selezionati, testo libero e snapshot della configurazione.
+
+### 3.16 Costo e Spesa
+
+`FairCost` e costo associato a una Fiera con tipo `stand | travel | accommodation | other`, etichetta, importo previsto ed effettivo.
+
+`Spesa` e costo generale collegabile a Fiera, Operazione, progetto, prodotto o attivita. La spesa e distinta dal suo pagamento.
+
+### 3.17 Movimento economico e Incasso
+
+`Movimento economico` ha direzione, importo, valuta, data, causale e origine.
+
+`Incasso` e denaro effettivamente ricevuto, collegato a una Operazione: importo, valuta, data, metodo, acconto/rata/saldo, stato e riferimento esterno.
+
+Storni e rimborsi sono movimenti inversi collegati all'origine; non cancellano il movimento originale.
+
+### 3.18 Allegato, Audit e Provenance
+
+`Allegato` collega file o riferimento a un'entita. `AuditEntry` registra autore, data, azione e valori precedente/nuovo.
+
+`AiProvenance` puo accompagnare qualunque contenuto: `manual | ai-assisted | ai-generated | calculated`, timestamp, revisione utente, modello e versione prompt quando applicabili.
+
+### 3.19 Configurazione AI e persistenza
+
+`AiTransparencySettings` contiene AI abilitata, consenso e autorizzazione cloud.
+
+La persistenza infrastrutturale usa identificativi, revisioni, soft delete e sync status definiti nei documenti Offline First. Il dominio non dipende da Dexie o IndexedDB.
+
+## 4. Relazioni e cardinalita
+
+| Relazione | Cardinalita | Regola |
+|---|---:|---|
+| Party - Ruolo | `1 : 0..*` | un Party puo avere piu ruoli |
+| Party - Operazione | `0..1 : 0..*` per ruolo | cliente, committente o editore possono coincidere |
+| Operazione - Cliente soft | `1 : 0..1` | Party registrato, testo libero o assente |
+| Canale - Operazione | `0..1 : 0..*` | un canale origina molte operazioni |
+| Evento - Fiera | `1 : 0..1` | Fiera specializza Evento |
+| Fiera - Operazione origine | `1 : 0..*` | dove nasce il contatto |
+| Fiera - Operazione consegna | `1 : 0..*` | dove avviene ritiro/consegna |
+| Fiera - Operazione contabilizzazione | `1 : 0..*` | attribuzione economica modificabile |
+| Operazione - Preventivo | `1 : 0..*` | uno o piu preventivi possono precedere l'accettazione |
+| Operazione - Riga | `1 : 0..*` | una vendita normalmente ha almeno una riga |
+| Operazione - Incasso | `1 : 0..*` | acconti, rate, saldo e rimborsi |
+| Operazione - Scadenza | `1 : 0..*` | consegna, verifica o pagamento |
+| Fiera - FairCost | `1 : 0..*` | costi ordinati per tipo |
+| Fiera - Spesa | `1 : 0..*` | costi direttamente associati |
+| Prodotto - Lotto | `0..1 : 0..*` | produzioni e acquisti |
+| Prodotto - Movimento magazzino | `1 : 0..*` | entrate, uscite, resi e rettifiche |
+| Prodotto - Categoria | `0..* : 0..*` | tramite ProductCategoryAssociation |
+| Categoria - Tag | `1 : 0..*` | ogni tag appartiene a una categoria |
+| Tag - PriceModifier | `1 : 0..1` | modificatore opzionale |
+| Bundle - BundleComponent | `1 : 1..*` | bundle con almeno un componente |
+| Bundle - BundleOverride | `1 : 0..*` | override per categoria o tag |
+| Progetto - Operazione | `1 : 0..*` | progetto puo contenere operazioni |
+| Progetto - Attivita | `1 : 0..*` | lavoro organizzato |
+| Attivita - Task | `1 : 0..*` | azioni atomiche |
+| Entita - Allegato | `1 : 0..*` | documenti e ricevute |
+| Entita - AuditEntry | `1 : 0..*` | storico delle modifiche |
+
+## 5. Stati normativi
+
+### 5.1 Stato operativo della commissione
+
+```text
+Bozza -> Richiesta -> Accettata -> In lavorazione -> Pronta -> Consegnata
+```
+
+Sono possibili `Sospesa` e `Annullata`; entrambe richiedono motivo. `Pagata` e uno stato economico, non una transizione operativa obbligatoria. Puo essere mostrato come stato derivato quando il residuo e zero.
+
+### 5.2 Stato economico
+
+`Preventivato`, `In attesa di approvazione`, `Concordato`, `Acconto ricevuto`, `Parzialmente pagato`, `Pagato`, `Insoluto`, `Annullato`.
+
+### 5.3 Stati di completezza
+
+- `complete`;
+- `incomplete`;
+- `needsReview`;
+- `missingFields`;
+- `nextAction`.
+
+### 5.4 Stati catalogo
+
+Categorie, tag, prodotti e bundle: `active`, `inactive`, con archiviazione tramite `archivedAt`.
+
+### 5.5 Stati sincronizzazione
+
+`local-only`, `pending`, `synced`, `sync-error`, `conflict`.
+
+## 6. Regole di business
+
+1. Una Operazione non viene duplicata quando cambia stato, consegna o completezza.
+2. Un record rapido puo essere salvato con i soli dati minimi riconoscibili.
+3. Cliente soft e Cliente registrato sono riferimenti distinti.
+4. La conversione del cliente soft e esplicita e non perde lo storico.
+5. Vendita, commissione, prenotazione e acconto restano tipi della stessa Operazione.
+6. Stato operativo ed economico sono indipendenti.
+7. Vendita non significa incasso; compenso concordato non significa denaro ricevuto.
+8. Spesa non significa pagamento effettuato.
+9. Incassi, rate, storni e rimborsi sono movimenti separati e auditabili.
+10. Fiera di origine, fiera di consegna e fiera di contabilizzazione possono differire.
+11. La fiera di contabilizzazione e modificabile dall'utente e guida i report gestionali, non la fiscalita.
+12. Default di contabilizzazione: origine se presa e consegnata fuori fiera; consegna se presa fuori e consegnata in fiera; fiera corrente proposta se origine e consegna sono fiere diverse.
+13. Una fiera e attiva con intervallo di date inclusivo.
+14. Sovrapposizioni di fiere richiedono scelta esplicita dell'utente.
+15. Costi non coperti: `max(0, costi considerati - ricavi attribuiti)`.
+16. Profitto: `ricavi attribuiti - costi considerati`; la metrica dichiara se usa costi diretti o allocati.
+17. Le vendite conservano snapshot di prezzo, tag, bundle e configurazione.
+18. Resi e rettifiche non cancellano la vendita originale.
+19. Categorie o tag inattivi non sono selezionabili in nuove operazioni, ma restano nello storico.
+20. Pricing: prima modificatori percentuali cumulativi, poi modificatori fissi, quindi arrotondamento.
+21. Nel bundle prevalgono override bundle, default prodotto applicabile, default categoria, nessun default.
+22. Categorie duplicate ereditate da un bundle vengono consolidate; se una e multipla, la selezione del bundle e multipla.
+23. Il bundle non modifica i prodotti componenti.
+24. I dati locali devono essere salvati prima di qualunque sync futura.
+25. La cancellazione applicativa e logica e non elimina la storia.
+26. Valute diverse non vengono sommate senza conversione esplicita.
+27. Contenuti AI e manuali devono essere distinguibili e quelli AI devono avere provenance e revisione umana.
+
+## 7. Confini e invarianti
+
+- Il dominio non importa Angular, Dexie, IndexedDB o provider cloud.
+- Un `EntityId` resta stabile durante export/import e sincronizzazione.
+- Ogni incasso deve riferire una Operazione o una causale esterna esplicita.
+- Ogni accountingFair deve riferire una Fiera esistente o essere nullo.
+- Una data fine non puo precedere la data inizio della Fiera.
+- Un importo monetario non puo essere NaN; importi negativi richiedono semantica esplicita di storno, rimborso o sconto.
+- Una categoria `single` non puo avere piu tag selezionati nella stessa riga.
+- Una riga di vendita deve contenere quantita positiva; resi usano movimento compensativo.
+- Le transizioni di stato non ammesse devono fallire senza mutare il record.
+- L'assegnazione a una fiera contabile deve essere storicizzata.
+- Un record incompleto non deve essere escluso dalle ricerche operative.
+
+## 8. Matrice di tracciabilita
+
+| Area | Entita principali | Output |
+|---|---|---|
+| Modalita Fiera | Fiera, Operazione, FairCost | dashboard evento e copertura |
+| Commissioni | Operazione, Preventivo, Scadenza, Incasso | ciclo di vita persistente |
+| Vendite | Operazione, Riga, Prodotto, Movimento | ricavi e magazzino |
+| Clienti | Party, Cliente soft, Operazione | anagrafica opzionale |
+| Catalogo | Prodotto, Categoria, Tag, Bundle | pricing e configurazione |
+| Finanza | Incasso, Spesa, Movimento economico | netto e residui |
+| Offline First | metadata, AuditEntry, sync status | continuita senza rete |
+| AI | AiProvenance, AiTransparencySettings | trasparenza e revisione |
+
+## 9. Decisioni successive
+
+Restano da dettagliare in documenti tecnici separati: schema fisico Dexie, indici e migrazioni, repository, `IStorageProvider`, outbox, algoritmo di conflitto, ruoli multiutente, allegati e retention. Queste decisioni non possono modificare gli invarianti di questo Domain Model v1 senza un ADR e una nuova versione del modello.

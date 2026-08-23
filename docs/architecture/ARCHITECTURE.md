@@ -4,6 +4,8 @@
 
 > **Persistenza Offline First:** storage locale, provider astratto, sincronizzazione e separazione TEST/RELEASE sono normati in [OFFLINE-FIRST-PERSISTENCE.md](OFFLINE-FIRST-PERSISTENCE.md). Il documento distingue l'architettura target dalle parti ancora non implementate.
 
+> **Modello di dominio:** il contratto v1 completo e in [../business/DOMAIN-MODEL-V1.md](../business/DOMAIN-MODEL-V1.md).
+
 ## Obiettivo e principi
 
 L'applicazione e una web app personale, offline-first e senza backend, per gestire l'attivita artistica e fumettistica: progetti, commissioni, lavori editoriali, fumetti, clienti, eventi, vendite, prodotti, spese, pagamenti, scadenze e report.
