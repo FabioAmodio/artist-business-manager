@@ -8,6 +8,10 @@
 
 > **Scheletro applicativo implementabile:** struttura Angular, repository, storage provider, DI e roadmap sono definiti in [APPLICATION-ARCHITECTURE-PROPOSAL.md](APPLICATION-ARCHITECTURE-PROPOSAL.md).
 
+> **Fiere:** la distinzione tra manifestazione ricorrente ed edizione concreta e definita in [FAIR-SERIES-EDITIONS.md](FAIR-SERIES-EDITIONS.md).
+
+> **Adozione graduale:** il workflow esistente con carta ed Excel resta fonte ufficiale durante la validazione sul campo. La migrazione personale e Post-MVP/MVP+1 e descritta in [../business/HISTORICAL-DATA-MIGRATION.md](../business/HISTORICAL-DATA-MIGRATION.md).
+
 ## Obiettivo e principi
 
 L'applicazione e una web app personale, offline-first e senza backend, per gestire l'attivita artistica e fumettistica: progetti, commissioni, lavori editoriali, fumetti, clienti, eventi, vendite, prodotti, spese, pagamenti, scadenze e report.

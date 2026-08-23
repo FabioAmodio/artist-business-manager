@@ -229,6 +229,8 @@ Questi elementi non devono trasformare la rete in prerequisito: ogni client cont
 
 ## 11. Questioni aperte successive
 
+La migrazione dello storico Excel personale e Post-MVP/MVP+1 e segue [../business/HISTORICAL-DATA-MIGRATION.md](../business/HISTORICAL-DATA-MIGRATION.md). Non deve diventare prerequisito del primo uso offline.
+
 - provider remoto iniziale e relativo formato di autenticazione;
 - algoritmo di merge e risoluzione conflitti;
 - cifratura locale e cifratura degli export;

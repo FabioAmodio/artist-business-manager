@@ -73,6 +73,13 @@ Le metriche economiche devono esporre separatamente compenso concordato, importo
 
 ## Eventi e fiere
 
+Il reporting fieristico ha due livelli distinti:
+
+- **FairEdition:** risultati di una specifica edizione, con date, luogo, costi, vendite, commissioni e margine;
+- **FairSeries:** aggregazione delle edizioni della stessa manifestazione, con confronti annuali, trend, medie e andamento storico.
+
+Le metriche devono poter filtrare per `fairEditionId` e raggruppare per `fairSeriesId`. L'anno e una dimensione descrittiva dell'edizione, non la sua identita. Origine, consegna e contabilizzazione di un'Operazione possono riferire edizioni differenti.
+
 Deve rispondere almeno a queste domande:
 
 - Quale fiera e stata piu redditizia?

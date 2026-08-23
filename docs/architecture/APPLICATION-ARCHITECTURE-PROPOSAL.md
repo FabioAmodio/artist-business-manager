@@ -61,7 +61,9 @@ src/app/
     repositories/
       client.repository.ts
       operation.repository.ts
-      fair.repository.ts
+      fair.repository.ts              legacy compatibility
+      fair-series.repository.ts
+      fair-edition.repository.ts
       product.repository.ts
       bundle.repository.ts
     storage/
@@ -78,7 +80,7 @@ src/app/
   domain/
     models/
       operation.ts
-      fair.ts
+      fair.ts                         FairSeries and FairEdition
       party.ts
       product.ts
       bundle.ts
@@ -128,6 +130,7 @@ src/app/
     settings/
   shared/
     components/
+        form-actions.component.ts
     directives/
     pipes/
     utils/
@@ -150,6 +153,8 @@ docs/
 ```
 
 Regola pratica: `core` condivide infrastruttura e servizi trasversali; `domain` contiene regole pure; `application` contiene Repository-facing Application Services; `features` contiene schermate; `layout` contiene shell e navigazione; `shared` contiene solo elementi realmente riutilizzabili e privi di logica di business.
+
+Ogni pagina di inserimento deve usare il controllo condiviso `FormActionsComponent`. Salva e Annulla restano vicini, con stili distinti e ordine coerente. Annulla modifica solo lo stato del form non ancora salvato e non altera i dati persistiti.
 
 La Facade non e un livello obbligatorio. Si introduce solo quando una schermata ha reale stato locale complesso o orchestrazione tra piu servizi. Non introdurre Command Handler, Mediator, Event Bus o un Use Case dedicato per ogni operazione nel MVP.
 
@@ -219,7 +224,7 @@ interface IOperationRepository {
 
 ### IFairRepository
 
-Responsabilita: fiere, date attive, costi, partecipazioni e selezione del contesto.
+Responsabilita: serie di fiere, edizioni, date attive, costi, partecipazioni e selezione del contesto. Il filtro temporale appartiene alle edizioni.
 
 ```typescript
 interface IFairRepository {
@@ -228,6 +233,26 @@ interface IFairRepository {
   findActive(onDate: CalendarDate): Promise<readonly Fair[]>;
   save(fair: Fair): Promise<void>;
   saveCost(cost: FairCost): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
+}
+```
+
+Per il nuovo codice usare `IFairSeriesRepository` e `IFairEditionRepository`. `IFairRepository` resta temporaneamente il contratto legacy per le API esistenti e rappresenta solo una `FairEdition`.
+
+```typescript
+interface IFairSeriesRepository {
+  getById(id: EntityId): Promise<FairSeries | null>;
+  list(filter?: FairSeriesFilter): Promise<readonly FairSeries[]>;
+  save(series: FairSeries): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
+}
+
+interface IFairEditionRepository {
+  getById(id: EntityId): Promise<FairEdition | null>;
+  list(filter?: FairFilter): Promise<readonly FairEdition[]>;
+  listBySeries(seriesId: EntityId): Promise<readonly FairEdition[]>;
+  findActive(onDate: CalendarDate): Promise<readonly FairEdition[]>;
+  save(edition: FairEdition): Promise<void>;
   softDelete(id: EntityId): Promise<void>;
 }
 ```
@@ -436,20 +461,21 @@ Vietato:
 
 ### Incremento 4: entita fondamentali
 
-1. Definire e validare entita `Fair` e `Operation`.
+1. Definire e validare entita `FairSeries`, `FairEdition` e `Operation`.
 2. Applicare stati, regole di completezza e metadati audit.
 3. Aggiungere test di dominio senza UI.
 
 ### Incremento 5: repository fondamentali
 
-1. Creare `IFairRepository`.
-2. Creare `IOperationRepository`.
-3. Collegare i repository a `IStorageProvider` senza esporre Dexie.
-4. Testare salvataggio, consultazione e cancellazione logica offline.
+1. Creare `IFairSeriesRepository` e `IFairEditionRepository`.
+2. Mantenere `IFairRepository` come compatibilita deprecata.
+3. Creare `IOperationRepository`.
+4. Collegare i repository a `IStorageProvider` senza esporre Dexie.
+5. Testare salvataggio, consultazione e cancellazione logica offline.
 
 ### Incremento 6: prima schermata reale
 
-1. Implementare la schermata Gestione Fiere.
+1. Implementare la schermata Gestione Fiere con serie ed edizioni.
 2. Consentire creazione, modifica, consultazione e cancellazione logica.
 3. Verificare persistenza dopo reload e assenza rete.
 
@@ -464,7 +490,11 @@ Vietato:
 
 Il primo MVP ha un obiettivo deliberatamente ristretto: registrare e consultare persistentemente fiere e commissioni anche completamente offline.
 
+Nel perimetro fiere, il MVP comprende `FairSeries` e `FairEdition`; `FairTask`, `ContactLog` e `Reservation` sono post-MVP. `Reservation` resta comunque un tipo di `Operation`.
+
 Dashboard avanzata, analytics, catalogo esteso, stock/magazzino, inventario avanzato e sincronizzazione cloud non sono obiettivi del primo MVP. `SyncEngine` e `ISyncProvider` restano contratti e decisioni future, senza implementazioni concrete nel breve periodo.
+
+Il reporting futuro avra due livelli: `FairEdition` per risultati e confronti della singola edizione; `FairSeries` per trend, medie e aggregazioni tra edizioni. `FairTask`, `ContactLog` e i dati specifici di `Reservation` sono post-MVP; Reservation resta un tipo di Operation.
 
 ## 11. Criteri di accettazione dello scheletro
 
@@ -480,6 +510,8 @@ Lo scheletro e pronto quando:
 - la documentazione indica chiaramente cosa e implementato e cosa e target.
 
 ## 12. Decisioni ancora aperte
+
+La migrazione Excel personale non e un prerequisito dello scheletro o del primo MVP. Il backup JSON dell'app e il formato ufficiale di backup/ripristino; l'import Excel e un adapter legacy amministrativo separato, da introdurre dopo la validazione reale.
 
 - schema fisico definitivo e strategia migrazioni;
 - scelta del formato export e compatibilita versioni;

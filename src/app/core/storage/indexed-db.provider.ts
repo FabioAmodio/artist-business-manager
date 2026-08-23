@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { AppDatabase, DATABASE_VERSION } from '../persistence/app-database';
 import { APP_ENVIRONMENT } from '../configuration/environment.tokens';
 import type { EntityId } from '../../domain/shared/types';
-import type { Fair } from '../../domain/models/fair';
+import type { FairEdition } from '../../domain/models/fair';
 import type {
   DeleteMetadata,
   IStorageProvider,
@@ -27,28 +27,27 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   async get<T>(_collection: string, _id: EntityId): Promise<T | null> {
-    if (!this.database || _collection !== 'fairs') return null;
-    return (await this.database.fairs.get(_id) as Fair | undefined ?? null) as T | null;
+    if (!this.database || !this.isSupportedCollection(_collection)) return null;
+    const table = this.database.table(_collection);
+    return (await table.get(_id) as T | undefined) ?? null;
   }
 
   async list<T>(_collection: string, _filter?: StorageFilter): Promise<readonly T[]> {
-    if (!this.database || _collection !== 'fairs') return [];
-    const fairs = await this.database.fairs.toArray();
-    return fairs as T[];
+    if (!this.database || !this.isSupportedCollection(_collection)) return [];
+    return await this.database.table(_collection).toArray() as T[];
   }
 
   async put<T>(_collection: string, _value: T): Promise<void> {
-    if (this.database && _collection === 'fairs') {
-      await this.database.fairs.put(_value as Fair);
-    }
+    if (this.database && this.isSupportedCollection(_collection)) await this.database.table(_collection).put(_value);
   }
 
   async deleteLogical(_collection: string, _id: EntityId, _metadata?: DeleteMetadata): Promise<void> {
-    if (!this.database || _collection !== 'fairs') return;
-    const fair = await this.database.fairs.get(_id);
-    if (fair) {
-      await this.database.fairs.put({
-        ...fair,
+    if (!this.database || !this.isSupportedCollection(_collection)) return;
+    const table = this.database.table(_collection);
+    const value = await table.get(_id) as (FairEdition & DeleteMetadata) | undefined;
+    if (value) {
+      await table.put({
+        ...value,
         deletedAt: _metadata?.deletedAt ?? new Date().toISOString(),
       });
     }
@@ -67,5 +66,9 @@ export class IndexedDbProvider implements IStorageProvider {
       migrationVersion: 0,
       checkedAt: new Date().toISOString(),
     };
+  }
+
+  private isSupportedCollection(collection: string): boolean {
+    return collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions';
   }
 }

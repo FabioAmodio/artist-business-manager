@@ -7,6 +7,7 @@ export interface EntityFilter {
 
 export type OperationFilter = EntityFilter & { readonly type?: string };
 export type FairFilter = EntityFilter & { readonly from?: string; readonly to?: string };
+export type FairSeriesFilter = EntityFilter;
 export type ProductFilter = EntityFilter;
 
 export interface OperationTransition {

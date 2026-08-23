@@ -4,6 +4,8 @@
 
 > **Domain Model v1:** entita, cardinalita, stati e regole consolidate sono raccolti in [DOMAIN-MODEL-V1.md](DOMAIN-MODEL-V1.md), che prevale sulle sezioni storiche di questo documento.
 
+> **Migrazione storico:** l'importazione del workbook personale e una capability Post-MVP/MVP+1 amministrativa, descritta in [HISTORICAL-DATA-MIGRATION.md](HISTORICAL-DATA-MIGRATION.md). Il file Excel resta fonte storica durante la validazione iniziale.
+
 ## Scopo e fonte
 
 Questo documento descrive esclusivamente il modello concettuale del dominio. Non definisce tabelle, database, schema Dexie, API o codice applicativo.

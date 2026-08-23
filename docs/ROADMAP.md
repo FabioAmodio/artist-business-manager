@@ -11,12 +11,23 @@ Gli incrementi sono:
 1. environment TEST/RELEASE, `AppEnvironment`, `storagePrefix` e Dependency Injection;
 2. `IStorageProvider`, `StorageHealth` e `StorageError`;
 3. `IndexedDbProvider` minimale con `open()`, `health()` e test di inizializzazione;
-4. entita `Fair` e `Operation`;
+4. entita `FairSeries`, `FairEdition` e `Operation`;
 5. `IFairRepository` e `IOperationRepository`;
 6. prima schermata reale per Gestione Fiere;
 7. inserimento rapido di Operazione/Commissione.
 
 Dashboard avanzata, analytics, catalogo esteso, stock e magazzino non sono prerequisiti del primo MVP.
+
+## Adozione e migrazione dello storico
+
+Dopo il primo MVP utilizzabile in fiera, l'ordine e:
+
+1. validazione reale sul campo in parallelo a carta ed Excel;
+2. consolidamento dei workflow;
+3. migrazione dati storici personali assistita (Post-MVP/MVP+1);
+4. eventuale framework di importazione generico, solo dopo utenti reali.
+
+La migrazione personale e descritta in [HISTORICAL-DATA-MIGRATION.md](business/HISTORICAL-DATA-MIGRATION.md) e non fa parte del normale workflow operativo.
 
 ## Funzionalita future
 
@@ -50,6 +61,7 @@ Ogni esperimento deve essere isolato, disattivabile, riconoscibile all'utente e 
 - test Safari iOS e quota IndexedDB da aggiungere;
 - pipeline deploy TEST da separare dal deploy RELEASE;
 - completamento dei form CRUD e dei flussi rapidi.
+- gestione avanzata delle edizioni, task, contatti e prenotazioni fieristiche;
 
 ## Criteri di avanzamento
 

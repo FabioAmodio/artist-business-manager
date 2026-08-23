@@ -4,6 +4,14 @@
 
 Versione normativa del modello di dominio di Artist Business Manager. Questo documento consolida le decisioni su Operazioni, fiere, catalogo, clienti, finanza, persistenza e provenance. In caso di conflitto con documenti precedenti, prevale questo modello.
 
+Le severita e le regole riutilizzabili di controllo qualita sono definite in [DATA-QUALITY-VALIDATION.md](DATA-QUALITY-VALIDATION.md).
+
+Per le Fiere, l'implementazione corrente e `FairValidation`; il service applicativo coordina il salvataggio ma non contiene le regole specifiche.
+
+## Aggiornamento fiere: serie ed edizioni
+
+La precedente entita `Fair` rappresentava implicitamente una singola edizione. Nel modello aggiornato `FairSeries` rappresenta la manifestazione ricorrente, mentre `FairEdition` rappresenta una specifica edizione con date, luogo, costi e risultati propri. Il tipo `Fair` resta un alias di compatibilita per `FairEdition` e non introduce un terzo concetto.
+
 ## 1. Principi del dominio
 
 - L'applicazione e un assistente operativo per artisti, illustratori, fumettisti e creativi.
@@ -54,9 +62,11 @@ Origine commerciale o del contatto, ad esempio fiera, Instagram, sito, negozio, 
 
 Attributi: nome, classificazione, descrizione, stato e metadati comuni. Non e luogo fisico e non e metodo di pagamento.
 
-### 3.4 Evento e Fiera
+### 3.4 Evento, FairSeries e FairEdition
 
-`Evento` e un'occorrenza pianificata con nome, tipo, luogo, data inizio, data fine, note, stato e costi. `Fiera` e una specializzazione di Evento.
+`Evento` e un'occorrenza pianificata con nome, tipo, luogo, data inizio, data fine, note, stato e costi. `FairSeries` identifica la manifestazione ricorrente; `FairEdition` e la specializzazione operativa di Evento per una specifica edizione.
+
+`FairSeries` contiene nome, organizzatore, contatti, sito, luogo predefinito e note. `FairEdition` contiene `fairSeriesId`, anno descrittivo, nome snapshot, date, luogo specifico, note sul luogo e note operative. L'anno non e l'identita dell'edizione.
 
 Attributi specifici Fiera: nome, luogo, `startDate`, `endDate`, note, organizzatore, stand, partecipazione e stato.
 
@@ -167,6 +177,12 @@ Storni e rimborsi sono movimenti inversi collegati all'origine; non cancellano i
 
 La persistenza infrastrutturale usa identificativi, revisioni, soft delete e sync status definiti nei documenti Offline First. Il dominio non dipende da Dexie o IndexedDB.
 
+### 3.20 FairTask, ContactLog e Reservation pianificate
+
+`FairTask` e un'attivita pianificata per una `FairEdition`, con titolo, descrizione, scadenza, stato e note. `ContactLog` registra comunicazioni riferite a un'edizione, con data, canale e note. `Reservation` resta un tipo di `Operazione` e non diventa un aggregate separato; puo riferire edizione, provider, costo, codice prenotazione e scadenza di cancellazione.
+
+Queste entita non fanno parte dell'MVP implementativo corrente, ma i loro riferimenti devono usare `fairEditionId`.
+
 ## 4. Relazioni e cardinalita
 
 | Relazione | Cardinalita | Regola |
@@ -175,16 +191,18 @@ La persistenza infrastrutturale usa identificativi, revisioni, soft delete e syn
 | Party - Operazione | `0..1 : 0..*` per ruolo | cliente, committente o editore possono coincidere |
 | Operazione - Cliente soft | `1 : 0..1` | Party registrato, testo libero o assente |
 | Canale - Operazione | `0..1 : 0..*` | un canale origina molte operazioni |
-| Evento - Fiera | `1 : 0..1` | Fiera specializza Evento |
-| Fiera - Operazione origine | `1 : 0..*` | dove nasce il contatto |
-| Fiera - Operazione consegna | `1 : 0..*` | dove avviene ritiro/consegna |
-| Fiera - Operazione contabilizzazione | `1 : 0..*` | attribuzione economica modificabile |
+| FairSeries - FairEdition | `1 : 0..*` | una serie ha molte edizioni |
+| FairSeries - organizzatore | `0..1 : 0..1` | dati comuni riutilizzabili |
+| Evento - FairEdition | `1 : 0..1` | l'edizione e l'occorrenza operativa |
+| FairEdition - Operazione origine | `1 : 0..*` | dove nasce il contatto |
+| FairEdition - Operazione consegna | `1 : 0..*` | dove avviene ritiro/consegna |
+| FairEdition - Operazione contabilizzazione | `1 : 0..*` | attribuzione economica modificabile |
 | Operazione - Preventivo | `1 : 0..*` | uno o piu preventivi possono precedere l'accettazione |
 | Operazione - Riga | `1 : 0..*` | una vendita normalmente ha almeno una riga |
 | Operazione - Incasso | `1 : 0..*` | acconti, rate, saldo e rimborsi |
 | Operazione - Scadenza | `1 : 0..*` | consegna, verifica o pagamento |
-| Fiera - FairCost | `1 : 0..*` | costi ordinati per tipo |
-| Fiera - Spesa | `1 : 0..*` | costi direttamente associati |
+| FairEdition - FairCost | `1 : 0..*` | costi ordinati per tipo |
+| FairEdition - Spesa | `1 : 0..*` | costi direttamente associati |
 | Prodotto - Lotto | `0..1 : 0..*` | produzioni e acquisti |
 | Prodotto - Movimento magazzino | `1 : 0..*` | entrate, uscite, resi e rettifiche |
 | Prodotto - Categoria | `0..* : 0..*` | tramite ProductCategoryAssociation |
@@ -197,6 +215,8 @@ La persistenza infrastrutturale usa identificativi, revisioni, soft delete e syn
 | Attivita - Task | `1 : 0..*` | azioni atomiche |
 | Entita - Allegato | `1 : 0..*` | documenti e ricevute |
 | Entita - AuditEntry | `1 : 0..*` | storico delle modifiche |
+| FairEdition - FairTask | `1 : 0..*` | attivita future di preparazione |
+| FairEdition - ContactLog | `1 : 0..*` | comunicazioni future |
 
 ## 5. Stati normativi
 

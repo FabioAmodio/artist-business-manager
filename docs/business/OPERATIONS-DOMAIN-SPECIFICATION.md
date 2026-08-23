@@ -6,6 +6,8 @@ Questa specifica integra e, dove necessario, sostituisce le assunzioni precedent
 
 La persistenza delle Operazioni deve rispettare la strategia Offline First definita in [../architecture/OFFLINE-FIRST-PERSISTENCE.md](../architecture/OFFLINE-FIRST-PERSISTENCE.md): il commit locale precede qualsiasi sincronizzazione e la rete non e prerequisito.
 
+Per la terminologia completa di serie ed edizioni fieristiche consultare [DOMAIN-MODEL-V1.md](DOMAIN-MODEL-V1.md). La vecchia `Fair` e trattata come `FairEdition` durante la migrazione.
+
 ## Visione del prodotto
 
 Artist Business Manager e un assistente operativo per artisti, illustratori, fumettisti e creativi. Non e solamente un gestionale: deve assistere il lavoro quotidiano e soprattutto l'attivita durante fiere ed eventi.
@@ -110,6 +112,8 @@ Quando la data corrente e compresa tra inizio e fine di una fiera, estremi inclu
 - l'utente mantiene comunque accesso a tutti gli altri workflow.
 
 Se piu fiere risultano attive contemporaneamente, l'app deve rendere l'ambiguita esplicita e permettere di scegliere il contesto, senza selezione silenziosa. Se non esiste una fiera attiva, si usa il contesto generale.
+
+Il contesto attivo e sempre una `FairEdition`, non una `FairSeries`: la serie identifica la manifestazione ricorrente, l'edizione determina date, luogo, costi e risultati dell'evento corrente.
 
 ## FAB centrale e inserimento rapido
 
