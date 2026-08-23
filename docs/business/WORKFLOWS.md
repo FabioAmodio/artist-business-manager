@@ -1,5 +1,7 @@
 # Workflow applicativi
 
+> **Decisione prevalente:** tutti i workflow descritti qui sono varianti del ciclo di vita di una Operazione. Per record rapidi, stati di commissione, clienti soft e contabilizzazione fieristica vale [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md).
+
 ## Principi comuni
 
 I workflow descrivono le operazioni principali dell'attivita artistica. Le entita possono essere salvate anche con dati incompleti, ma l'app deve evidenziare campi mancanti, scadenze assenti e riferimenti da completare.
@@ -14,7 +16,7 @@ Durante una fiera, vendita, commissione, inventario, cliente e scadenza devono e
 
 I controlli devono essere touch friendly, raggiungibili da tastiera e dotati di etichette accessibili. Stato operativo, stato economico, Canale, WorkType e Tag hanno significati distinti e non devono essere usati come sinonimi.
 
-Una richiesta non ancora accettata puo essere registrata come Opportunity. Il percorso economico tipico resta: richiesta, Opportunity, Preventivo, accettazione, Work o Commissione, Acconto, consegna, Saldo.
+Una richiesta non ancora accettata puo essere registrata come Opportunity. Il percorso economico tipico resta: richiesta, Opportunity, Preventivo, accettazione, Operazione di tipo commissione o editoriale, Acconto, consegna, Saldo.
 
 ## 1. Gestione commissione privata
 

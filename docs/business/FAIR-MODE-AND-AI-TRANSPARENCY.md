@@ -1,5 +1,7 @@
 # Modalita Fiera e trasparenza AI
 
+> **Aggiornamento normativo:** questo documento resta il riferimento operativo per la Modalita Fiera, mentre il modello unificato delle Operazioni e le regole di contabilizzazione sono definiti in [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md).
+
 ## Scopo
 
 La Modalita Fiera e un contesto operativo temporaneo che porta in primo piano l'evento corrente e il flusso di registrazione rapida delle vendite.

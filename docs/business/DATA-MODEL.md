@@ -1,5 +1,7 @@
 # Modello concettuale del dominio
 
+> **Decisione prevalente:** per il modello aggiornato di Operazione, commissioni, clienti soft e riferimenti fieristici consultare [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md). In caso di conflitto, quella specifica prevale.
+
 ## Scopo e fonte
 
 Questo documento descrive esclusivamente il modello concettuale del dominio. Non definisce tabelle, database, schema Dexie, API o codice applicativo.
@@ -54,7 +56,7 @@ Classificazione della natura di un lavoro, come commissione privata, editoriale,
 
 ### Work
 
-Concetto unificato futuro per gli incarichi attivi o accettati. Condivide Party, Canale, stato, scadenze, consegne e valori economici; Commissione e Lavoro editoriale possono diventare specializzazioni tramite WorkType. La direzione non modifica ancora il modello fisico.
+Concetto descrittivo per la componente di lavoro di un'Operazione. Non e un aggregate root separato: commissione e lavoro editoriale sono profili o WorkType dell'Operazione e condividono stato, scadenze, consegne e valori economici.
 
 ### Evento
 
@@ -136,9 +138,9 @@ Proposta economica precedente all'attivazione di una commissione o di un lavoro 
 
 Data limite per obbligo, consegna, pagamento o attivita. Attributi: titolo, descrizione, data limite, priorita, stato, origine, completamento, rinvii, note e allegati.
 
-## Evoluzione verso Work unificato
+## Evoluzione dei profili di Operazione
 
-Commissione e Lavoro editoriale condividono molti attributi e relazioni, ma il modello attuale li mantiene distinti per rispettare i workflow e l'incertezza dei dati storici. In futuro Work potra diventare l'aggregato comune, con WorkType e dettagli specifici; Opportunity restera precedente all'accettazione e non verra assorbita automaticamente.
+Commissione e Lavoro editoriale condividono attributi e relazioni perche sono profili della stessa Operazione. WorkType e i dettagli specifici estendono il profilo senza creare un record parallelo; Opportunity resta precedente all'accettazione e puo essere convertita nella stessa Operazione quando il dominio lo richiede.
 
 ## Relazioni e cardinalita
 
@@ -152,11 +154,11 @@ Le cardinalita indicano il modello concettuale previsto. Dove l'Excel non contie
 | Canale - Vendita/Commissione/Progetto/Evento | Canale `0..1` : entita `0..*` | un'origine puo generare molti elementi |
 | Canale - Party | Canale `0..1` : Party `0..*` | origine del contatto o cliente |
 | Evento - Fiera | Evento `1` : Fiera `0..1` | ogni fiera e un evento specializzato |
-| Fiera - Vendita | Fiera `1` : vendita `0..*` | relazione osservata tramite `Fiera + Anno` |
+| Fiera - Operazione | Fiera `1` : operazione `0..*` per ruolo fieristico | relazione osservata tramite `Fiera + Anno` e distinta per origine, consegna e contabilizzazione |
 | Prodotto - Lotto | Prodotto `0..1` : lotto `0..*` | una tipologia puo avere piu produzioni |
 | Prodotto - Riga vendita | Prodotto `0..1` : riga `0..*` | riferimento certo o da normalizzare |
 | Vendita - Riga vendita | Vendita `1` : riga `1..*` | una vendita ha una o piu righe |
-| Vendita - Incasso | Vendita `1` : incasso `0..*` | pagamento in una o piu tranche |
+| Operazione - Incasso | Operazione `1` : incasso `0..*` | vendita, acconto, rata, saldo o rimborso |
 | Fiera - Spesa | Fiera `1` : spesa `0..*` | costi direttamente associati |
 | Preventivo - incarico | Preventivo `0..1` : incarico `0..1` | un preventivo accettato puo attivare un incarico |
 | Commissione/Lavoro - Incasso | incarico `1` : incasso `0..*` | acconto, rate e saldo separati |

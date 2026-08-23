@@ -1,5 +1,7 @@
 # Architettura
 
+> **Decisione prevalente:** l'architettura applicativa adotta Operazione come aggregate root per vendite, commissioni e prenotazioni. Le regole complete sono in [../business/OPERATIONS-DOMAIN-SPECIFICATION.md](../business/OPERATIONS-DOMAIN-SPECIFICATION.md).
+
 ## Obiettivo e principi
 
 L'applicazione e una web app personale, offline-first e senza backend, per gestire l'attivita artistica e fumettistica: progetti, commissioni, lavori editoriali, fumetti, clienti, eventi, vendite, prodotti, spese, pagamenti, scadenze e report.
@@ -69,7 +71,7 @@ Le feature possono contenere componenti, facade locali e route, ma non devono im
 ## Suddivisione per feature
 
 - **Dashboard:** scadenze, lavori aperti, prossimi eventi, incassi, spese e indicatori sintetici.
-- **Lavori:** progetto generico, commissione privata e lavoro editoriale; brief, fasi, revisioni, consegne, compensi e pagamenti.
+- **Lavori:** Operazioni di tipo commissione privata o lavoro editoriale; brief, fasi, revisioni, consegne, compensi e pagamenti.
 - **Fumetti:** serie, volumi, episodi, tavole e fasi di produzione.
 - **Contatti:** clienti, editori, fornitori, contatti e storico delle relazioni.
 - **Eventi:** fiere e altri eventi, date, luogo, stand, costi, inventario portato e vendite associate.
@@ -111,7 +113,7 @@ Il tema chiaro resta il default iniziale, ma colori, superfici, bordi e stati de
 
 ## Modalita fiera
 
-La modalita fiera e un profilo d'uso futuro, non una feature da implementare nello scheletro. Deve privilegiare velocita e leggibilita offline:
+La modalita fiera e un contesto operativo automatico, attivo quando la data corrente e compresa tra inizio e fine della fiera, estremi inclusi. Deve privilegiare velocita e leggibilita offline:
 
 - inserimento rapido di una vendita con prodotto, quantita e metodo di pagamento;
 - inserimento rapido di una commissione con contatto, brief minimo e canale;

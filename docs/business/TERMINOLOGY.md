@@ -1,5 +1,7 @@
 # Terminologia di dominio
 
+> **Decisione prevalente:** [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md) definisce Operazione, stati persistenti, Cliente soft e fiera di contabilizzazione. Le definizioni precedenti incompatibili sono superate.
+
 Questo glossario e normativo per interfaccia, modello dati, report e import/export. Ogni termine mantiene il significato qui definito; quando serve un concetto diverso si usa un termine diverso.
 
 ## Soggetti
@@ -84,7 +86,7 @@ Classificazione del tipo di lavoro, ad esempio commissione privata, lavoro edito
 
 ### Work
 
-Concetto unificato e futuro per rappresentare lavori con elementi comuni come Party, Canale, stato, scadenze, consegne e valori economici. Commissione e Lavoro editoriale possono essere specializzazioni di Work; questa direzione non modifica ancora il modello dati definitivo.
+Concetto descrittivo della componente di lavoro di un'Operazione. Non e un'entita persistente separata: Commissione e Lavoro editoriale sono profili classificati tramite WorkType.
 
 ## Catalogo e configurazione
 

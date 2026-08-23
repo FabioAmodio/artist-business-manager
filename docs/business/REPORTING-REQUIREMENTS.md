@@ -1,5 +1,7 @@
 # Requisiti di reporting
 
+> **Decisione prevalente:** i report devono usare Operazione come dimensione primaria e distinguere origine, consegna e contabilizzazione fieristica. La specifica normativa e [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md).
+
 ## Obiettivo
 
 Il reporting deve rispondere a domande operative e strategiche sull'attivita artistica, usando dati ricostruibili dai workflow. Ogni risultato deve indicare periodo, valuta, filtri applicati e definizione della metrica.

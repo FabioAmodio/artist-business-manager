@@ -1,5 +1,10 @@
 # Changelog
 
+## Decisioni di dominio successive
+
+- Introdotta [OPERATIONS-DOMAIN-SPECIFICATION.md](../business/OPERATIONS-DOMAIN-SPECIFICATION.md) come specifica normativa per Operazione, macchina a stati delle commissioni, record incompleti, Clienti soft e contabilizzazione fieristica distinta da origine e consegna.
+- La Modalita Fiera e un contesto operativo automatico con FAB centrale e azione alternativa; l'AI resta una tecnologia di supporto con provenance esplicita e revisione umana.
+
 Questo documento traccia tutti gli aggiornamenti e le nuove funzionalita introdotte nella documentazione e nella architettura di Artist Business Manager.
 
 ## [2.0.0] - 2026-08-23
