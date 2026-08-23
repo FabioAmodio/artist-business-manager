@@ -4,20 +4,23 @@ La roadmap distingue lavoro necessario, evoluzioni e sperimentazioni. Le date no
 
 ## MVP
 
-- Operazione come aggregate root;
-- commissione con macchina a stati persistente;
-- Modalita Fiera e dashboard contestuale;
-- vendita e commissione rapida con record incompleti;
-- Clienti soft;
-- fiere con costi e copertura;
-- IndexedDB/Dexie con repository e `IStorageProvider`;
-- configurazioni TEST/RELEASE e isolamento storage;
-- test di dominio, repository e persistenza dopo reload;
-- documentazione e onboarding coerenti.
+L'obiettivo del primo MVP non e dashboard, analytics o sync: e registrare e consultare persistentemente fiere e commissioni anche completamente offline.
+
+Gli incrementi sono:
+
+1. environment TEST/RELEASE, `AppEnvironment`, `storagePrefix` e Dependency Injection;
+2. `IStorageProvider`, `StorageHealth` e `StorageError`;
+3. `IndexedDbProvider` minimale con `open()`, `health()` e test di inizializzazione;
+4. entita `Fair` e `Operation`;
+5. `IFairRepository` e `IOperationRepository`;
+6. prima schermata reale per Gestione Fiere;
+7. inserimento rapido di Operazione/Commissione.
+
+Dashboard avanzata, analytics, catalogo esteso, stock e magazzino non sono prerequisiti del primo MVP.
 
 ## Funzionalita future
 
-- Sync asincrona con outbox;
+- Sync asincrona con outbox e `SyncEngine` (solo evoluzione futura);
 - provider Google Drive, OneDrive, Dropbox o backend;
 - appunti rapidi, testo libero e dettatura vocale;
 - suggerimenti di prezzo e bundle;
@@ -41,7 +44,7 @@ Ogni esperimento deve essere isolato, disattivabile, riconoscibile all'utente e 
 
 - service worker PWA e verifica offline reale;
 - schema Dexie ancora da completare;
-- repository, provider astratto e outbox da implementare;
+- repository e provider astratto da implementare secondo gli incrementi MVP;
 - environment file e storagePrefix non ancora cablati;
 - lint e gate CI non configurati;
 - test Safari iOS e quota IndexedDB da aggiungere;

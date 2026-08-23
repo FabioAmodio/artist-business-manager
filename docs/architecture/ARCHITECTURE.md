@@ -6,6 +6,8 @@
 
 > **Modello di dominio:** il contratto v1 completo e in [../business/DOMAIN-MODEL-V1.md](../business/DOMAIN-MODEL-V1.md).
 
+> **Scheletro applicativo implementabile:** struttura Angular, repository, storage provider, DI e roadmap sono definiti in [APPLICATION-ARCHITECTURE-PROPOSAL.md](APPLICATION-ARCHITECTURE-PROPOSAL.md).
+
 ## Obiettivo e principi
 
 L'applicazione e una web app personale, offline-first e senza backend, per gestire l'attivita artistica e fumettistica: progetti, commissioni, lavori editoriali, fumetti, clienti, eventi, vendite, prodotti, spese, pagamenti, scadenze e report.
