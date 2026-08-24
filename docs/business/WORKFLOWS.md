@@ -2,6 +2,10 @@
 
 > **Decisione prevalente:** tutti i workflow descritti qui sono varianti del ciclo di vita di una Operazione. Per record rapidi, stati di commissione, clienti soft e contabilizzazione fieristica vale [OPERATIONS-DOMAIN-SPECIFICATION.md](OPERATIONS-DOMAIN-SPECIFICATION.md).
 
+> **Confini Work/Sale:** per decidere quando una commissione, sketch, prodotto o bundle e Work, Sale o caso ibrido consultare [WORK-SALES-BOUNDARIES.md](WORK-SALES-BOUNDARIES.md).
+
+> **Lifecycle operativi:** gli stati e le transizioni consentite sono definiti in [OPERATION-LIFECYCLE.md](OPERATION-LIFECYCLE.md).
+
 ## Principi comuni
 
 I workflow descrivono le operazioni principali dell'attivita artistica. Le entita possono essere salvate anche con dati incompleti, ma l'app deve evidenziare campi mancanti, scadenze assenti e riferimenti da completare.

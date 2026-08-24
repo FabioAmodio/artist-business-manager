@@ -15,6 +15,7 @@ Questa raccolta documenta le decisioni architetturali che vincolano il progetto.
 9. [Import/export come backup ufficiale](#adr-009-importexport-come-backup-ufficiale)
 10. [Branch, ambienti e promozione](adr/ADR-010-git-and-environments.md)
 11. [Gradual Adoption](adr/ADR-011-gradual-adoption.md)
+12. [Operation come aggregate root](adr/ADR-012-operation-aggregate-root.md)
 
 ## Stato degli ADR
 

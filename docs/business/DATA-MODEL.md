@@ -6,6 +6,10 @@
 
 > **Migrazione storico:** l'importazione del workbook personale e una capability Post-MVP/MVP+1 amministrativa, descritta in [HISTORICAL-DATA-MIGRATION.md](HISTORICAL-DATA-MIGRATION.md). Il file Excel resta fonte storica durante la validazione iniziale.
 
+> **Confini Work/Sale:** i criteri pratici per distinguere lavoro creativo, vendita e casi ibridi sono in [WORK-SALES-BOUNDARIES.md](WORK-SALES-BOUNDARIES.md).
+
+> **Lifecycle operativi:** stati e transizioni ufficiali di Work, Sale, Operation, Preventivo, Scadenza, Evento/Fiera e stato economico sono in [OPERATION-LIFECYCLE.md](OPERATION-LIFECYCLE.md).
+
 ## Scopo e fonte
 
 Questo documento descrive esclusivamente il modello concettuale del dominio. Non definisce tabelle, database, schema Dexie, API o codice applicativo.
