@@ -86,7 +86,50 @@ Organizzare la produzione e misurarne l'avanzamento a partire dalle unita di lav
 ### Dati coinvolti
 Serie, volume ed episodio; tavole, ordine e stato; fasi e storico; script, note, blocchi e revisioni; scadenze e milestone; allegati; cliente o editore; consegna e pubblicazione.
 
-## 4. Partecipazione a una fiera
+## 4. Pianificazione Fiera
+
+### Attore
+Artista che valuta e prepara la partecipazione a una fiera molti mesi prima dell'evento.
+
+### Obiettivo
+Decidere se partecipare e arrivare all'evento con costi, prenotazioni e scadenze sotto controllo.
+
+### Flusso
+1. Registrare la fiera annunciata come FairEdition, anche con dati incompleti.
+2. Valutare partecipazione, costi attesi, rimborsi, gettoni e potenziale commerciale.
+3. Prenotare hotel o alloggio, spesso con cancellazione gratuita.
+4. Registrare costo hotel previsto/confermato e data limite di cancellazione gratuita.
+5. Stimare il viaggio, ad esempio con ViaMichelin o strumenti equivalenti.
+6. Registrare costo viaggio previsto e ipotesi di mezzo.
+7. Registrare eventuali costi stand, parcheggi, vitto o altri costi previsti.
+8. Registrare rimborsi o gettoni presenza previsti.
+9. Creare scadenze collegate: cancellazione gratuita, pagamento stand, invio materiale, saldo hotel, prenotazione viaggio.
+10. Monitorare le scadenze nei mesi successivi.
+11. Confermare definitivamente o annullare la partecipazione.
+12. Passare alla preparazione operativa e poi alla partecipazione.
+13. Durante e dopo l'evento registrare vendite, attivita e consuntivo finale.
+
+### Dati coinvolti
+FairSeries, FairEdition, Booking, FairCost, rimborso/gettone, scadenze, organizzatore, contatti, note logistiche, stato operativo, stato economico previsto, spese e incassi effettivi.
+
+### Scadenze tipiche
+- cancellazione gratuita hotel;
+- pagamento stand;
+- invio materiale all'organizzatore;
+- saldo hotel;
+- prenotazione o acquisto viaggio;
+- conferma presenza;
+- chiusura iscrizione o consegna documenti.
+
+### Controlli consigliati
+- data di cancellazione gratuita precedente all'inizio della fiera;
+- costi previsti mancanti per hotel, viaggio o stand;
+- budget previsto negativo;
+- fiera confermata senza prenotazione hotel quando necessaria;
+- scadenze nei prossimi 30 giorni;
+- rimborso/gettone previsto ma non ancora ricevuto dopo l'evento.
+
+## 5. Partecipazione a una fiera
 
 ### Attore
 Artista partecipante, con eventuali organizzatore, collaboratori e fornitori.
@@ -108,7 +151,7 @@ Preparare, gestire e chiudere una fiera collegando logistica, prodotti, vendite,
 ### Dati coinvolti
 Evento, tipo, luogo, date e organizzatore; stand e logistica; prodotti, varianti e quantita; vendite e canali; movimenti di magazzino; spese; incassi e metodi; note e report.
 
-## 5. Registrazione vendite
+## 6. Registrazione vendite
 
 ### Attore
 Artista o collaboratore che registra una vendita online, in fiera, in negozio o diretta.
@@ -129,7 +172,7 @@ Registrare una transazione verificabile, aggiornando la disponibilita e distingu
 ### Dati coinvolti
 Vendita, data, canale ed evento; cliente; prodotti, varianti, SKU e righe; quantita, prezzo, sconti e totale; magazzino; incasso, metodo, valuta e stato; resi e rettifiche.
 
-## 6. Registrazione spese
+## 7. Registrazione spese
 
 ### Attore
 Artista o collaboratore che registra un costo previsto o sostenuto.
@@ -150,7 +193,7 @@ Classificare i costi e collegarli al contesto corretto, distinguendo competenza 
 ### Dati coinvolti
 Spesa, descrizione, categoria e stato; date; importo, valuta e imposte; fornitore e documento; progetto, lavoro, evento o prodotto; ricevute; pagamento, scadenza e rimborso.
 
-## 7. Gestione incassi
+## 8. Gestione incassi
 
 ### Attore
 Artista che registra denaro ricevuto da cliente, editore o acquirente.
@@ -171,7 +214,7 @@ Tracciare ogni entrata e riconciliarla con compenso, vendita o rimborso, mantene
 ### Dati coinvolti
 Incasso, data, importo e valuta; metodo e stato; causale e riferimento; compenso, preventivo o vendita di origine; cliente o editore; rate, saldo e scadenze; storni e rimborsi.
 
-## 8. Gestione scadenze
+## 9. Gestione scadenze
 
 ### Attore
 Artista, che crea e aggiorna scadenze proprie o derivate da lavori, eventi e pagamenti.

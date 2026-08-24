@@ -154,7 +154,7 @@ docs/
 
 Regola pratica: `core` condivide infrastruttura e servizi trasversali; `domain` contiene regole pure; `application` contiene Repository-facing Application Services; `features` contiene schermate; `layout` contiene shell e navigazione; `shared` contiene solo elementi realmente riutilizzabili e privi di logica di business.
 
-Ogni pagina di inserimento deve usare il controllo condiviso `FormActionsComponent`. Salva e Annulla restano vicini, con stili distinti e ordine coerente. Annulla modifica solo lo stato del form non ancora salvato e non altera i dati persistiti.
+Ogni pagina di inserimento o modifica deve usare una dialog centrata come superficie predefinita, mantenendo la lista come contenuto principale. Drawer laterali sono ammessi solo quando motivati da un workflow specifico. La dialog deve usare il controllo condiviso `FormActionsComponent`: Salva e Annulla restano vicini, con stili distinti e ordine coerente. Annulla modifica solo lo stato del form non ancora salvato e non altera i dati persistiti.
 
 La Facade non e un livello obbligatorio. Si introduce solo quando una schermata ha reale stato locale complesso o orchestrazione tra piu servizi. Non introdurre Command Handler, Mediator, Event Bus o un Use Case dedicato per ogni operazione nel MVP.
 

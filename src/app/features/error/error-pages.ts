@@ -21,70 +21,8 @@ export class AppError {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-not-found-page',
-  template: `
-    <section class="error-page" [attr.aria-live]="'polite'">
-      <div class="error-content">
-        <p class="eyebrow">{{ statusCode }}</p>
-        <h1>{{ title }}</h1>
-        <p class="description">{{ description }}</p>
-        <a routerLink="/dashboard" class="action-link">Torna alla home</a>
-      </div>
-    </section>
-  `,
-  styles: `
-    .error-page {
-      border-top: 3px solid var(--color-status-error);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100%;
-      padding: var(--spacing-8);
-    }
-
-    .error-content {
-      max-width: 52rem;
-      text-align: center;
-    }
-
-    .eyebrow {
-      color: var(--color-text-secondary);
-      font-family: var(--font-mono);
-      font-size: var(--font-size-xs);
-      letter-spacing: var(--letter-spacing-wide);
-      margin: 0 0 var(--spacing-6);
-      text-transform: uppercase;
-    }
-
-    h1 {
-      color: var(--color-primary);
-      font-family: var(--font-serif);
-      font-size: clamp(2rem, 5vw, 4rem);
-      font-weight: var(--font-weight-regular);
-      line-height: var(--line-height-tight);
-      margin: 0 0 var(--spacing-5);
-    }
-
-    .description {
-      color: var(--color-text-secondary);
-      font-size: var(--font-size-lg);
-      margin: 0 0 var(--spacing-8);
-    }
-
-    .action-link {
-      background: var(--color-primary);
-      color: var(--color-surface);
-      display: inline-block;
-      padding: var(--spacing-4) var(--spacing-8);
-      border-radius: var(--radius-base);
-      text-decoration: none;
-      font-weight: var(--font-weight-medium);
-      transition: background var(--transition-base);
-    }
-
-    .action-link:hover {
-      background: var(--color-primary-light);
-    }
-  `,
+  templateUrl: './not-found-page.html',
+  styleUrl: './error-pages.scss',
   standalone: true,
   imports: [RouterLink],
 })
@@ -97,70 +35,8 @@ export class NotFoundPage {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-error-page',
-  template: `
-    <section class="error-page" [attr.aria-live]="'polite'">
-      <div class="error-content">
-        <p class="eyebrow">Errore</p>
-        <h1>{{ title }}</h1>
-        <p class="description">{{ description }}</p>
-        <a routerLink="/dashboard" class="action-link">Torna alla home</a>
-      </div>
-    </section>
-  `,
-  styles: `
-    .error-page {
-      border-top: 3px solid var(--color-status-error);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100%;
-      padding: var(--spacing-8);
-    }
-
-    .error-content {
-      max-width: 52rem;
-      text-align: center;
-    }
-
-    .eyebrow {
-      color: var(--color-text-secondary);
-      font-family: var(--font-mono);
-      font-size: var(--font-size-xs);
-      letter-spacing: var(--letter-spacing-wide);
-      margin: 0 0 var(--spacing-6);
-      text-transform: uppercase;
-    }
-
-    h1 {
-      color: var(--color-primary);
-      font-family: var(--font-serif);
-      font-size: clamp(2rem, 5vw, 4rem);
-      font-weight: var(--font-weight-regular);
-      line-height: var(--line-height-tight);
-      margin: 0 0 var(--spacing-5);
-    }
-
-    .description {
-      color: var(--color-text-secondary);
-      font-size: var(--font-size-lg);
-      margin: 0 0 var(--spacing-8);
-    }
-
-    .action-link {
-      background: var(--color-primary);
-      color: var(--color-surface);
-      display: inline-block;
-      padding: var(--spacing-4) var(--spacing-8);
-      border-radius: var(--radius-base);
-      text-decoration: none;
-      font-weight: var(--font-weight-medium);
-      transition: background var(--transition-base);
-    }
-
-    .action-link:hover {
-      background: var(--color-primary-light);
-    }
-  `,
+  templateUrl: './error-page.html',
+  styleUrl: './error-pages.scss',
   standalone: true,
   imports: [RouterLink],
 })

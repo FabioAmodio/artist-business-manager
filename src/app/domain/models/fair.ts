@@ -26,6 +26,15 @@ export interface FairEdition {
   readonly locationNotes?: string;
   readonly startDate: string;
   readonly endDate: string;
+  readonly expectedBudget?: number;
+  readonly standCost?: number;
+  readonly reimbursement?: number;
+  readonly hotelCost?: number;
+  readonly travelCost?: number;
+  readonly otherCosts?: number;
+  readonly standPaid?: boolean;
+  readonly travelPaid?: boolean;
+  readonly hotelPaid?: boolean;
   readonly notes?: string;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;

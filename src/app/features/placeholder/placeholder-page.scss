@@ -1,0 +1,29 @@
+.placeholder-page {
+  border-top: 3px solid #d28b4c;
+  max-width: 52rem;
+  padding-top: 1.5rem;
+}
+
+.eyebrow {
+  color: #6e7770;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  margin: 0 0 1.5rem;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: #183c37;
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 400;
+  line-height: 1;
+  margin: 0;
+}
+
+.description {
+  color: #6e7770;
+  font-size: 0.95rem;
+  margin: 1.25rem 0 0;
+}

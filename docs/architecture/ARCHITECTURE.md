@@ -95,6 +95,20 @@ Ogni feature espone una superficie orientata al caso d'uso. Modelli, repository 
 
 ## Responsive, mobile first e accessibilita
 
+### Angular Component Convention
+
+Tutti i componenti Angular devono usare file separati per logica, template e stile:
+
+```text
+component-name.component.ts
+component-name.component.html
+component-name.component.scss
+```
+
+I decorator devono usare `templateUrl` e `styleUrl` o `styleUrls`. Template inline e stili inline non devono essere usati, salvo eccezioni temporanee e motivate per prototipi, test o componenti tecnici estremamente piccoli.
+
+Questa convenzione migliora manutenibilita, review, navigazione del codice e gestione dei merge Git. Le feature esistenti devono mantenere comportamento invariato durante l'estrazione.
+
 La UI deve essere progettata mobile first: smartphone e il vincolo iniziale per gerarchia dei contenuti, azioni primarie, densita e gestione degli errori. Desktop e tablet aggiungono spazio e colonne, ma non introducono un modello d'interazione incompatibile.
 
 ### Breakpoint e layout
@@ -109,6 +123,14 @@ I breakpoint sono conseguenza del contenuto e non di dispositivi specifici. Ogni
 
 Le azioni usate durante una fiera devono essere raggiungibili con una mano: target touch ampi, spaziatura sufficiente, feedback immediato e conferme solo per azioni distruttive. Inserimento vendita, commissione, ricerca prodotto, ricerca cliente e consultazione scadenze devono richiedere il minor numero possibile di passaggi.
 
+### List First UX
+
+Le schermate gestionali mostrano prima la lista dei dati gia registrati e mantengono l'azione Aggiungi sempre raggiungibile. I form sono contestuali e non sostituiscono il contenuto principale. Testi didascalici permanenti e spiegazioni lunghe vengono evitati; tutorial guidati e onboarding contestuali sono una feature futura.
+
+Gli empty state devono essere brevi e azionabili. Le liste operative possono includere indicatori visuali sintetici per stato evento, stato economico, stato logistico, costi e rimborsi, anche prima della logica completa, purche siano chiaramente presentazionali e non fingano dati non disponibili.
+
+Per Eventi e Fiere la lista deve rendere visibili senza aprire il dettaglio: stato evento, budget previsto, risultato effettivo, stato hotel/alloggio, stato viaggio, stato stand e rimborso/gettone. L'obiettivo e far capire a colpo d'occhio cosa e confermato, cosa manca e cosa richiede un'azione.
+
 ### Accessibilita
 
 La shell e le feature devono rispettare HTML semantico, ordine di focus, navigazione da tastiera, nomi accessibili per icone e controlli, contrasto adeguato e messaggi di errore annunciabili. Colore, icone o gesture non possono essere l'unico modo per comunicare stato o risultato.
@@ -120,6 +142,8 @@ La UI deve prevedere una futura Convention Mode, ottimizzata per l'uso ripetitiv
 ### Dark mode
 
 Il tema chiaro resta il default iniziale, ma colori, superfici, bordi e stati devono essere definiti tramite token semantici. La struttura deve consentire un futuro dark mode basato su preferenza di sistema e scelta manuale, senza hardcode cromatici nei componenti feature.
+
+I componenti devono usare ruoli semantici (`--color-heading`, `--color-text`, `--color-text-inverse`, `--color-primary-action-bg`, `--color-primary-action-text`, `--color-link`, `--color-focus-ring`) invece di riutilizzare direttamente `--color-primary` o `--color-surface` per scopi diversi. Nell'implementazione attuale la dark mode e CSS-only via `prefers-color-scheme`; `data-theme` e scelta manuale restano evoluzione futura.
 
 ## Modalita fiera
 

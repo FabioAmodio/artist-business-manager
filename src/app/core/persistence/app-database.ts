@@ -11,6 +11,15 @@ interface LegacyFair {
   readonly startDate: string;
   readonly endDate: string;
   readonly notes?: string;
+  readonly expectedBudget?: number;
+  readonly standCost?: number;
+  readonly reimbursement?: number;
+  readonly hotelCost?: number;
+  readonly travelCost?: number;
+  readonly otherCosts?: number;
+  readonly standPaid?: boolean;
+  readonly travelPaid?: boolean;
+  readonly hotelPaid?: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly deletedAt?: string;

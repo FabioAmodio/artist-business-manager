@@ -70,6 +70,61 @@ Occorrenza pianificata con periodo, luogo e attivita associate. Attributi: ident
 
 Specializzazione di Evento per esposizione, promozione o vendita. Attributi osservati o derivati: nome, anno, inizio, fine, luogo, stand, canale, costo spazio, hotel, viaggio, rimborso, ricavo, stati di pagamento logistico, note e bilancio derivato.
 
+### Pianificazione fiera
+
+La fiera non e solo un consuntivo dei giorni di manifestazione. Una `FairEdition` attraversa un ciclo di vita lungo: pianificazione, prenotazioni, preparazione, partecipazione e consuntivo. Le informazioni economiche e logistiche possono essere registrate molti mesi prima dell'evento e servono a decidere se partecipare realmente.
+
+Attributi concettuali della pianificazione: stato operativo, stato economico previsto, costi previsti, costi confermati, costi pagati, costi effettivi finali, rimborsi/gettoni previsti e ricevuti, scadenze collegate, note organizzative e decisione finale di partecipazione.
+
+### Campi economici V1 della FairEdition
+
+Per coerenza con il foglio storico `Fiere`, la V1 puo mantenere direttamente su `FairEdition` alcuni campi economici aggregati:
+
+- budget previsto;
+- costo stand;
+- rimborso/gettone;
+- costo hotel;
+- costo viaggio;
+- altri costi;
+- stand pagato;
+- viaggio pagato;
+- hotel pagato.
+
+Questi campi sono temporanei e pragmatici: permettono di rappresentare subito i dati esistenti nell'Excel e di supportare la decisione di partecipazione. In una fase successiva devono evolvere verso `FairCost`, `Booking`, `Incasso` e `Spesa` collegati all'evento, mantenendo migrazione e compatibilita storica.
+
+### Booking
+
+Prenotazione collegata a una `FairEdition`. Rappresenta un impegno logistico o organizzativo e non deve essere ridotta a una semplice spesa, perche contiene scadenze, condizioni e riferimenti operativi.
+
+Booking e il termine concettuale preferito per coprire hotel, alloggio, treno, aereo, parcheggio o altre prenotazioni. Specializzazioni future come `AccommodationBooking` o `TravelBooking` possono essere introdotte solo se il comportamento diverge davvero.
+
+Attributi: identita, `fairEditionId`, tipo (`hotel`, `alloggio`, `treno`, `aereo`, `parcheggio`, `altro`), provider, costo previsto, costo confermato, costo pagato, costo effettivo finale, riferimento prenotazione, scadenza cancellazione gratuita, scadenza saldo, stato, note e allegati.
+
+### FairCost
+
+Voce economica prevista o sostenuta per una `FairEdition`. Copre stand, viaggio, hotel/alloggio, parcheggi, vitto e altre spese.
+
+Ogni costo deve distinguere:
+
+- costo previsto: stima iniziale usata per decidere se partecipare;
+- costo confermato: importo comunicato o prenotato;
+- costo pagato: importo effettivamente pagato;
+- costo effettivo finale: importo finale dopo variazioni, cancellazioni o rimborsi.
+
+Il costo non coincide necessariamente con il pagamento. Un booking puo generare o collegare una o piu voci FairCost.
+
+### Rimborso e gettone fiera
+
+Entrata prevista o ricevuta collegata a una `FairEdition`. Il rimborso puo coprire viaggio, alloggio o altri costi; il gettone presenza e un compenso per la partecipazione.
+
+Attributi: tipo (`rimborso`, `gettone`), importo previsto, importo ricevuto, data prevista, data incasso, stato, note e riferimento all'organizzatore. Rimborsi e gettoni contribuiscono al risultato economico finale dell'evento.
+
+### Stato operativo ed economico della fiera
+
+Stato operativo suggerito per una `FairEdition`: `Idea`, `Valutazione`, `Confermata`, `Prenotata`, `In preparazione`, `In corso`, `Conclusa`, `Annullata`.
+
+Stato economico suggerito: `Budget positivo`, `Budget neutro`, `Budget negativo`, `In attesa di dati`. Lo stato economico e derivato da costi e rimborsi/gettoni previsti o effettivi, non sostituisce i movimenti economici.
+
 ### Progetto
 
 Contenitore organizzativo di obiettivi, lavori, attivita e risultati. Attributi: titolo, descrizione, obiettivo, stato, periodo, canale, Party collegati, note e allegati.
@@ -163,6 +218,9 @@ Le cardinalita indicano il modello concettuale previsto. Dove l'Excel non contie
 | Prodotto - Riga vendita | Prodotto `0..1` : riga `0..*` | riferimento certo o da normalizzare |
 | Vendita - Riga vendita | Vendita `1` : riga `1..*` | una vendita ha una o piu righe |
 | Operazione - Incasso | Operazione `1` : incasso `0..*` | vendita, acconto, rata, saldo o rimborso |
+| FairEdition - Booking | FairEdition `1` : booking `0..*` | hotel, viaggio e altre prenotazioni operative |
+| FairEdition - FairCost | FairEdition `1` : costo `0..*` | costi previsti, confermati, pagati o finali |
+| FairEdition - Rimborso/Gettone | FairEdition `1` : entrata prevista/ricevuta `0..*` | contributi che incidono sul risultato dell'evento |
 | Fiera - Spesa | Fiera `1` : spesa `0..*` | costi direttamente associati |
 | Preventivo - incarico | Preventivo `0..1` : incarico `0..1` | un preventivo accettato puo attivare un incarico |
 | Commissione/Lavoro - Incasso | incarico `1` : incasso `0..*` | acconto, rate e saldo separati |

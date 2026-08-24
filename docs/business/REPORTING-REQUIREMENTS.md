@@ -80,6 +80,8 @@ Il reporting fieristico ha due livelli distinti:
 
 Le metriche devono poter filtrare per `fairEditionId` e raggruppare per `fairSeriesId`. L'anno e una dimensione descrittiva dell'edizione, non la sua identita. Origine, consegna e contabilizzazione di un'Operazione possono riferire edizioni differenti.
 
+Nel breve periodo i report potranno leggere campi aggregati V1 della FairEdition, come costo stand, hotel, viaggio, altri costi, rimborso/gettone e stati pagato. Nel modello maturo questi valori dovranno essere ricostruibili da booking, costi, incassi e spese collegate.
+
 Deve rispondere almeno a queste domande:
 
 - Quale fiera e stata piu redditizia?
@@ -92,6 +94,14 @@ Deve rispondere almeno a queste domande:
 - Quante vendite o entrate sono state generate per canale e per evento?
 - Quali eventi hanno avuto il miglior rapporto tra costi e ricavi?
 - Quale inventario e stato portato, venduto, restituito o rettificato?
+- Quali fiere future non hanno ancora un hotel o alloggio registrato?
+- Quali fiere hanno prenotazioni con scadenza di cancellazione vicina?
+- Quali fiere hanno un budget previsto negativo?
+- Quali fiere sono in attesa di dati economici essenziali?
+- Quali fiere hanno ricevuto rimborsi o gettoni?
+- Quale costo medio sostengo per hotel o alloggio?
+- Quanto spendo mediamente in viaggio per fiera?
+- Quali scadenze organizzative sono imminenti per le fiere future?
 
 Il margine deve dichiarare se considera solo spese direttamente associate oppure anche costi allocati. Gli eventi senza vendite devono restare inclusi nelle analisi dei costi medi.
 

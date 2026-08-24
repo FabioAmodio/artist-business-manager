@@ -13,8 +13,8 @@
 }
 
 .topbar {
-  background-color: var(--color-primary);
-  color: var(--color-surface);
+  background-color: var(--color-primary-action-bg);
+  color: var(--color-primary-action-text);
   height: var(--topbar-height);
   display: flex;
   align-items: center;
@@ -36,9 +36,7 @@
   transition: opacity var(--transition-base);
 }
 
-.brand:hover {
-  opacity: 0.9;
-}
+.brand:hover { opacity: 0.9; }
 
 .brand-mark {
   display: inline-flex;
@@ -47,20 +45,16 @@
   width: 2.5rem;
   height: 2.5rem;
   background-color: var(--color-accent);
-  color: var(--color-primary);
+  color: var(--color-primary-action-bg);
   border-radius: var(--radius-base);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-sm);
 }
 
-.brand-text {
-  display: none;
-}
+.brand-text { display: none; }
 
 @media (min-width: 700px) {
-  .brand-text {
-    display: inline;
-  }
+  .brand-text { display: inline; }
 }
 
 .topbar-nav {
@@ -84,9 +78,7 @@
   font-size: var(--font-size-xl);
 }
 
-.theme-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
+.theme-toggle:hover { background-color: rgba(255, 255, 255, 0.1); }
 
 .shell-body {
   display: flex;
@@ -139,12 +131,10 @@
   white-space: nowrap;
 }
 
-.sidebar a:hover {
-  background-color: var(--color-surface-tertiary);
-}
+.sidebar a:hover,
+.sidebar a.active { background-color: var(--color-surface-tertiary); }
 
 .sidebar a.active {
-  background-color: var(--color-surface-tertiary);
   border-left-color: var(--color-accent);
   font-weight: var(--font-weight-semibold);
 }
@@ -215,11 +205,8 @@
   padding: 0;
 }
 
-/* Responsive: Mobile (< 700px) */
 @media (max-width: 699px) {
-  .shell-body {
-    flex-direction: column;
-  }
+  .shell-body { flex-direction: column; }
 
   .sidebar {
     width: 100%;
@@ -233,15 +220,11 @@
     position: relative;
   }
 
-  .nav-label {
-    display: none;
-  }
+  .nav-label,
+  .sidebar-footer { display: none; }
 
-  /* Hide standard nav, show responsive nav's mobile version */
   :host ::ng-deep .sidebar-nav,
-  :host ::ng-deep .nav-more-button {
-    display: none;
-  }
+  :host ::ng-deep .nav-more-button { display: none; }
 
   :host ::ng-deep .responsive-nav-wrapper {
     width: 100%;
@@ -258,27 +241,19 @@
     max-height: 70vh !important;
   }
 
-  .sidebar-footer {
-    display: none;
-  }
-
   .footer-content {
     flex-direction: column;
     text-align: center;
   }
 
-  .topbar {
-    padding: 0 var(--spacing-4);
-  }
+  .topbar { padding: 0 var(--spacing-4); }
 
   .brand-mark {
     width: 2rem;
     height: 2rem;
   }
 
-  .main-content {
-    min-height: 0;
-  }
+  .main-content { min-height: 0; }
 
   :host ::ng-deep .nav-icon {
     width: 1.25rem;
@@ -286,7 +261,6 @@
   }
 }
 
-/* Tablet and Desktop (>= 700px) */
 @media (min-width: 700px) {
   .shell-body {
     display: grid;

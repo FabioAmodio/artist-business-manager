@@ -16,6 +16,8 @@ L'obiettivo e comprendere dominio, architettura e workflow in meno di una giorna
 ## Convenzioni di team
 
 - usare TypeScript strict e componenti Angular standalone;
+- usare per ogni componente Angular file `.ts`, `.html` e `.scss` separati;
+- evitare template e stili inline salvo prototipi, test o componenti tecnici estremamente piccoli;
 - mantenere il dominio indipendente da Angular e Dexie;
 - usare Signals per stato locale e facade read-only verso la UI;
 - mantenere l'Offline First: il salvataggio locale precede ogni sync futura;

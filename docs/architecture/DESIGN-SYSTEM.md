@@ -2,6 +2,23 @@
 
 ## Obiettivi e principi
 
+### List First UX
+
+Tutte le schermate gestionali devono usare un approccio **List First**:
+
+- l'elenco e il contenuto principale della pagina;
+- il pulsante Aggiungi resta sempre accessibile;
+- il form di inserimento o modifica compare solo quando richiesto;
+- i testi didascalici permanenti vengono evitati;
+- gli empty state sono minimalisti e orientati all'azione;
+- eventuali tutorial guidati sono una feature futura, non testo fisso nella schermata.
+
+L'obiettivo e ridurre rumore visivo e far percepire subito i dati operativi. Ogni schermata deve rispondere prima a: "cosa ho gia registrato?" e poi a "cosa posso aggiungere o modificare?".
+
+Le schermate con lista devono mostrare indicatori visuali immediati quando aiutano la scansione, ad esempio stato evento, stato economico, stato logistico, costo e rimborso. Gli indicatori possono partire come placeholder presentazionali, ma la logica di business deve restare nei servizi/regole di dominio.
+
+Per la lista Eventi/Fiere gli indicatori minimi da prevedere sono: stato evento, budget previsto, risultato effettivo, stato hotel/alloggio, stato viaggio, stato stand e rimborso/gettone. Devono comunicare rapidamente cosa e andato bene, cosa e andato male e cosa richiede un'azione.
+
 ### Obiettivi
 
 L'interfaccia di Artist Business Manager deve essere:
@@ -117,6 +134,16 @@ I design token definiscono valori riutilizzabili per colori, tipografia, spaziat
 --color-text-tertiary: #999999;
 --color-text-disabled: #CCCCCC;
 --color-text-inverse: #FFFFFF;
+
+/* Ruoli semantici implementati */
+--color-heading: var(--color-primary);
+--color-text: var(--color-text-primary);
+--color-text-inverse: var(--color-surface);
+--color-primary-action-bg: var(--color-primary);
+--color-primary-action-bg-hover: var(--color-primary-light);
+--color-primary-action-text: var(--color-text-inverse);
+--color-link: var(--color-primary);
+--color-focus-ring: var(--color-accent);
 ```
 
 ### Token di tipografia
@@ -246,6 +273,10 @@ Variabili principali:
 
 Tema scuro, riduce l'affaticamento visivo in ambienti con poca luce.
 
+Nel codice attuale la modalita scura e automatica via `prefers-color-scheme`. Non esiste ancora selezione manuale tramite `data-theme` o servizio Angular.
+
+I token semantici devono essere sovrascritti in dark mode per evitare doppi ruoli ambigui: `--color-surface` resta superficie, mentre `--color-primary-action-text` e `--color-text-inverse` gestiscono il testo su azioni primarie.
+
 Variabili principali:
 ```css
 [data-theme="dark"] {
@@ -289,6 +320,8 @@ L'applicazione deve permettere all'utente di scegliere il tema preferito in "Imp
 - Artist
 - Segui preferenze di sistema (prefers-color-scheme)
 - Temi personalizzati (future)
+
+Questa selezione e target futuro. L'implementazione attuale segue automaticamente la preferenza del sistema tramite CSS.
 
 ## Componenti e pattern UI
 

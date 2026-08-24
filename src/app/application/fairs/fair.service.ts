@@ -4,7 +4,7 @@ import { FairSeriesRepository } from '../../core/repositories/fair-series.reposi
 import type { Fair, FairSeries } from '../../domain/models/fair';
 import { validateFairInput, type FairValidationIssue } from '../../domain/rules/fair-validation';
 
-export type FairInput = Pick<Fair, 'name' | 'location' | 'locationNotes' | 'startDate' | 'endDate' | 'notes' | 'edition'> & {
+export type FairInput = Pick<Fair, 'name' | 'location' | 'locationNotes' | 'startDate' | 'endDate' | 'notes' | 'edition' | 'expectedBudget' | 'standCost' | 'reimbursement' | 'hotelCost' | 'travelCost' | 'otherCosts' | 'standPaid' | 'travelPaid' | 'hotelPaid'> & {
   readonly fairSeriesId?: string;
 };
 

@@ -1,0 +1,10 @@
+<div class="form-actions">
+  <button class="cancel-button" type="button" (click)="cancel.emit()">
+    <span aria-hidden="true">×</span>
+    Annulla
+  </button>
+  <button class="save-button" type="submit" [disabled]="disabled() || saving()">
+    <span aria-hidden="true">✓</span>
+    {{ saving() ? 'Salvataggio...' : saveLabel() }}
+  </button>
+</div>

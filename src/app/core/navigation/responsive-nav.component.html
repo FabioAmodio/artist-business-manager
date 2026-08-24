@@ -1,0 +1,54 @@
+<div class="responsive-nav-wrapper">
+  <nav class="sidebar-nav" #navContainer>
+    <a
+      *ngFor="let item of visibleItems(); trackBy: trackByPath"
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: item.exact || false }"
+      class="nav-item"
+      [attr.aria-label]="item.label"
+      [attr.data-path]="item.path"
+    >
+      <span class="nav-icon">{{ item.icon }}</span>
+      <span class="nav-label">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <button
+    *ngIf="hasMoreItems()"
+    class="nav-more-button"
+    [class.active]="moreMenuOpen()"
+    (click)="toggleMoreMenu()"
+    aria-label="Mostra altri elementi di navigazione"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="moreMenuOpen()"
+  >
+    <span class="more-icon">⋯</span>
+    <span class="more-label">Altro</span>
+  </button>
+
+  <div *ngIf="moreMenuOpen()" class="nav-more-menu" role="menu" @.presence>
+    <div class="more-menu-header">
+      <span>Altre opzioni</span>
+      <button class="more-menu-close" (click)="closeMoreMenu()" aria-label="Chiudi menu">
+        ✕
+      </button>
+    </div>
+
+    <nav class="more-menu-items">
+      <a
+        *ngFor="let item of navigationItems; trackBy: trackByPath"
+        [routerLink]="item.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: item.exact || false }"
+        class="more-menu-item"
+        [attr.aria-label]="item.label"
+        role="menuitem"
+        (click)="closeMoreMenu()"
+      >
+        <span class="nav-icon">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+  </div>
+</div>

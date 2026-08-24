@@ -1,0 +1,9 @@
+.settings { max-width: 48rem; padding: clamp(1.5rem, 4vw, 3.5rem); }
+.eyebrow { color: var(--color-accent); font: 600 .72rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+h1 { color: var(--color-heading); font: 400 clamp(2rem, 5vw, 3.5rem) var(--font-serif); margin: 0 0 1rem; }
+.intro, .info-panel, .status { color: var(--color-text-secondary); line-height: 1.6; }
+.info-panel { border-left: 3px solid var(--color-accent); background: var(--color-surface-secondary); padding: 1rem 1.25rem; margin: 2rem 0; }
+fieldset { border: 1px solid var(--color-border); padding: 1.25rem; display: grid; gap: 1rem; }
+legend { color: var(--color-heading); font-weight: 700; padding: 0 .5rem; }
+label { color: var(--color-text-primary); display: flex; gap: .75rem; align-items: center; }
+input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem; }

@@ -5,6 +5,7 @@ Assistente operativo offline-first per commissioni, fiere, prodotti, clienti e v
 
 - [Getting Started](docs/GETTING-STARTED.md)
 - [Contributing](CONTRIBUTING.md)
+- Angular components use separate `.ts`, `.html`, and `.scss` files.
 - [Git Strategy](docs/architecture/GIT-STRATEGY.md)
 - [Environments](docs/architecture/ENVIRONMENTS.md)
 - [Architecture](docs/architecture/ARCHITECTURE.md)

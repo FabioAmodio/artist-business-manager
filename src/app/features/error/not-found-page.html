@@ -1,0 +1,8 @@
+<section class="error-page" [attr.aria-live]="'polite'">
+  <div class="error-content">
+    <p class="eyebrow">{{ statusCode }}</p>
+    <h1>{{ title }}</h1>
+    <p class="description">{{ description }}</p>
+    <a routerLink="/dashboard" class="action-link">Torna alla home</a>
+  </div>
+</section>

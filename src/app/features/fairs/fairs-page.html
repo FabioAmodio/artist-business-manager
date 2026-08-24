@@ -1,0 +1,117 @@
+<section class="fairs-page" aria-labelledby="fairs-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Eventi</p>
+      <h1 id="fairs-title">Fiere</h1>
+    </div>
+    @if (!editingId()) {
+      <button class="primary-button" type="button" (click)="startCreating()">+ Nuova fiera</button>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <p class="feedback error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="feedback success" role="status">{{ successMessage() }}</p>
+  }
+  @if (validationIssues().length) {
+    <div class="validation-list" role="alert">
+      @for (issue of validationIssues(); track issue.code + issue.message) {
+        <p [class.validation-error]="issue.severity === 'ERROR'" [class.validation-warning]="issue.severity === 'WARNING'">
+          <strong>{{ issue.severity === 'ERROR' ? 'Errore' : 'Attenzione' }}:</strong> {{ issue.message }}
+        </p>
+      }
+    </div>
+  }
+
+  <div class="list-heading"><h2>Elenco fiere</h2><span>{{ fairs().length }} registrate</span></div>
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!fairs().length) {
+    <div class="empty-state"><h3>Nessuna fiera registrata</h3><button class="primary-button" type="button" (click)="startCreating()">Crea la prima fiera</button></div>
+  } @else {
+    <div class="fair-list">
+      @for (fair of fairs(); track fair.id) {
+        <article class="fair-row">
+          <div class="fair-main">
+            <h3>{{ fair.name }} · {{ fair.edition || fair.year }}</h3>
+            <p>{{ fair.location }} · {{ fair.startDate }} - {{ fair.endDate }}</p>
+            @if (fair.locationNotes) {<small>{{ fair.locationNotes }}</small>} @if (fair.notes) {<small>{{ fair.notes }}</small>}
+          </div>
+              <div class="fair-money" aria-label="Riepilogo economico">
+                <span><strong>Ricavi</strong><em>n.d.</em></span>
+                <span><strong>Costi</strong><em>{{ formatMoney(totalCosts(fair)) }}</em></span>
+                <span><strong>Bilancio</strong><em>{{ formatMoney(fairBalance(fair)) }}</em></span>
+              </div>
+          <div class="fair-indicators" aria-label="Indicatori fiera">
+                <span class="indicator" [class.indicator-success]="eventStatusKind(fair) === 'success'" [class.indicator-warning]="eventStatusKind(fair) === 'warning'" [class.indicator-neutral]="eventStatusKind(fair) === 'neutral'">{{ eventStatusLabel(fair) }}</span>
+                <span class="indicator" [class.indicator-success]="budgetKind(fair) === 'success'" [class.indicator-warning]="budgetKind(fair) === 'warning'" [class.indicator-neutral]="budgetKind(fair) === 'neutral'">{{ budgetLabel(fair) }}</span>
+                <span class="indicator" [class.indicator-success]="fair.hotelPaid" [class.indicator-warning]="!fair.hotelPaid">{{ hotelLabel(fair) }}</span>
+                <span class="indicator" [class.indicator-success]="fair.travelPaid" [class.indicator-warning]="!fair.travelPaid">{{ travelLabel(fair) }}</span>
+                <span class="indicator" [class.indicator-success]="fair.standPaid" [class.indicator-warning]="!fair.standPaid">{{ standLabel(fair) }}</span>
+                <span class="indicator" [class.indicator-success]="fair.reimbursement" [class.indicator-neutral]="!fair.reimbursement">{{ reimbursementLabel(fair) }}</span>
+          </div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(fair)">Modifica</button><button class="danger-button" type="button" (click)="remove(fair)">Elimina</button></div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="fair-dialog" role="dialog" aria-modal="true" aria-labelledby="fair-form-title">
+      <form class="fair-form" (ngSubmit)="save()" #fairForm="ngForm">
+        <div class="form-heading">
+          <div>
+            <p class="eyebrow">Partecipazione</p>
+            <h2 id="fair-form-title">{{ editingId() ? 'Modifica fiera' : 'Nuova fiera' }}</h2>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row form-row-identity">
+            <label>Nome fiera
+              <input name="name" required list="fair-series-list" [(ngModel)]="draft.name" (ngModelChange)="onFairNameChange($event)" />
+              <datalist id="fair-series-list">@for (series of series(); track series.id) { <option [value]="series.name"></option> }</datalist>
+            </label>
+            <label [class.field-error]="hasFieldError('edition')">Edizione <input name="edition" placeholder="es. Primavera 2026" required [(ngModel)]="draft.edition" /></label>
+          </div>
+          <div class="form-row form-row-dates">
+            <label [class.field-error]="hasFieldError('startDate')">Data inizio <input name="startDate" type="date" required [(ngModel)]="draft.startDate" [attr.aria-invalid]="hasFieldError('startDate')" /></label>
+            <label [class.field-error]="hasFieldError('endDate')">Data fine <input name="endDate" type="date" required [(ngModel)]="draft.endDate" [attr.aria-invalid]="hasFieldError('endDate')" /></label>
+          </div>
+          <div class="form-row form-row-location">
+            <label [class.field-error]="hasFieldError('location')">Luogo <input name="location" required [(ngModel)]="draft.location" /></label>
+            <label>Note luogo <input name="locationNotes" [(ngModel)]="draft.locationNotes" /></label>
+          </div>
+          <label class="full-width">Note <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea></label>
+          <section class="economic-section" aria-labelledby="fair-economic-title">
+            <h3 id="fair-economic-title">Dati economici</h3>
+            <div class="form-row form-row-money">
+              <label>Budget previsto <input name="expectedBudget" type="number" min="0" step="0.01" [(ngModel)]="draft.expectedBudget" /></label>
+              <label>Costo stand <input name="standCost" type="number" min="0" step="0.01" [(ngModel)]="draft.standCost" /></label>
+              <label>Rimborso / gettone <input name="reimbursement" type="number" min="0" step="0.01" [(ngModel)]="draft.reimbursement" /></label>
+            </div>
+            <div class="form-row form-row-money">
+              <label>Costo hotel <input name="hotelCost" type="number" min="0" step="0.01" [(ngModel)]="draft.hotelCost" /></label>
+              <label>Costo viaggio <input name="travelCost" type="number" min="0" step="0.01" [(ngModel)]="draft.travelCost" /></label>
+              <label>Altri costi <input name="otherCosts" type="number" min="0" step="0.01" [(ngModel)]="draft.otherCosts" /></label>
+            </div>
+            <div class="payment-flags">
+              <label><input name="standPaid" type="checkbox" [(ngModel)]="draft.standPaid" /> Stand pagato</label>
+              <label><input name="travelPaid" type="checkbox" [(ngModel)]="draft.travelPaid" /> Viaggio pagato</label>
+              <label><input name="hotelPaid" type="checkbox" [(ngModel)]="draft.hotelPaid" /> Hotel pagato</label>
+            </div>
+          </section>
+        </div>
+        @if (matchedSeries(); as matched) {
+          <div class="series-suggestion" role="status">
+            <p>Hai gia partecipato a <strong>{{ matched.name }}</strong>. Vuoi creare una nuova edizione?</p>
+            <div><button class="primary-button" type="button" (click)="useExistingSeries(matched)">Nuova edizione</button><button class="text-button" type="button" (click)="useNewSeries()">Nuova fiera</button></div>
+          </div>
+        }
+        <app-form-actions [disabled]="fairForm.invalid === true" [saving]="saving()" [saveLabel]="hasWarnings() ? 'Salva comunque' : 'Salva fiera'" (cancel)="cancelForm()"></app-form-actions>
+      </form>
+    </section>
+  }
+</section>

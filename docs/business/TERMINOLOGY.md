@@ -58,6 +58,26 @@ Occorrenza pianificata in un luogo o intervallo temporale, con eventuali costi, 
 
 Evento pubblico o commerciale a cui l'artista partecipa per esporre, promuovere o vendere prodotti. La fiera e una specializzazione di evento e aggiunge dati come stand, prenotazione, inventario portato e vendite associate.
 
+### FairSeries
+
+Manifestazione ricorrente considerata nel suo complesso, ad esempio Alecomics o Lucca Comics. Contiene dati riutilizzabili tra edizioni, come organizzatore, contatti, sito e luogo abituale.
+
+### FairEdition
+
+Specifico appuntamento o partecipazione a una fiera, ad esempio Alecomics 2026. Contiene date, luogo, costi, prenotazioni, scadenze, risultati e stato operativo della singola edizione.
+
+### Booking
+
+Prenotazione o impegno logistico collegato a una FairEdition. Puo rappresentare hotel, viaggio, parcheggio o altra prenotazione e include condizioni, riferimenti e scadenze come la cancellazione gratuita.
+
+### Costo previsto / confermato / pagato / effettivo
+
+Fasi diverse dello stesso costo. Il previsto e una stima; il confermato e un importo comunicato o prenotato; il pagato e il denaro effettivamente versato; l'effettivo finale e il costo consolidato dopo l'evento.
+
+### Rimborso e gettone
+
+Entrate collegate alla partecipazione a una fiera. Il rimborso compensa costi specifici; il gettone remunera la presenza. Entrambi possono essere previsti o ricevuti e incidono sul risultato economico dell'evento.
+
 ### Vendita
 
 Transazione commerciale in cui uno o piu prodotti vengono ceduti a un acquirente a fronte di un prezzo. La vendita contiene righe, quantita e prezzi applicati; puo risultare non ancora incassata e non e sinonimo di entrata.

@@ -12,7 +12,7 @@ FairSeries
   +-- FairEdition 2026
 ```
 
-`FairSeries` rappresenta l'identita stabile dell'evento, ad esempio Alecomics o Lucca Comics. `FairEdition` rappresenta una partecipazione concreta, con proprie date, luogo, costi, risultati e attivita.
+`FairSeries` rappresenta l'identita stabile dell'evento, ad esempio Alecomics o Lucca Comics. `FairEdition` rappresenta una partecipazione concreta, con propria edizione, date, luogo, costi, risultati e attivita.
 
 La cardinalita e `FairSeries 1 : 0..* FairEdition`. L'anno e un attributo descrittivo derivato dalla data o memorizzato per ricerca; non e l'identita dell'edizione.
 
@@ -39,16 +39,28 @@ Attributi:
 
 - `id`;
 - `fairSeriesId`;
-- `year`;
+- `edition`;
+- `year` opzionale di compatibilita;
 - `name`;
 - `startDate`;
 - `endDate`;
 - `location`;
 - `locationNotes`;
 - `notes`;
+- `expectedBudget`;
+- `standCost`;
+- `reimbursement`;
+- `hotelCost`;
+- `travelCost`;
+- `otherCosts`;
+- `standPaid`;
+- `travelPaid`;
+- `hotelPaid`;
 - `createdAt`, `updatedAt`, `deletedAt`.
 
 Costi, Operazioni, contatti, task e prenotazioni si collegano all'edizione, mai direttamente alla serie. Le statistiche per serie aggregano le edizioni.
+
+I campi economici aggregati sono accettati in V1 per coerenza con l'Excel storico. Sono temporanei e dovranno evolvere verso `FairCost`, `Booking`, `Incasso` e `Spesa` collegati alla FairEdition.
 
 ## Compatibilita con Fair
 

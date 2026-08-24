@@ -30,6 +30,16 @@
   --color-status-info: #4a8fc4;
   --color-status-info-light: #7eabda;
 
+  /* Semantic Color Roles */
+  --color-heading: var(--color-primary);
+  --color-text: var(--color-text-primary);
+  --color-text-inverse: var(--color-surface);
+  --color-primary-action-bg: var(--color-primary);
+  --color-primary-action-bg-hover: var(--color-primary-light);
+  --color-primary-action-text: var(--color-text-inverse);
+  --color-link: var(--color-primary);
+  --color-focus-ring: var(--color-accent);
+
   /* Spacing Scale */
   --spacing-0: 0;
   --spacing-1: 0.25rem;
@@ -123,6 +133,15 @@
 
     --color-border: #333937;
     --color-border-light: rgba(51, 57, 55, 0.5);
+
+    --color-heading: var(--color-text-primary);
+    --color-text: var(--color-text-primary);
+    --color-text-inverse: #f4f1ea;
+    --color-primary-action-bg: #2d5b54;
+    --color-primary-action-bg-hover: #3b6f67;
+    --color-primary-action-text: var(--color-text-inverse);
+    --color-link: #e8b86a;
+    --color-focus-ring: var(--color-accent-light);
   }
 }
 
