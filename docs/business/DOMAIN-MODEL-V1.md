@@ -56,6 +56,8 @@ Attributi: nome visualizzato, tipo `person | organization`, recapiti, note, ruol
 
 Riferimento cliente dentro un'Operazione. Puo contenere `partyId` di un Party registrato, `freeName` testuale oppure nessun riferimento. `freeName` non crea automaticamente un'anagrafica.
 
+Nella feature Party, Cliente soft non e una terza tipologia di anagrafica: resta un value object preparatorio da convertire eventualmente in Party in un secondo momento.
+
 ### 3.3 Canale
 
 Origine commerciale o del contatto, ad esempio fiera, Instagram, sito, negozio, editore, marketplace, passaparola o altro.
