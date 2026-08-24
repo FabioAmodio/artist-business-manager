@@ -1,8 +1,9 @@
 import Dexie, { type Table } from 'dexie';
 import type { FairEdition, FairSeries } from '../../domain/models/fair';
+import type { Party } from '../../domain/models/party';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 
 interface LegacyFair {
   readonly id: string;
@@ -29,6 +30,7 @@ export class AppDatabase extends Dexie {
   readonly fairs!: Table<FairEdition, string>;
   readonly fairSeries!: Table<FairSeries, string>;
   readonly fairEditions!: Table<FairEdition, string>;
+  readonly parties!: Table<Party, string>;
 
   constructor(databaseName = DATABASE_NAME) {
     super(databaseName);
@@ -36,6 +38,7 @@ export class AppDatabase extends Dexie {
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
+      parties: 'id, type, displayName, email, updatedAt, deletedAt',
     }).upgrade(async (transaction) => {
       const legacyFairs = await transaction.table('fairs').toArray() as LegacyFair[];
       const series = legacyFairs.map((fair) => ({

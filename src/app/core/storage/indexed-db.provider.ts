@@ -69,6 +69,6 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   private isSupportedCollection(collection: string): boolean {
-    return collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions';
+    return collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'parties';
   }
 }

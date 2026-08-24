@@ -14,7 +14,7 @@ export const routes: Routes = [
 	{
 		path: 'clients',
 		data: { title: 'Clienti' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/clients/clients-page').then((m) => m.ClientsPage),
 	},
 	{
 		path: 'works',
