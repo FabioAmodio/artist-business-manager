@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { AppDatabase, DATABASE_VERSION } from '../persistence/app-database';
 import { APP_ENVIRONMENT } from '../configuration/environment.tokens';
 import type { EntityId } from '../../domain/shared/types';
-import type { FairEdition } from '../../domain/models/fair';
 import type {
   DeleteMetadata,
   IStorageProvider,
@@ -44,7 +43,7 @@ export class IndexedDbProvider implements IStorageProvider {
   async deleteLogical(_collection: string, _id: EntityId, _metadata?: DeleteMetadata): Promise<void> {
     if (!this.database || !this.isSupportedCollection(_collection)) return;
     const table = this.database.table(_collection);
-    const value = await table.get(_id) as (FairEdition & DeleteMetadata) | undefined;
+    const value = await table.get(_id) as (DeleteMetadata & { readonly id: EntityId }) | undefined;
     if (value) {
       await table.put({
         ...value,
@@ -69,6 +68,6 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   private isSupportedCollection(collection: string): boolean {
-    return collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'parties';
+    return collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'parties' || collection === 'operations';
   }
 }

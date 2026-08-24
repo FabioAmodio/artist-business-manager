@@ -1,0 +1,55 @@
+<section class="operations-page" aria-labelledby="operations-title">
+  <header class="page-header">
+    <div><p class="eyebrow">Aggregate root</p><h1 id="operations-title">Operazioni</h1></div>
+    @if (!editingId()) { <button class="primary-button" type="button" (click)="startCreating()">+ Nuova operazione</button> }
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="toolbar">
+    <label>Ricerca <input type="search" name="query" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Titolo o descrizione" /></label>
+    <label>Tipo
+      <select name="typeFilter" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
+        <option value="all">Tutte</option><option value="sale">Vendite</option><option value="commission">Commissioni</option><option value="sketch">Sketch</option><option value="other">Altro</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="list-heading"><h2>Elenco operazioni</h2><span>{{ operations().length }} registrate</span></div>
+  @if (loading()) { <p class="empty-state">Caricamento...</p> }
+  @else if (!operations().length) { <div class="empty-state"><h3>Nessuna operazione registrata</h3><button class="primary-button" type="button" (click)="startCreating()">Crea la prima operazione</button></div> }
+  @else {
+    <div class="operation-list">
+      @for (operation of operations(); track operation.id) {
+        <article class="operation-row">
+          <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.description || 'Nessuna descrizione' }}</p></div>
+          <div class="context-grid"><span><strong>Cliente</strong>{{ partyName(operation.partyId) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span></div>
+          <div class="badges"><span [class.active]="hasWork(operation)">Work</span><span [class.active]="hasSale(operation)">Sale</span><span>{{ operation.economicStatus || 'Economia n.d.' }}</span></div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(operation)">Modifica</button><button class="danger-button" type="button" (click)="remove(operation)">Elimina</button></div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="operation-dialog" role="dialog" aria-modal="true" aria-labelledby="operation-form-title">
+      <form class="operation-form" (ngSubmit)="save()" #operationForm="ngForm">
+        <div class="form-heading"><div><p class="eyebrow">Operazione</p><h2 id="operation-form-title">{{ editingId() ? 'Modifica operazione' : 'Nuova operazione' }}</h2></div></div>
+        <div class="form-grid">
+          <label>Tipo <select name="type" required [(ngModel)]="draft.type"><option value="sale">Vendita</option><option value="commission">Commissione</option><option value="sketch">Sketch</option><option value="other">Altro</option></select></label>
+          <label class="wide">Titolo <input name="title" required [(ngModel)]="draft.title" /></label>
+          <label>Cliente <select name="partyId" [(ngModel)]="draft.partyId"><option [ngValue]="undefined">Nessun cliente</option>@for (party of parties(); track party.id) { <option [value]="party.id">{{ party.displayName }}</option> }</select></label>
+          <label>Fiera <select name="fairEditionId" [(ngModel)]="draft.fairEditionId"><option [ngValue]="undefined">Nessuna fiera</option>@for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }</select></label>
+          <label>Importo <input name="amount" type="number" min="0" step="0.01" [(ngModel)]="draft.amount" /></label>
+          <label>Stato Work <select name="workStatus" [(ngModel)]="draft.workStatus"><option [ngValue]="undefined">Non applicabile</option><option value="draft">Draft</option><option value="requested">Requested</option><option value="accepted">Accepted</option><option value="in-progress">In Progress</option><option value="ready">Ready</option><option value="delivered">Delivered</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
+          <label>Stato Sale <select name="saleStatus" [(ngModel)]="draft.saleStatus"><option [ngValue]="undefined">Non applicabile</option><option value="draft">Draft</option><option value="pending-payment">Pending Payment</option><option value="partially-paid">Partially Paid</option><option value="paid">Paid</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
+          <label>Stato economico <select name="economicStatus" [(ngModel)]="draft.economicStatus"><option [ngValue]="undefined">Non indicato</option><option value="preventivato">Preventivato</option><option value="concordato">Concordato</option><option value="acconto-ricevuto">Acconto ricevuto</option><option value="parzialmente-pagato">Parzialmente pagato</option><option value="pagato">Pagato</option><option value="insoluto">Insoluto</option><option value="annullato">Annullato</option></select></label>
+          <label class="full-width">Descrizione <textarea name="description" rows="4" [(ngModel)]="draft.description"></textarea></label>
+        </div>
+        <app-form-actions [disabled]="operationForm.invalid === true" [saving]="saving()" saveLabel="Salva operazione" (cancel)="cancelForm()"></app-form-actions>
+      </form>
+    </section>
+  }
+</section>

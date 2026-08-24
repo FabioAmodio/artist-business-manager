@@ -19,7 +19,7 @@ export const routes: Routes = [
 	{
 		path: 'works',
 		data: { title: 'Lavori' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/operations/operations-page').then((m) => m.OperationsPage),
 	},
 	{
 		path: 'events',
@@ -29,7 +29,7 @@ export const routes: Routes = [
 	{
 		path: 'sales',
 		data: { title: 'Vendite' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/operations/operations-page').then((m) => m.OperationsPage),
 	},
 	{
 		path: 'catalog',
