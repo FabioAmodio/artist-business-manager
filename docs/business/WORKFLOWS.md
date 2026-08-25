@@ -16,7 +16,7 @@ Le scritture economiche devono mantenere lo storico. Un compenso concordato non 
 
 I workflow devono essere utilizzabili su smartphone, tablet e desktop senza cambiare regole o significato dei dati. Smartphone privilegia ricerca, inserimento rapido e una sola azione primaria per schermata; tablet supporta confronto e pannelli affiancati; desktop supporta viste dense e report.
 
-Durante una fiera, vendita, commissione, inventario, cliente e scadenza devono essere consultabili o aggiornabili con pochi passaggi, anche offline. Il salvataggio locale deve dare feedback immediato e le azioni distruttive devono richiedere conferma.
+Durante una fiera, vendita, commissione, inventario, cliente, fornitore e scadenza devono essere consultabili o aggiornabili con pochi passaggi, anche offline. Il salvataggio locale deve dare feedback immediato e le azioni distruttive devono richiedere conferma.
 
 I controlli devono essere touch friendly, raggiungibili da tastiera e dotati di etichette accessibili. Stato operativo, stato economico, Canale, WorkType e Tag hanno significati distinti e non devono essere usati come sinonimi.
 
@@ -196,6 +196,12 @@ Classificare i costi e collegarli al contesto corretto, distinguendo competenza 
 
 ### Dati coinvolti
 Spesa, descrizione, categoria e stato; date; importo, valuta e imposte; fornitore e documento; progetto, lavoro, evento o prodotto; ricevute; pagamento, scadenza e rimborso.
+
+### Workflow rapido fornitore
+
+Quando il fornitore non esiste ancora, l'artista puo creare una scheda minimale prima o durante la registrazione della spesa: nome, categoria, sito web, email, telefono e note. La categoria iniziale deve coprire i casi osservati nei workflow reali ed Excel storico: tipografie per ristampe, editori e organizzazioni, fornitori di materiali, marketplace e altri fornitori.
+
+La creazione del fornitore non deve bloccare il record economico: se durante una fiera serve solo registrare velocemente una spesa o un acquisto, il flusso deve privilegiare pochi campi e salvataggio locale immediato. Relazioni complesse, statistiche e dashboard dei fornitori restano fuori dalla V1.
 
 ## 8. Gestione incassi
 

@@ -28,6 +28,11 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '👥',
   },
   {
+    path: '/suppliers',
+    label: 'Fornitori',
+    icon: '▣',
+  },
+  {
     path: '/events',
     label: 'Eventi',
     icon: '📅',

@@ -270,6 +270,19 @@ interface IClientRepository {
 }
 ```
 
+### ISupplierRepository
+
+Responsabilita: Party con ruolo fornitore, ricerca rapida e persistenza dell'anagrafica minimale da collegare in futuro ad Acquisti, Spese e Pagamenti.
+
+```typescript
+interface ISupplierRepository {
+  getById(id: EntityId): Promise<Party | null>;
+  search(query: string, limit?: number): Promise<readonly Party[]>;
+  save(supplier: Party): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
+}
+```
+
 ### IProductRepository
 
 Responsabilita: prodotti, bundle e snapshot di catalogo. Stock, lotti, soglie, movimenti di magazzino e inventario avanzato sono rinviati.

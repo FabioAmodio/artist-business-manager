@@ -91,12 +91,13 @@ All technical infrastructure components have been implemented without business l
 
 ### Updated: `src/app/app.routes.ts`
 
-**Application Routes (9 feature routes + 2 error routes)**
+**Application Routes (10 feature routes + 2 error routes)**
 
 | Route | Title | Status |
 |-------|-------|--------|
 | `/dashboard` | Dashboard | Lazy-loaded placeholder |
 | `/clients` | Clienti | Lazy-loaded placeholder |
+| `/suppliers` | Fornitori | Lazy-loaded feature |
 | `/works` | Lavori | Lazy-loaded placeholder |
 | `/events` | Eventi | Lazy-loaded placeholder |
 | `/sales` | Vendite | Lazy-loaded placeholder |
@@ -108,8 +109,7 @@ All technical infrastructure components have been implemented without business l
 | `/error` | Generic Error | Error page |
 | `**` (wildcard) | → /404 | Catch-all redirect |
 
-All routes load `PlaceholderPage` component with dynamic title from route data.
-Error routes load dedicated `NotFoundPage` and `ErrorPage` components.
+Implemented feature routes load their dedicated standalone page; incomplete areas still load `PlaceholderPage` with dynamic title from route data. Error routes load dedicated `NotFoundPage` and `ErrorPage` components.
 
 ---
 

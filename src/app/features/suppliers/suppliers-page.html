@@ -1,0 +1,84 @@
+<section class="suppliers-page" aria-labelledby="suppliers-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Anagrafica</p>
+      <h1 id="suppliers-title">Fornitori</h1>
+    </div>
+    @if (!editingId()) {
+      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo fornitore</button>
+    }
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="toolbar">
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, email, telefono, sito" /></label>
+    <label>Tipo
+      <select name="typeFilter" [(ngModel)]="typeFilter">
+        <option value="all">Tutti</option>
+        <option value="printer">Tipografie</option>
+        <option value="publisher">Editori</option>
+        <option value="materials">Materiali</option>
+        <option value="marketplace">Marketplace</option>
+        <option value="other">Altri fornitori</option>
+      </select>
+    </label>
+  </div>
+
+  <p class="supplier-note">Anagrafica minimale per acquistare prodotti o servizi: pronta per collegare gli Acquisti senza rallentare l'inserimento in fiera.</p>
+
+  <div class="list-heading"><h2>Elenco fornitori</h2><span>{{ visibleSuppliers().length }} registrati</span></div>
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!visibleSuppliers().length) {
+    <div class="empty-state"><h3>Nessun fornitore registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo fornitore</button></div>
+  } @else {
+    <div class="supplier-list">
+      @for (supplier of visibleSuppliers(); track supplier.id) {
+        <article class="supplier-row">
+          <div>
+            <h3>{{ supplier.displayName }}</h3>
+            <p>{{ supplierTypeLabel(supplier.supplierType) }}</p>
+          </div>
+          <div class="contact-grid">
+            <span><strong>Email</strong>{{ supplier.email || 'n.d.' }}</span>
+            <span><strong>Telefono</strong>{{ supplier.phone || 'n.d.' }}</span>
+            <span><strong>Sito</strong>{{ supplier.website || 'n.d.' }}</span>
+            <span><strong>Note</strong>{{ supplier.notes || 'n.d.' }}</span>
+          </div>
+          <div class="relation-badges" aria-label="Relazioni future">
+            <span>Acquisti</span><span>Costi fiera</span><span>Catalogo</span><span>Pagamenti</span>
+          </div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(supplier)">Modifica</button><button class="danger-button" type="button" (click)="remove(supplier)">Elimina</button></div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="supplier-dialog" role="dialog" aria-modal="true" aria-labelledby="supplier-form-title">
+      <form class="supplier-form" (ngSubmit)="save()" #supplierForm="ngForm">
+        <div class="form-heading"><div><p class="eyebrow">Anagrafica</p><h2 id="supplier-form-title">{{ editingId() ? 'Modifica fornitore' : 'Nuovo fornitore' }}</h2></div></div>
+        <div class="form-grid">
+          <label class="wide">Nome <input name="displayName" required [(ngModel)]="draft.displayName" /></label>
+          <label>Tipo
+            <select name="supplierType" required [(ngModel)]="draft.supplierType">
+              <option value="printer">Tipografia</option>
+              <option value="publisher">Editore</option>
+              <option value="materials">Fornitore materiale</option>
+              <option value="marketplace">Marketplace</option>
+              <option value="other">Altro fornitore</option>
+            </select>
+          </label>
+          <label>Sito web <input name="website" type="url" [(ngModel)]="draft.website" /></label>
+          <label>Email <input name="email" type="email" [(ngModel)]="draft.email" /></label>
+          <label>Telefono <input name="phone" [(ngModel)]="draft.phone" /></label>
+          <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
+        </div>
+        <app-form-actions [disabled]="supplierForm.invalid === true" [saving]="saving()" saveLabel="Salva fornitore" (cancel)="cancelForm()"></app-form-actions>
+      </form>
+    </section>
+  }
+</section>

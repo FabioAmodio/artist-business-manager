@@ -4,7 +4,7 @@
 
 Questo documento fotografa lo stato reale dell'implementazione rispetto alla documentazione di dominio e architettura. Distingue tra funzionalita implementate, parzialmente implementate e solo documentate.
 
-Ultimo aggiornamento: 2026-08-24.
+Ultimo aggiornamento: 2026-08-25.
 
 ## Sintesi generale
 
@@ -16,7 +16,7 @@ Ultimo aggiornamento: 2026-08-24.
 | Storage Provider | Parziale | `IStorageProvider` e `IndexedDbProvider`, ma supporto collection esplicito e limitato |
 | Sync cloud | Solo documentata | `DisabledSyncProvider`, nessun sync engine reale |
 | Fair / Eventi | Implementata V1 | CRUD, persistenza, validazioni, List First, FairSeries/FairEdition |
-| Party / Clienti | Implementata V1 | CRUD anagrafico, ricerca, filtro, persistenza |
+| Party / Clienti / Fornitori | Implementata V1 | CRUD anagrafico, ricerca, filtro, persistenza; Fornitori come ruolo Party |
 | Dashboard | Parziale | Pagina reale ma dati quasi tutti placeholder/in-memory |
 | Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
 | Operation | Solo documentata | Modello e ADR definiti, nessuna feature Angular |
@@ -32,6 +32,7 @@ Ultimo aggiornamento: 2026-08-24.
 |---|---|---|---|
 | `/dashboard` | `DashboardPage` | Parziale | Usa `FairContextService` in memoria; KPI generali placeholder |
 | `/clients` | `ClientsPage` | Implementata V1 | Gestione Party: Persona/Organizzazione, ricerca, filtro, dialog |
+| `/suppliers` | `SuppliersPage` | Implementata V1 | Gestione Party con ruolo Fornitore: categoria, ricerca, dialog |
 | `/events` | `FairsPage` | Implementata V1 | Gestione FairSeries/FairEdition con dati economici aggregati V1 |
 | `/settings` | `SettingsPage` | Parziale | Trasparenza AI e preferenze non persistite |
 | `/works` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
@@ -48,6 +49,7 @@ Ultimo aggiornamento: 2026-08-24.
 |---|---|---|---|
 | `FairService` | Implementato V1 | CRUD FairEdition, FairSeries implicita, validazioni, soft delete | Non gestisce Booking/FairCost completi, reminder, report |
 | `ClientService` | Implementato V1 | CRUD Party, validazione nome, soft delete | Nessuna conversione reale Cliente soft -> Party, nessuna relazione Operation |
+| `SupplierService` | Implementato V1 | CRUD Party con ruolo Fornitore, validazione nome, soft delete | Nessuna relazione Acquisti/Spese/Pagamenti |
 | `FairContextService` | Parziale | Stato fiera attiva e AI settings in memoria | Non persistito, dati demo/in-memory, non usa repository |
 | `AppStateService` | Parziale | Online/offline, database ready, backup timestamp in memoria | Nessuna gestione quota, sync status, errori persistenti |
 | `AppNavigationService` | Implementato base | Navigazione applicativa | Nessuna policy avanzata |
@@ -60,7 +62,8 @@ Ultimo aggiornamento: 2026-08-24.
 | `FairEditionRepository` | Implementato V1 | `fairEditions` | Lista ordinata per `startDate` crescente, soft delete |
 | `FairSeriesRepository` | Implementato V1 | `fairSeries` | CRUD base serie fiera |
 | `FairRepository` | Legacy compat | `fairs` | Adapter compatibile con vecchio concetto Fair |
-| `ClientRepository` | Implementato V1 | `parties` | Ricerca attiva, ordinamento nome, soft delete |
+| `ClientRepository` | Implementato V1 | `parties` | Ricerca attiva filtrata su clienti legacy/customer/commissioner, ordinamento nome, soft delete |
+| `SupplierRepository` | Implementato V1 | `parties` | Ricerca attiva filtrata su ruolo `supplier`, ordinamento nome, soft delete |
 | `IOperationRepository` | Solo contratto | nessuna | Nessuna implementazione |
 | `IProductRepository` | Solo contratto | nessuna | Nessuna implementazione |
 | `IBundleRepository` | Solo contratto | nessuna | Nessuna implementazione |
@@ -141,7 +144,7 @@ Gap:
 - report;
 - gestione avanzata degli stati evento/economici.
 
-### Party / Clienti V1
+### Party / Clienti / Fornitori V1
 
 Stato: Implementata V1.
 
@@ -158,9 +161,10 @@ Implementato:
 - CRUD tramite dialog;
 - lista List First;
 - ricerca;
-- filtro per tipo;
+- filtro per tipo cliente o categoria fornitore;
 - persistenza IndexedDB;
 - cancellazione logica;
+- ruolo `supplier` e categorie fornitore V1;
 - `SoftCustomer` come value object preparatorio;
 - badge placeholder per relazioni future.
 
@@ -169,9 +173,10 @@ Gap:
 - relazioni reali con Operation;
 - conversione Cliente soft -> Party;
 - ruoli multipli completi;
+- collegamento Fornitori ad Acquisti/Spese/Pagamenti;
 - deduplicazione;
 - import contatti;
-- report cliente.
+- report cliente e fornitore.
 
 ## Feature parzialmente implementate
 

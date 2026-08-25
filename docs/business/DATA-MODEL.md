@@ -44,7 +44,11 @@ Il foglio contiene `Fiera`, `Anno`, `Giorno`, `Tipo`, `Descrizione`, `Cliente`, 
 
 Soggetto generale con cui l'artista ha una relazione. Puo essere Persona o Organizzazione e puo ricoprire piu ruoli: Cliente, Committente, Editore, Fornitore o Collaboratore.
 
-Attributi: identita, tipo, nome visualizzato, recapiti, note, ruoli, date di creazione e aggiornamento. La colonna `Cliente` dell'Excel e spesso vuota e non consente sempre di ricostruire un'anagrafica completa.
+Attributi: identita, tipo, nome visualizzato, recapiti, note, ruoli, categoria fornitore quando il ruolo e `Fornitore`, date di creazione e aggiornamento. La colonna `Cliente` dell'Excel e spesso vuota e non consente sempre di ricostruire un'anagrafica completa.
+
+La vista Clienti mostra Party senza ruoli legacy oppure con ruolo `Cliente` o `Committente`. La vista Fornitori mostra solo Party con ruolo `Fornitore`, evitando contaminazioni operative tra chi compra e chi vende all'artista. Questa separazione e necessaria per restare aderenti all'Excel storico e ai workflow reali: in fiera l'inserimento di una vendita deve trovare rapidamente clienti o nomi liberi, mentre l'acquisto di materiali, stampe o servizi deve cercare fornitori senza affollare la lista clienti.
+
+Categorie iniziali dei fornitori: tipografia, editore, fornitore materiale, marketplace e altro fornitore. La categoria non sostituisce il ruolo `Fornitore` e non introduce relazioni complesse; serve solo a rendere piu rapida la ricerca e a preparare il collegamento futuro agli Acquisti.
 
 ### Canale
 

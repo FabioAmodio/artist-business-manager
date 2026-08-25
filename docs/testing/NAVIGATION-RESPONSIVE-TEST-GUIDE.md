@@ -65,6 +65,7 @@ Ripeti il Test 1.1 per ogni rotta:
 | Dashboard | `/dashboard` | Esatto (exact: true) |
 | Lavori | `/works` | Test con inventory |
 | Clienti | `/clients` | Test con lista |
+| Fornitori | `/suppliers` | Test con lista |
 | Eventi | `/events` | Test calendario |
 | Vendite | `/sales` | Test storico |
 | Catalogo | `/catalog` | Test config |

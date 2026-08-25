@@ -54,6 +54,19 @@ Deve rispondere almeno a queste domande:
 
 Filtri minimi: periodo, ruolo, canale, stato del lavoro, stato economico e intervallo di valore.
 
+## Fornitori
+
+Il reporting fornitori non e richiesto nella V1 dell'anagrafica Fornitori. La modellazione deve pero permettere report futuri senza duplicare i soggetti: i fornitori sono Party con ruolo `Fornitore` e categoria operativa.
+
+Quando saranno implementati Acquisti, Spese e Pagamenti, il reporting dovra rispondere almeno a queste domande:
+
+- Quali fornitori generano piu uscite nel periodo selezionato?
+- Quanto viene speso per tipografie, editori, materiali, marketplace o altri fornitori?
+- Quali fornitori sono collegati a costi di fiera, prodotti o ristampe?
+- Quali spese verso fornitori risultano non ancora pagate?
+
+Filtri futuri minimi: periodo, categoria fornitore, stato pagamento, evento, prodotto/lavoro collegato e intervallo di valore.
+
 ## Commissioni e progetti
 
 Deve rispondere almeno a queste domande:

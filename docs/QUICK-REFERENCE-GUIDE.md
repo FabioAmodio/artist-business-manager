@@ -404,19 +404,20 @@ npm run build
 | Tablet | 700-1024px | Mix + Hamburger |
 | Desktop | ≥ 1024px | All items |
 
-### Navigation Items (9 total)
+### Navigation Items (10 total)
 
 | # | Path | Label | Icon |
 |---|------|-------|------|
 | 1 | /dashboard | Dashboard | 📊 |
 | 2 | /works | Lavori | ✓ |
 | 3 | /clients | Clienti | 👥 |
-| 4 | /events | Eventi | 📅 |
-| 5 | /sales | Vendite | 💰 |
-| 6 | /catalog | Catalogo | 📦 |
-| 7 | /finance | Finanza | 💳 |
-| 8 | /deadlines | Scadenze | ⏰ |
-| 9 | /settings | Impostazioni | ⚙ |
+| 4 | /suppliers | Fornitori | ▣ |
+| 5 | /events | Eventi | 📅 |
+| 6 | /sales | Vendite | 💰 |
+| 7 | /catalog | Catalogo | 📦 |
+| 8 | /finance | Finanza | 💳 |
+| 9 | /deadlines | Scadenze | ⏰ |
+| 10 | /settings | Impostazioni | ⚙ |
 
 ### ARIA Attributes
 

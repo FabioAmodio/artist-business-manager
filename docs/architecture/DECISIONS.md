@@ -266,6 +266,8 @@ Adottare `Party` come concetto generale di anagrafica, con due tipi principali: 
 
 Questa decisione definisce il modello concettuale e non approva ancora uno schema dati definitivo. I dati storici dell'Excel, in particolare la colonna `Cliente`, devono essere normalizzati solo quando l'identita e sufficientemente certa.
 
+Nota implementativa 2026-08-25: la V1 di Fornitori applica questa decisione usando la collection `parties`, il ruolo `supplier` e una categoria fornitore minimale. La scelta evita un'anagrafica separata e mantiene rapidi i workflow reali: Clienti e Fornitori sono viste filtrate dello stesso Party, ma non si contaminano nelle liste operative.
+
 ### Alternative considerate
 
 - entita anagrafiche separate per ogni ruolo;

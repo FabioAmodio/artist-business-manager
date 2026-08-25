@@ -107,10 +107,11 @@ export class App {
 
 ### Il Problema
 
-L'app ha una sidebar con 9 voci di navigazione:
+L'app ha una sidebar con 10 voci di navigazione:
 - Dashboard
 - Lavori
 - Clienti
+- Fornitori
 - Eventi
 - Vendite
 - Catalogo

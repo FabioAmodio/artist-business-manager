@@ -50,7 +50,9 @@ Metadati comuni a ogni entita persistente:
 
 Soggetto generale, persona o organizzazione, con uno o piu ruoli.
 
-Attributi: nome visualizzato, tipo `person | organization`, recapiti, note, ruoli `customer | commissioner | publisher | supplier | collaborator`, stato e metadati comuni.
+Attributi: nome visualizzato, tipo `person | organization`, recapiti, note, ruoli `customer | commissioner | publisher | supplier | collaborator`, categoria fornitore opzionale per il ruolo `supplier`, stato e metadati comuni.
+
+La feature Clienti e la feature Fornitori sono viste operative filtrate della stessa anagrafica Party. Clienti mantiene compatibilita con i Party storici privi di ruoli; Fornitori richiede il ruolo `supplier` e una categoria iniziale tra tipografia, editore, materiali, marketplace e altro.
 
 ### 3.2 Cliente soft
 

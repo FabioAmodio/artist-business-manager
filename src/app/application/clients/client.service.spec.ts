@@ -28,6 +28,7 @@ describe('ClientService', () => {
 
     expect(updated.id).toBe(created.id);
     expect(updated.displayName).toBe('Marco R.');
+    expect(updated.roles).toContain('customer');
     expect(repository.clients.size).toBe(1);
   });
 

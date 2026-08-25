@@ -16,7 +16,7 @@ Persona o organizzazione che richiede, approva o finanzia uno specifico lavoro. 
 
 ### Party
 
-Soggetto generale con cui l'artista mantiene una relazione: puo essere una persona o un'organizzazione e puo ricoprire uno o piu ruoli. Party e una possibile direzione architetturale per evitare duplicazioni; non sostituisce ancora il modello dati definitivo.
+Soggetto generale con cui l'artista mantiene una relazione: puo essere una persona o un'organizzazione e puo ricoprire uno o piu ruoli. Party e l'anagrafica unica usata per evitare duplicazioni tra clienti, committenti, editori, fornitori e collaboratori.
 
 ### Persona
 
@@ -29,6 +29,14 @@ Tipo di Party riferito a un'entita collettiva, azienda, editore o associazione. 
 ### Ruoli del Party
 
 Ruoli contestuali assegnabili a un Party: Cliente, Committente, Editore, Fornitore e Collaboratore. Il ruolo descrive la relazione in uno specifico contesto; non crea una nuova persona o organizzazione.
+
+### Fornitore
+
+Persona o organizzazione da cui l'artista acquista prodotti o servizi, ad esempio tipografia, editore, fornitore di materiali, marketplace o altro fornitore. Fornitore e un ruolo di Party e puo convivere con altri ruoli quando il soggetto reale e lo stesso.
+
+### Categoria fornitore
+
+Classificazione operativa minima del fornitore: tipografia, editore, materiali, marketplace o altro. Serve per ricerca e inserimento rapido, non per contabilita, statistiche o relazioni complesse.
 
 ## Organizzazione del lavoro
 
