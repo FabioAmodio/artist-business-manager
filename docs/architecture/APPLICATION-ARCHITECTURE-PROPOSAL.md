@@ -287,6 +287,19 @@ interface ISupplierRepository {
 
 Responsabilita: prodotti, bundle e snapshot di catalogo. Stock, lotti, soglie, movimenti di magazzino e inventario avanzato sono rinviati.
 
+### IPurchaseRepository
+
+Responsabilita: acquisti di prodotti destinati alla vendita, con fornitore opzionale e riferimenti futuri a prodotto e lotto. Non gestisce ammortamento, statistiche, magazzino o vendite.
+
+```typescript
+interface IPurchaseRepository {
+  getById(id: EntityId): Promise<Purchase | null>;
+  list(filter?: PurchaseFilter): Promise<readonly Purchase[]>;
+  save(purchase: Purchase): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
+}
+```
+
 ```typescript
 interface IProductRepository {
   getById(id: EntityId): Promise<Product | null>;

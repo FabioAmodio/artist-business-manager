@@ -17,6 +17,7 @@ Ultimo aggiornamento: 2026-08-25.
 | Sync cloud | Solo documentata | `DisabledSyncProvider`, nessun sync engine reale |
 | Fair / Eventi | Implementata V1 | CRUD, persistenza, validazioni, List First, FairSeries/FairEdition |
 | Party / Clienti / Fornitori | Implementata V1 | CRUD anagrafico, ricerca, filtro, persistenza; Fornitori come ruolo Party |
+| Acquisti | Implementata V1 | CRUD acquisti destinati alla vendita, ricerca, fornitore opzionale, persistenza |
 | Dashboard | Parziale | Pagina reale ma dati quasi tutti placeholder/in-memory |
 | Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
 | Operation | Solo documentata | Modello e ADR definiti, nessuna feature Angular |
@@ -33,6 +34,7 @@ Ultimo aggiornamento: 2026-08-25.
 | `/dashboard` | `DashboardPage` | Parziale | Usa `FairContextService` in memoria; KPI generali placeholder |
 | `/clients` | `ClientsPage` | Implementata V1 | Gestione Party: Persona/Organizzazione, ricerca, filtro, dialog |
 | `/suppliers` | `SuppliersPage` | Implementata V1 | Gestione Party con ruolo Fornitore: categoria, ricerca, dialog |
+| `/purchases` | `PurchasesPage` | Implementata V1 | Acquisti prodotti destinati alla vendita: fornitore, data, descrizione, importo, note |
 | `/events` | `FairsPage` | Implementata V1 | Gestione FairSeries/FairEdition con dati economici aggregati V1 |
 | `/settings` | `SettingsPage` | Parziale | Trasparenza AI e preferenze non persistite |
 | `/works` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
@@ -50,6 +52,7 @@ Ultimo aggiornamento: 2026-08-25.
 | `FairService` | Implementato V1 | CRUD FairEdition, FairSeries implicita, validazioni, soft delete | Non gestisce Booking/FairCost completi, reminder, report |
 | `ClientService` | Implementato V1 | CRUD Party, validazione nome, soft delete | Nessuna conversione reale Cliente soft -> Party, nessuna relazione Operation |
 | `SupplierService` | Implementato V1 | CRUD Party con ruolo Fornitore, validazione nome, soft delete | Nessuna relazione Acquisti/Spese/Pagamenti |
+| `PurchaseService` | Implementato V1 | CRUD Acquisti, validazione data/descrizione/importo, soft delete | Nessun magazzino, lotti, prodotti o pagamenti collegati |
 | `FairContextService` | Parziale | Stato fiera attiva e AI settings in memoria | Non persistito, dati demo/in-memory, non usa repository |
 | `AppStateService` | Parziale | Online/offline, database ready, backup timestamp in memoria | Nessuna gestione quota, sync status, errori persistenti |
 | `AppNavigationService` | Implementato base | Navigazione applicativa | Nessuna policy avanzata |
@@ -64,6 +67,7 @@ Ultimo aggiornamento: 2026-08-25.
 | `FairRepository` | Legacy compat | `fairs` | Adapter compatibile con vecchio concetto Fair |
 | `ClientRepository` | Implementato V1 | `parties` | Ricerca attiva filtrata su clienti legacy/customer/commissioner, ordinamento nome, soft delete |
 | `SupplierRepository` | Implementato V1 | `parties` | Ricerca attiva filtrata su ruolo `supplier`, ordinamento nome, soft delete |
+| `PurchaseRepository` | Implementato V1 | `purchases` | Ricerca attiva, filtro fornitore, ordinamento per data acquisto decrescente, soft delete |
 | `IOperationRepository` | Solo contratto | nessuna | Nessuna implementazione |
 | `IProductRepository` | Solo contratto | nessuna | Nessuna implementazione |
 | `IBundleRepository` | Solo contratto | nessuna | Nessuna implementazione |
@@ -74,19 +78,23 @@ Ultimo aggiornamento: 2026-08-25.
 ### IndexedDB / Dexie
 
 Database: `AppDatabase`  
-Versione schema: `4`
+Versione schema: `6`
 
 Collection reali:
 
 - `fairs` legacy;
 - `fairSeries`;
 - `fairEditions`;
-- `parties`.
+- `parties`;
+- `operations`;
+- `purchases`.
 
 ### Migrazioni
 
 - Versione 3: migrazione additive da `fairs` verso `fairSeries` e `fairEditions`.
 - Versione 4: aggiunta `parties`.
+- Versione 5: aggiunta `operations`.
+- Versione 6: aggiunta `purchases`.
 
 ### Storage Provider
 

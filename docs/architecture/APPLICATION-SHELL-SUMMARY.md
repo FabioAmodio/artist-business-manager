@@ -91,13 +91,14 @@ All technical infrastructure components have been implemented without business l
 
 ### Updated: `src/app/app.routes.ts`
 
-**Application Routes (10 feature routes + 2 error routes)**
+**Application Routes (11 feature routes + 2 error routes)**
 
 | Route | Title | Status |
 |-------|-------|--------|
 | `/dashboard` | Dashboard | Lazy-loaded placeholder |
 | `/clients` | Clienti | Lazy-loaded placeholder |
 | `/suppliers` | Fornitori | Lazy-loaded feature |
+| `/purchases` | Acquisti | Lazy-loaded feature |
 | `/works` | Lavori | Lazy-loaded placeholder |
 | `/events` | Eventi | Lazy-loaded placeholder |
 | `/sales` | Vendite | Lazy-loaded placeholder |

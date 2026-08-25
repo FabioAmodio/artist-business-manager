@@ -165,6 +165,12 @@ Articolo o servizio vendibile di catalogo. Attributi: identita, tipo o categoria
 
 Raggruppamento per stampa, ristampa o acquisto usato dal foglio `Prodotti`. Attributi: prodotto o tipo, descrizione, data, quantita se nota, costo totale, costo unitario, ricavo, bilancio derivato e nota sulla qualita del dato.
 
+### Acquisto destinato alla vendita
+
+Record minimale di acquisto di prodotti o materiali destinati alla vendita, ad esempio 100 fumetti, 200 calamite o 50 stampe A5. Attributi V1: fornitore opzionale, data acquisto, descrizione, importo totale, note, riferimenti futuri opzionali a Prodotto e Lotto.
+
+L'Acquisto rappresenta il fatto osservabile nel foglio storico `Prodotti`: una spesa sostenuta o consuntivata per ottenere prodotti vendibili. Non crea ancora Movimento di magazzino, non calcola ammortamento e non modifica vendite o disponibilita. Questa scelta mantiene rapido il workflow reale durante fiere e preparazione eventi: l'artista puo registrare subito il costo storico senza essere obbligato a normalizzare prodotto, quantita o lotto quando l'informazione non e certa.
+
 ### Vendita
 
 Transazione commerciale in cui prodotti vengono ceduti a fronte di un prezzo. Attributi: identita, data o contesto temporale, fiera/evento, canale, cliente opzionale, righe, totale, stato, metodo di pagamento e note. Le righe Excel sono il livello osservabile piu vicino.
@@ -223,6 +229,9 @@ Le cardinalita indicano il modello concettuale previsto. Dove l'Excel non contie
 | Evento - Fiera | Evento `1` : Fiera `0..1` | ogni fiera e un evento specializzato |
 | Fiera - Operazione | Fiera `1` : operazione `0..*` per ruolo fieristico | relazione osservata tramite `Fiera + Anno` e distinta per origine, consegna e contabilizzazione |
 | Prodotto - Lotto | Prodotto `0..1` : lotto `0..*` | una tipologia puo avere piu produzioni |
+| Fornitore - Acquisto | Party con ruolo Fornitore `0..1` : acquisto `0..*` | il fornitore puo essere indicato quando noto, senza bloccare la registrazione rapida |
+| Acquisto - Prodotto | Acquisto `0..*` : prodotto `0..1` | collegamento futuro quando l'identita del prodotto e certa |
+| Acquisto - Lotto | Acquisto `0..*` : lotto `0..1` | collegamento futuro a stampa, ristampa o acquisto normalizzato |
 | Prodotto - Riga vendita | Prodotto `0..1` : riga `0..*` | riferimento certo o da normalizzare |
 | Vendita - Riga vendita | Vendita `1` : riga `1..*` | una vendita ha una o piu righe |
 | Operazione - Incasso | Operazione `1` : incasso `0..*` | vendita, acconto, rata, saldo o rimborso |
@@ -258,6 +267,8 @@ Radice Fiera; comprende partecipazione, costi logistici, prodotti pianificati, v
 ### Catalogo e disponibilita
 
 Radice Prodotto; comprende varianti, lotti e movimenti di magazzino. Le vendite conservano il prezzo storico del momento della cessione.
+
+`Acquisto` e un record preparatorio vicino al Catalogo, ma nella V1 non entra nel confine di consistenza del magazzino: non crea lotti ne movimenti finche i dati non sono normalizzati.
 
 ### Vendita
 

@@ -135,6 +135,12 @@ Articolo o servizio vendibile. Attributi: nome, descrizione, categoria/tipo, var
 
 `Movimento di magazzino` registra entrata, uscita, reso o rettifica con prodotto/lotto, quantita, data, origine, Operazione, fiera e note.
 
+### 3.12.1 Acquisto destinato alla vendita
+
+`Acquisto` registra il costo sostenuto per ottenere prodotti destinati alla vendita. Attributi V1: `supplierId?`, data acquisto, descrizione, importo totale, note, `productId?` e `lotId?` per relazioni future.
+
+Nella V1 l'Acquisto non genera Movimento di magazzino, non crea Lotto automaticamente e non partecipa alle vendite. Serve a conservare rapidamente il dato storico e operativo osservabile nell'Excel `Prodotti`, anche quando quantita, costo unitario o identita prodotto non sono ancora normalizzati.
+
 ### 3.13 Categoria, Tag e pricing
 
 `Categoria` raggruppa opzioni con nome, descrizione, selezione `single | multiple`, ordine, stato e default globale.
@@ -207,6 +213,9 @@ Queste entita non fanno parte dell'MVP implementativo corrente, ma i loro riferi
 | Operazione - Scadenza | `1 : 0..*` | consegna, verifica o pagamento |
 | FairEdition - FairCost | `1 : 0..*` | costi ordinati per tipo |
 | FairEdition - Spesa | `1 : 0..*` | costi direttamente associati |
+| Fornitore - Acquisto | `0..1 : 0..*` | fornitore opzionale, non bloccante |
+| Acquisto - Prodotto | `0..* : 0..1` | collegamento futuro quando normalizzato |
+| Acquisto - Lotto | `0..* : 0..1` | collegamento futuro a stampa/ristampa/acquisto |
 | Prodotto - Lotto | `0..1 : 0..*` | produzioni e acquisti |
 | Prodotto - Movimento magazzino | `1 : 0..*` | entrate, uscite, resi e rettifiche |
 | Prodotto - Categoria | `0..* : 0..*` | tramite ProductCategoryAssociation |

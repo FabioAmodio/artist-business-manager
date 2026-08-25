@@ -33,6 +33,11 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '▣',
   },
   {
+    path: '/purchases',
+    label: 'Acquisti',
+    icon: '＋',
+  },
+  {
     path: '/events',
     label: 'Eventi',
     icon: '📅',

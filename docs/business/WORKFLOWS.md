@@ -176,7 +176,29 @@ Registrare una transazione verificabile, aggiornando la disponibilita e distingu
 ### Dati coinvolti
 Vendita, data, canale ed evento; cliente; prodotti, varianti, SKU e righe; quantita, prezzo, sconti e totale; magazzino; incasso, metodo, valuta e stato; resi e rettifiche.
 
-## 7. Registrazione spese
+## 7. Registrazione acquisti destinati alla vendita
+
+### Attore
+Artista che acquista o fa produrre articoli destinati alla vendita.
+
+### Obiettivo
+Registrare rapidamente il costo storico di prodotti vendibili, preparando il collegamento futuro a Prodotto e Lotto senza obbligare subito a gestire magazzino, vendite o ammortamento.
+
+### Flusso
+1. Creare l'acquisto dalla lista Acquisti.
+2. Selezionare il fornitore se gia presente, oppure lasciare il campo non indicato e completarlo in seguito.
+3. Inserire data acquisto, descrizione operativa e importo totale.
+4. Aggiungere note utili, ad esempio quantita, formato o riferimento ordine.
+5. Salvare localmente con feedback immediato.
+6. Collegare in futuro Prodotto o Lotto solo quando l'identita e sufficientemente certa.
+
+### Dati coinvolti
+Acquisto, fornitore, data, descrizione, importo totale e note; riferimenti futuri a prodotto e lotto.
+
+### Vincoli V1
+La registrazione non crea movimento di magazzino, non alimenta statistiche, non aggiorna vendite e non calcola ammortamento. Questa scelta e intenzionale: il foglio storico `Prodotti` contiene righe spesso aggregate o incomplete, e durante una fiera o una preparazione evento il workflow piu rapido e annotare il costo senza bloccare l'artista su normalizzazioni premature.
+
+## 8. Registrazione spese
 
 ### Attore
 Artista o collaboratore che registra un costo previsto o sostenuto.
@@ -203,7 +225,7 @@ Quando il fornitore non esiste ancora, l'artista puo creare una scheda minimale 
 
 La creazione del fornitore non deve bloccare il record economico: se durante una fiera serve solo registrare velocemente una spesa o un acquisto, il flusso deve privilegiare pochi campi e salvataggio locale immediato. Relazioni complesse, statistiche e dashboard dei fornitori restano fuori dalla V1.
 
-## 8. Gestione incassi
+## 9. Gestione incassi
 
 ### Attore
 Artista che registra denaro ricevuto da cliente, editore o acquirente.
@@ -224,7 +246,7 @@ Tracciare ogni entrata e riconciliarla con compenso, vendita o rimborso, mantene
 ### Dati coinvolti
 Incasso, data, importo e valuta; metodo e stato; causale e riferimento; compenso, preventivo o vendita di origine; cliente o editore; rate, saldo e scadenze; storni e rimborsi.
 
-## 9. Gestione scadenze
+## 10. Gestione scadenze
 
 ### Attore
 Artista, che crea e aggiorna scadenze proprie o derivate da lavori, eventi e pagamenti.
@@ -247,7 +269,7 @@ Scadenza, titolo, descrizione e stato; date e storico dei rinvii; priorita, cate
 
 ## Report trasversali
 
-I workflow alimentano report filtrabili per intervallo, cliente, progetto, lavoro, evento, categoria e canale. Le metriche iniziali includono compensi concordati, importi fatturabili, incassi, residui, vendite, spese, margine evento, lavori aperti, scadenze e magazzino. Ogni report indica se usa data dell'operazione, di competenza o del pagamento.
+I workflow alimentano report filtrabili per intervallo, cliente, progetto, lavoro, evento, categoria e canale. Le metriche iniziali includono compensi concordati, importi fatturabili, incassi, residui, vendite, acquisti, spese, margine evento, lavori aperti, scadenze e magazzino. Ogni report indica se usa data dell'operazione, di competenza o del pagamento.
 
 ## Backup e ripristino
 

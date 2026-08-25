@@ -94,6 +94,14 @@ Transazione commerciale in cui uno o piu prodotti vengono ceduti a un acquirente
 
 Articolo o servizio definito nel catalogo e potenzialmente vendibile, con nome, identificativo, prezzo e regole proprie. Una vendita registra una fotografia del prodotto venduto, mentre il prodotto di catalogo puo cambiare in seguito.
 
+### Acquisto destinato alla vendita
+
+Registrazione del costo sostenuto per acquistare o produrre prodotti destinati alla vendita, come fumetti, calamite o stampe. Non e una vendita, non e un incasso e nella V1 non aggiorna il magazzino. Puo essere collegato a un Fornitore e in futuro a Prodotto o Lotto.
+
+### Lotto
+
+Raggruppamento normalizzato di produzione, stampa, ristampa o acquisto con quantita e costo. Un Acquisto puo preparare la creazione o il collegamento a un Lotto, ma non lo crea automaticamente nella V1.
+
 ### Canale
 
 Modalita attraverso cui viene generata una vendita, una commissione, un contatto o un'opportunita lavorativa. Esempi sono Fiera, Instagram, Facebook, Sito web, Negozio, Editore, Marketplace, Passaparola, Evento e Altro.

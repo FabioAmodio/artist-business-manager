@@ -131,6 +131,19 @@ Deve rispondere almeno a queste domande:
 - Quali vendite risultano non ancora incassate?
 - Quali prodotti hanno avuto il maggior numero di resi o rettifiche?
 - Quali sono le vendite per periodo, evento, cliente e canale?
+
+## Acquisti destinati alla vendita
+
+La V1 della feature Acquisti non implementa statistiche o dashboard. Il modello deve pero conservare i dati necessari a ricostruire in futuro il costo di prodotti acquistati o prodotti per la vendita, coerentemente con il foglio storico `Prodotti`.
+
+Quando saranno implementati report e collegamenti a catalogo/lotti, il reporting dovra rispondere almeno a queste domande:
+
+- Quanto e stato speso per acquistare o produrre prodotti destinati alla vendita?
+- Quali fornitori sono piu rilevanti per acquisti di prodotti vendibili?
+- Quali acquisti non sono ancora collegati a un prodotto o lotto normalizzato?
+- Qual e il costo storico associato a una stampa, ristampa o produzione?
+
+Filtri futuri minimi: periodo, fornitore, prodotto, lotto, descrizione testuale e intervallo di importo. I report devono dichiarare se usano solo record Acquisto o anche movimenti economici/pagamenti riconciliati.
 - Qual e l'andamento delle quantita vendute rispetto al periodo precedente?
 
 Il fatturato delle vendite usa il prezzo storico registrato nella riga di vendita. Resi e annullamenti devono essere visibili separatamente e non cancellare la transazione originale.

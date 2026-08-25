@@ -1,0 +1,69 @@
+<section class="purchases-page" aria-labelledby="purchases-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Catalogo</p>
+      <h1 id="purchases-title">Acquisti</h1>
+    </div>
+    @if (!editingId()) {
+      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo acquisto</button>
+    }
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="toolbar">
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Descrizione, fornitore, note" /></label>
+  </div>
+
+  <p class="purchase-note">Registra acquisti destinati alla vendita senza creare ancora magazzino: prodotti e lotti saranno collegabili in una fase successiva.</p>
+
+  <div class="list-heading"><h2>Elenco acquisti</h2><span>{{ visiblePurchases().length }} registrati</span></div>
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!visiblePurchases().length) {
+    <div class="empty-state"><h3>Nessun acquisto registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo acquisto</button></div>
+  } @else {
+    <div class="purchase-list">
+      @for (purchase of visiblePurchases(); track purchase.id) {
+        <article class="purchase-row">
+          <div>
+            <h3>{{ purchase.description }}</h3>
+            <p>{{ purchase.purchaseDate | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <div class="context-grid">
+            <span><strong>Fornitore</strong>{{ supplierName(purchase.supplierId) }}</span>
+            <span><strong>Importo totale</strong>{{ purchase.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</span>
+            <span><strong>Note</strong>{{ purchase.notes || 'n.d.' }}</span>
+          </div>
+          <div class="relation-badges" aria-label="Relazioni future">
+            <span>Prodotti</span><span>Lotti</span><span>Costi</span>
+          </div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(purchase)">Modifica</button><button class="danger-button" type="button" (click)="remove(purchase)">Elimina</button></div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="purchase-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-form-title">
+      <form class="purchase-form" (ngSubmit)="save()" #purchaseForm="ngForm">
+        <div class="form-heading"><div><p class="eyebrow">Acquisto</p><h2 id="purchase-form-title">{{ editingId() ? 'Modifica acquisto' : 'Nuovo acquisto' }}</h2></div></div>
+        <div class="form-grid">
+          <label>Fornitore
+            <select name="supplierId" [(ngModel)]="draft.supplierId">
+              <option [ngValue]="undefined">Fornitore non indicato</option>
+              @for (supplier of suppliers(); track supplier.id) { <option [value]="supplier.id">{{ supplier.displayName }}</option> }
+            </select>
+          </label>
+          <label>Data acquisto <input name="purchaseDate" type="date" required [(ngModel)]="draft.purchaseDate" /></label>
+          <label class="wide">Descrizione <input name="description" required placeholder="Es. 50 stampe A5" [(ngModel)]="draft.description" /></label>
+          <label>Importo totale <input name="totalAmount" type="number" min="0" step="0.01" required [(ngModel)]="draft.totalAmount" /></label>
+          <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
+        </div>
+        <app-form-actions [disabled]="purchaseForm.invalid === true" [saving]="saving()" saveLabel="Salva acquisto" (cancel)="cancelForm()"></app-form-actions>
+      </form>
+    </section>
+  }
+</section>

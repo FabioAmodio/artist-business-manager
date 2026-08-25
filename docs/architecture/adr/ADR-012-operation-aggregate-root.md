@@ -60,6 +60,10 @@ Scartata perche non fornisce un confine di consistenza sufficiente per repositor
 
 Scartata perche il pagamento non rappresenta il fatto creativo o commerciale completo. E un evento economico collegato.
 
+### Acquisto destinato alla vendita come Operation
+
+Scartata per la V1 perche l'acquisto di prodotti destinati alla vendita non rappresenta una vendita al cliente ne un incarico creativo. E un costo di approvvigionamento osservabile nel foglio storico `Prodotti`, spesso senza prodotto o lotto normalizzato. Modellarlo come `Operation` rallenterebbe il workflow reale e confonderebbe Work/Sale con approvvigionamento. Resta collegabile in futuro a Prodotto, Lotto, Uscita o Pagamento.
+
 ## Criteri di revisione
 
 La decisione puo essere rivalutata se in futuro emergono workflow in cui Work o Sale hanno vita autonoma completa, regole di consistenza indipendenti e storico separato non riconducibile a una Operation. In quel caso dovra essere creato un nuovo ADR e una migrazione esplicita del modello.
