@@ -113,6 +113,7 @@ L'app ha una sidebar con 11 voci di navigazione:
 - Clienti
 - Fornitori
 - Acquisti
+- Lotti
 - Eventi
 - Vendite
 - Prodotti

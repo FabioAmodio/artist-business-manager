@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ProductRepository } from '../../core/repositories/product.repository';
 import type { Product } from '../../domain/models/product';
 
-export type ProductInput = Pick<Product, 'name' | 'description' | 'suggestedPrice' | 'active' | 'tags' | 'lotId'>;
+export type ProductInput = Pick<Product, 'name' | 'description' | 'suggestedPrice' | 'active' | 'tags'>;
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {

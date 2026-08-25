@@ -8,6 +8,7 @@ export interface EntityFilter {
 export type OperationFilter = EntityFilter & { readonly type?: string };
 export type FairFilter = EntityFilter & { readonly from?: string; readonly to?: string };
 export type FairSeriesFilter = EntityFilter;
+export type LotFilter = EntityFilter & { readonly productId?: EntityId; readonly purchaseId?: EntityId };
 export type ProductFilter = EntityFilter & { readonly active?: boolean };
 export type PurchaseFilter = EntityFilter & { readonly supplierId?: EntityId };
 

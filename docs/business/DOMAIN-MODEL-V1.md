@@ -129,19 +129,21 @@ Una scadenza mancante puo essere evidenziata come dato da completare; una scaden
 
 Concetto centrale del catalogo e dell'offerta commerciale. Puo rappresentare oggetti fisici, originali, servizi creativi, commissioni, sketch, copertine, illustrazioni e bundle.
 
-Attributi V1: nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo, tag come placeholder, `lotId?` preparatorio, date e metadati comuni. Attributi futuri: variante, SKU, costo unitario, soglia, configurazioni, specializzazioni e gestione lotti.
+Attributi V1: nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo, tag come placeholder, date e metadati comuni. Attributi futuri: variante, SKU, soglia, configurazioni e specializzazioni.
 
 Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch, Copertina, Illustrazione e Bundle sono valori di Prodotto, non categorie. Diventano profili di Operazione solo quando esiste un caso concreto con cliente, stato, consegna o pagamento. Bundle e un Prodotto, eventualmente composto da altri prodotti in una fase successiva.
 
 ### 3.12 Lotto e Movimento di magazzino
 
-`Lotto` raggruppa produzione o acquisto con quantita, costo totale, costo unitario, data e note sulla qualita del dato.
+`Lotto` rappresenta una specifica disponibilita del Prodotto. Attributi V1: nome lotto, `productId`, `purchaseId?`, data creazione, quantita iniziale, quantita residua, costo totale, costo unitario derivato e note. Product e Lot non sono la stessa cosa: Product e cio che viene venduto, Lot e origine/disponibilita/costo.
 
 `Movimento di magazzino` registra entrata, uscita, reso o rettifica con prodotto/lotto, quantita, data, origine, Operazione, fiera e note.
 
+Stato futuro di assegnazione lotto nelle vendite: `assigned`, `needs-review`, `unassigned`. I suggerimenti automatici possono proporre un lotto, ma non devono rendere definitiva l'assegnazione senza verifica quando il dato e ambiguo.
+
 ### 3.12.1 Acquisto destinato alla vendita
 
-`Acquisto` registra il costo sostenuto per ottenere prodotti destinati alla vendita. Attributi V1: `supplierId?`, data acquisto, descrizione, importo totale, note, `productId?` e `lotId?` per relazioni future.
+`Acquisto` registra il costo sostenuto per ottenere prodotti destinati alla vendita. Attributi V1: `supplierId?`, data acquisto, descrizione, importo totale, note e `productId?`. La relazione con i lotti vive su `Lot.purchaseId`, per permettere a un acquisto di originare uno o piu lotti.
 
 Nella V1 l'Acquisto non genera Movimento di magazzino, non crea Lotto automaticamente e non partecipa alle vendite. Serve a conservare rapidamente il dato storico e operativo osservabile nell'Excel `Prodotti`, anche quando quantita, costo unitario o identita prodotto non sono ancora normalizzati.
 
@@ -219,8 +221,8 @@ Queste entita non fanno parte dell'MVP implementativo corrente, ma i loro riferi
 | FairEdition - Spesa | `1 : 0..*` | costi direttamente associati |
 | Fornitore - Acquisto | `0..1 : 0..*` | fornitore opzionale, non bloccante |
 | Acquisto - Prodotto | `0..* : 0..1` | collegamento futuro quando normalizzato |
-| Acquisto - Lotto | `0..* : 0..1` | collegamento futuro a stampa/ristampa/acquisto |
-| Prodotto - Lotto | `0..1 : 0..*` | produzioni e acquisti |
+| Acquisto - Lotto | `0..1 : 0..*` | un acquisto puo originare uno o piu lotti |
+| Prodotto - Lotto | `1 : 0..*` | un prodotto puo avere molti lotti |
 | Prodotto - Movimento magazzino | `1 : 0..*` | entrate, uscite, resi e rettifiche |
 | Prodotto - Categoria | `0..* : 0..*` | post-V1 tramite ProductCategoryAssociation; non presente nel Product V1 |
 | Categoria - Tag | `1 : 0..*` | post-V1 per configurazioni e varianti |

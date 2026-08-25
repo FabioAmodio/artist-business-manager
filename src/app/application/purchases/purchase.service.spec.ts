@@ -23,14 +23,13 @@ describe('PurchaseService', () => {
     TestBed.configureTestingModule({ providers: [PurchaseService, { provide: PurchaseRepository, useValue: repository }] });
     const service = TestBed.inject(PurchaseService);
 
-    const created = await service.create({ supplierId: 'supplier-1', purchaseDate: '2026-08-25', description: '50 stampe A5', totalAmount: 120, notes: '', productId: undefined, lotId: undefined });
+    const created = await service.create({ supplierId: 'supplier-1', purchaseDate: '2026-08-25', description: '50 stampe A5', totalAmount: 120, notes: '', productId: undefined });
     const updated = await service.update(created.id, { ...created, description: '50 stampe A5 firmate', totalAmount: 135 });
 
     expect(updated.id).toBe(created.id);
     expect(updated.description).toBe('50 stampe A5 firmate');
     expect(updated.totalAmount).toBe(135);
     expect(updated.productId).toBeUndefined();
-    expect(updated.lotId).toBeUndefined();
     expect(repository.purchases.size).toBe(1);
   });
 
@@ -39,8 +38,8 @@ describe('PurchaseService', () => {
     TestBed.configureTestingModule({ providers: [PurchaseService, { provide: PurchaseRepository, useValue: repository }] });
     const service = TestBed.inject(PurchaseService);
 
-    await expect(service.create({ purchaseDate: '', description: ' ', totalAmount: -1, notes: '', supplierId: undefined, productId: undefined, lotId: undefined })).rejects.toThrow();
-    const created = await service.create({ supplierId: undefined, purchaseDate: '2026-08-25', description: '100 fumetti', totalAmount: 500, notes: '', productId: undefined, lotId: undefined });
+    await expect(service.create({ purchaseDate: '', description: ' ', totalAmount: -1, notes: '', supplierId: undefined, productId: undefined })).rejects.toThrow();
+    const created = await service.create({ supplierId: undefined, purchaseDate: '2026-08-25', description: '100 fumetti', totalAmount: 500, notes: '', productId: undefined });
     await service.delete(created.id);
 
     expect(repository.purchases.get(created.id)?.deletedAt).toBeDefined();

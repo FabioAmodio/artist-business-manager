@@ -287,6 +287,19 @@ interface ISupplierRepository {
 
 Responsabilita: prodotti di catalogo, inclusi Stampa A4, Sketch, Commissione e Bundle come record prodotto. Stock, gestione lotti, soglie, movimenti di magazzino, composizione bundle avanzata e inventario avanzato sono rinviati.
 
+### ILotRepository
+
+Responsabilita: disponibilita specifiche dei prodotti, con collegamento Product 1:N, acquisto origine opzionale, quantita, costi e note. Non gestisce vendite, assegnazioni definitive o movimenti di magazzino.
+
+```typescript
+interface ILotRepository {
+  getById(id: EntityId): Promise<Lot | null>;
+  list(filter?: LotFilter): Promise<readonly Lot[]>;
+  save(lot: Lot): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
+}
+```
+
 ### IPurchaseRepository
 
 Responsabilita: acquisti di prodotti destinati alla vendita, con fornitore opzionale e riferimenti futuri a prodotto e lotto. Non gestisce ammortamento, statistiche, magazzino o vendite.

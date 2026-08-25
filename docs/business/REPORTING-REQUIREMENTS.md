@@ -146,6 +146,17 @@ Quando saranno implementati vendite e report, il reporting prodotti dovra rispon
 
 Filtri futuri minimi: periodo, prodotto, stato attivo, tag, lotto, evento, canale e intervallo di prezzo. I report devono distinguere il prezzo suggerito del catalogo dal prezzo effettivo registrato nella vendita.
 
+## Lotti
+
+La V1 della feature Lotti non implementa statistiche o dashboard. Il modello deve pero conservare i dati necessari per analisi economiche future:
+
+- Ho recuperato il costo di stampa?
+- Questo acquisto e stato ammortizzato?
+- Vale la pena ristampare?
+- Quanto utile ha generato questo lotto?
+
+Filtri futuri minimi: prodotto, acquisto origine, periodo creazione lotto, disponibilita residua, costo totale e stato assegnazione vendite. Le vendite senza lotto assegnato devono restare analizzabili come `Non assegnato` o `Da verificare`, senza bloccare il workflow rapido in fiera.
+
 ## Acquisti destinati alla vendita
 
 La V1 della feature Acquisti non implementa statistiche o dashboard. Il modello deve pero conservare i dati necessari a ricostruire in futuro il costo di prodotti acquistati o prodotti per la vendita, coerentemente con il foglio storico `Prodotti`.

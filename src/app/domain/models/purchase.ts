@@ -8,7 +8,6 @@ export interface Purchase {
   readonly totalAmount: number;
   readonly notes?: string;
   readonly productId?: EntityId;
-  readonly lotId?: EntityId;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;
   readonly deletedAt?: IsoDateTime;

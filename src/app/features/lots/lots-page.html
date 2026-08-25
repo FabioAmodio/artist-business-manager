@@ -1,0 +1,80 @@
+<section class="lots-page" aria-labelledby="lots-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Catalogo</p>
+      <h1 id="lots-title">Lotti</h1>
+    </div>
+    @if (!editingId()) {
+      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo lotto</button>
+    }
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="toolbar">
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Nome lotto, prodotto, acquisto, note" /></label>
+  </div>
+
+  <p class="lot-note">Il prodotto resta cio che viene venduto; il lotto rappresenta una produzione o un acquisto specifico.</p>
+
+  <div class="list-heading"><h2>Elenco lotti</h2><span>{{ visibleLots().length }} registrati</span></div>
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!visibleLots().length) {
+    <div class="empty-state"><h3>Nessun lotto registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo lotto</button></div>
+  } @else {
+    <div class="lot-list">
+      @for (lot of visibleLots(); track lot.id) {
+        <article class="lot-row">
+          <div>
+            <h3>{{ lot.name }}</h3>
+            <p>{{ productName(lot.productId) }}</p>
+          </div>
+          <div class="context-grid">
+            <span><strong>Acquisto origine</strong>{{ purchaseLabel(lot.purchaseId) }}</span>
+            <span><strong>Data creazione</strong>{{ lot.lotDate ? (lot.lotDate | date:'dd/MM/yyyy') : 'n.d.' }}</span>
+            <span><strong>Quantita</strong>{{ lot.initialQuantity ?? 'n.d.' }}</span>
+            <span><strong>Disponibilita</strong>{{ availabilityLabel(lot) }}</span>
+            <span><strong>Costo totale</strong>{{ lot.totalCost != null ? (lot.totalCost | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span><strong>Costo unitario</strong>{{ lot.unitCost != null ? (lot.unitCost | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+          </div>
+          <div class="relation-badges" aria-label="Relazioni future">
+            <span>Vendite</span><span>Assegnazione</span><span>Ammortamento</span>
+          </div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(lot)">Modifica</button><button class="danger-button" type="button" (click)="remove(lot)">Elimina</button></div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="lot-dialog" role="dialog" aria-modal="true" aria-labelledby="lot-form-title">
+      <form class="lot-form" (ngSubmit)="save()" #lotForm="ngForm">
+        <div class="form-heading"><div><p class="eyebrow">Lotto</p><h2 id="lot-form-title">{{ editingId() ? 'Modifica lotto' : 'Nuovo lotto' }}</h2></div></div>
+        <div class="form-grid">
+          <label class="wide">Nome lotto <input name="name" required [(ngModel)]="draft.name" placeholder="Es. Tipografia marzo 2026" /></label>
+          <label>Prodotto
+            <select name="productId" required [(ngModel)]="draft.productId">
+              <option value="">Seleziona prodotto</option>
+              @for (product of products(); track product.id) { <option [value]="product.id">{{ product.name }}</option> }
+            </select>
+          </label>
+          <label>Acquisto origine
+            <select name="purchaseId" [(ngModel)]="draft.purchaseId">
+              <option [ngValue]="undefined">Nessun acquisto</option>
+              @for (purchase of purchases(); track purchase.id) { <option [value]="purchase.id">{{ purchase.purchaseDate }} · {{ purchase.description }}</option> }
+            </select>
+          </label>
+          <label>Data creazione <input name="lotDate" type="date" [(ngModel)]="draft.lotDate" /></label>
+          <label>Quantita iniziale <input name="initialQuantity" type="number" min="0" step="1" [(ngModel)]="draft.initialQuantity" /></label>
+          <label>Quantita residua <input name="remainingQuantity" type="number" min="0" step="1" [(ngModel)]="draft.remainingQuantity" /></label>
+          <label>Costo totale <input name="totalCost" type="number" min="0" step="0.01" [(ngModel)]="draft.totalCost" /></label>
+          <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
+        </div>
+        <app-form-actions [disabled]="lotForm.invalid === true" [saving]="saving()" saveLabel="Salva lotto" (cancel)="cancelForm()"></app-form-actions>
+      </form>
+    </section>
+  }
+</section>

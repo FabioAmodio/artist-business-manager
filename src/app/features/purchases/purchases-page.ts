@@ -56,7 +56,6 @@ export class PurchasesPage implements OnInit {
       totalAmount: purchase.totalAmount,
       notes: purchase.notes ?? '',
       productId: purchase.productId,
-      lotId: purchase.lotId,
     };
     this.editingId.set(purchase.id);
     this.creating.set(false);
@@ -123,6 +122,6 @@ export class PurchasesPage implements OnInit {
   }
 
   private emptyDraft(): PurchaseInput {
-    return { supplierId: undefined, purchaseDate: new Date().toISOString().slice(0, 10), description: '', totalAmount: 0, notes: '', productId: undefined, lotId: undefined };
+    return { supplierId: undefined, purchaseDate: new Date().toISOString().slice(0, 10), description: '', totalAmount: 0, notes: '', productId: undefined };
   }
 }

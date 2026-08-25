@@ -29,6 +29,8 @@ Questa scelta evita duplicazione e divergenza tra commissioni, vendite e pagamen
 
 `Prodotto` resta la definizione commerciale di catalogo. Commissione, Sketch e Bundle sono Prodotti quando descrivono l'offerta ripetibile; diventano parte di una `Operation` solo quando esiste un caso concreto con cliente, stato, consegna, vendita o pagamento.
 
+`Lotto` resta distinto da `Prodotto`: rappresenta una disponibilita specifica di quel prodotto, con origine, quantita e costo. Una vendita rapida deve poter salvare il Prodotto senza selezionare subito il Lotto.
+
 Permette inoltre di mantenere nello stesso confine:
 
 - cliente registrato o Cliente soft;
@@ -46,6 +48,7 @@ Permette inoltre di mantenere nello stesso confine:
 - `WorkRepository` e `SaleRepository`, se introdotti, dovranno essere query/proiezioni o adapter di lettura, non fonti di verita autonome.
 - Le feature Angular dovranno evitare di creare una commissione e una vendita separate quando descrivono lo stesso fatto reale.
 - Le transizioni operative e gli stati economici devono essere coordinati dalla `Operation`, mantenendo concetti separati.
+- L'assegnazione del Lotto a una futura vendita puo essere `assigned`, `needs-review` o `unassigned`; suggerimenti automatici non devono diventare assegnazioni definitive quando il dato e ambiguo.
 - La migrazione da dati storici dovra mappare righe legacy verso Operation, marcando i casi ambigui come `needsReview`.
 
 ## Alternative considerate

@@ -1,4 +1,5 @@
 import type { EntityId, IsoDateTime } from '../shared/types';
+import type { LotAssignmentStatus, LotSuggestion } from './lot';
 
 export type OperationType =
   | 'sale'
@@ -19,6 +20,10 @@ export interface Operation {
   readonly description?: string;
   readonly partyId?: EntityId;
   readonly fairEditionId?: EntityId;
+  readonly productId?: EntityId;
+  readonly lotId?: EntityId;
+  readonly lotAssignmentStatus?: LotAssignmentStatus;
+  readonly lotSuggestion?: LotSuggestion;
   readonly amount?: number;
   readonly workStatus?: 'draft' | 'requested' | 'accepted' | 'in-progress' | 'ready' | 'delivered' | 'completed' | 'cancelled';
   readonly saleStatus?: 'draft' | 'pending-payment' | 'partially-paid' | 'paid' | 'refunded' | 'cancelled';

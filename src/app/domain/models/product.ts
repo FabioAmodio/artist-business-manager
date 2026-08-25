@@ -7,7 +7,6 @@ export interface Product {
   readonly suggestedPrice?: number;
   readonly active: boolean;
   readonly tags: readonly string[];
-  readonly lotId?: EntityId;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;
   readonly deletedAt?: IsoDateTime;

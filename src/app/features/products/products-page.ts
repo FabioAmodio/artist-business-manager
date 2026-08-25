@@ -52,7 +52,6 @@ export class ProductsPage implements OnInit {
       suggestedPrice: product.suggestedPrice,
       active: product.active,
       tags: product.tags,
-      lotId: product.lotId,
     };
     this.tagText = product.tags.join(', ');
     this.editingId.set(product.id);
@@ -114,6 +113,6 @@ export class ProductsPage implements OnInit {
   }
 
   private emptyDraft(): ProductInput {
-    return { name: '', description: '', suggestedPrice: undefined, active: true, tags: [], lotId: undefined };
+    return { name: '', description: '', suggestedPrice: undefined, active: true, tags: [] };
   }
 }

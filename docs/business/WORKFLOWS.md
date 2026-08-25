@@ -208,13 +208,35 @@ Registrare rapidamente il costo storico di prodotti vendibili, preparando il col
 3. Inserire data acquisto, descrizione operativa e importo totale.
 4. Aggiungere note utili, ad esempio quantita, formato o riferimento ordine.
 5. Salvare localmente con feedback immediato.
-6. Collegare in futuro Prodotto o Lotto solo quando l'identita e sufficientemente certa.
+6. Collegare il Prodotto quando l'identita e sufficientemente certa.
+7. Generare o collegare un Lotto quando l'acquisto rappresenta una disponibilita specifica, ad esempio `Tipografia marzo 2026`.
 
 ### Dati coinvolti
-Acquisto, fornitore, data, descrizione, importo totale e note; riferimenti futuri a prodotto e lotto.
+Acquisto, fornitore, data, descrizione, importo totale e note; riferimenti a prodotto e lotto.
 
 ### Vincoli V1
 La registrazione non crea movimento di magazzino, non alimenta statistiche, non aggiorna vendite e non calcola ammortamento. Questa scelta e intenzionale: il foglio storico `Prodotti` contiene righe spesso aggregate o incomplete, e durante una fiera o una preparazione evento il workflow piu rapido e annotare il costo senza bloccare l'artista su normalizzazioni premature.
+
+## 7.1 Gestione lotti
+
+### Attore
+Artista che normalizza disponibilita, ristampe o acquisti collegandoli al Prodotto vendibile.
+
+### Obiettivo
+Distinguere cio che viene venduto dal suo lotto di origine, preparando analisi future su costo recuperato, ammortamento, ristampa e utile per lotto.
+
+### Flusso
+1. Aprire la lista Lotti.
+2. Cercare per nome lotto, prodotto, acquisto origine o note.
+3. Creare un lotto con nome, prodotto associato, acquisto origine opzionale, data, quantita iniziale, quantita residua, costo totale e note.
+4. Usare nomi aderenti al workflow reale, ad esempio `Stampe casalinghe`, `Tipografia marzo 2026` o `Tipografia settembre 2026`.
+5. Salvare senza creare movimenti di magazzino, vendite o report.
+
+### Dati coinvolti
+Lotto, prodotto, acquisto origine, quantita iniziale, quantita residua, costo totale, costo unitario derivato e note.
+
+### Vincoli V1
+La vendita rapida continuera a selezionare il Prodotto, non necessariamente il Lotto. L'assegnazione del lotto potra essere automatica suggerita, manuale successiva o marcata `Da verificare`, ma nessuna assegnazione definitiva viene introdotta in questa feature.
 
 ## 8. Registrazione spese
 

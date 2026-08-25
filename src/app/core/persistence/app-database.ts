@@ -1,12 +1,13 @@
 import Dexie, { type Table } from 'dexie';
 import type { FairEdition, FairSeries } from '../../domain/models/fair';
+import type { Lot } from '../../domain/models/lot';
 import type { Operation } from '../../domain/models/operation';
 import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 8;
+export const DATABASE_VERSION = 10;
 
 interface LegacyFair {
   readonly id: string;
@@ -33,6 +34,7 @@ export class AppDatabase extends Dexie {
   readonly fairs!: Table<FairEdition, string>;
   readonly fairSeries!: Table<FairSeries, string>;
   readonly fairEditions!: Table<FairEdition, string>;
+  readonly lots!: Table<Lot, string>;
   readonly operations!: Table<Operation, string>;
   readonly parties!: Table<Party, string>;
   readonly products!: Table<Product, string>;
@@ -44,10 +46,11 @@ export class AppDatabase extends Dexie {
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
+      lots: 'id, productId, purchaseId, lotDate, updatedAt, deletedAt',
       operations: 'id, type, partyId, fairEditionId, updatedAt, deletedAt',
       parties: 'id, type, displayName, email, updatedAt, deletedAt',
-      products: 'id, name, active, lotId, updatedAt, deletedAt',
-      purchases: 'id, supplierId, purchaseDate, productId, lotId, updatedAt, deletedAt',
+      products: 'id, name, active, updatedAt, deletedAt',
+      purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
     }).upgrade(async (transaction) => {
       const legacyFairs = await transaction.table('fairs').toArray() as LegacyFair[];
       const series = legacyFairs.map((fair) => ({
