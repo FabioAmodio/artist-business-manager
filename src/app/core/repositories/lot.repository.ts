@@ -23,7 +23,7 @@ export class LotRepository implements ILotRepository {
       .filter((lot) => filter?.includeDeleted || !lot.deletedAt)
       .filter((lot) => !filter?.productId || lot.productId === filter.productId)
       .filter((lot) => !filter?.purchaseId || lot.purchaseId === filter.purchaseId)
-      .filter((lot) => !normalized || `${lot.name} ${lot.lotDate ?? ''} ${lot.notes ?? ''}`.toLowerCase().includes(normalized))
+        .filter((lot) => !normalized || `${lot.name} ${(lot.aliases ?? []).join(' ')} ${lot.notes ?? ''}`.toLowerCase().includes(normalized))
       .sort((first, second) => first.name.localeCompare(second.name));
   }
 

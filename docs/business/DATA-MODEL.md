@@ -169,11 +169,15 @@ Commissione e Sketch non sono anagrafiche operative separate dal catalogo: sono 
 
 ### Lotto
 
-Disponibilita specifica di un Prodotto, derivata da produzione, stampa, ristampa o acquisto. Product e Lot non coincidono: l'utente vende il Prodotto `Stampa A5`, mentre l'app puo distinguere lotti come `Stampe casalinghe`, `Acquisto tipografia marzo 2026` o `Acquisto tipografia settembre 2026`.
+Raggruppamento logico subordinato a un Prodotto, derivato da produzione, stampa, ristampa o acquisto. Product e Lot non coincidono: l'utente vende il Prodotto `Stampa A5`, mentre l'app puo distinguere lotti come `Stampe casalinghe`, `Acquisto tipografia marzo 2026` o `Acquisto tipografia settembre 2026`.
 
-Attributi V1: identita, nome lotto, prodotto associato, acquisto origine opzionale, data creazione lotto, quantita iniziale, quantita residua, costo totale, costo unitario derivato e note.
+Attributi V1: identita, nome lotto, prodotto associato, acquisto origine opzionale, alias e note.
 
-I codici storici dell'Excel come `A5`, `A5+` e `A5-` devono essere interpretati come possibili lotti o varianti operative dello stesso Prodotto `Stampa A5`, non come prodotti finali da vendere al cliente con nomi diversi. La normalizzazione deve preservare il nome vendibile rapido e spostare differenze di origine/costo/disponibilita nel Lotto.
+Il Lotto V1 non e gestione di magazzino: non contiene data creazione operativa, quantita iniziale, quantita residua, costo totale o costo unitario. Questi dati potranno appartenere a una futura gestione inventariale, ma non derivano dal workflow reale attuale.
+
+I codici storici dell'Excel come `A5`, `A5+` e `A5-` devono essere interpretati come possibili lotti o varianti operative dello stesso Prodotto `Stampa A5`, non come prodotti finali da vendere al cliente con nomi diversi. La normalizzazione deve preservare il nome vendibile rapido e spostare il raggruppamento operativo nel Lotto.
+
+Gli alias del Lotto sono termini testuali utili al riconoscimento futuro. Nella V1 non esiste un secondo elenco testuale separato dagli alias.
 
 ### Acquisto destinato alla vendita
 
@@ -238,7 +242,7 @@ Le cardinalita indicano il modello concettuale previsto. Dove l'Excel non contie
 | Canale - Party | Canale `0..1` : Party `0..*` | origine del contatto o cliente |
 | Evento - Fiera | Evento `1` : Fiera `0..1` | ogni fiera e un evento specializzato |
 | Fiera - Operazione | Fiera `1` : operazione `0..*` per ruolo fieristico | relazione osservata tramite `Fiera + Anno` e distinta per origine, consegna e contabilizzazione |
-| Prodotto - Lotto | Prodotto `1` : lotto `0..*` | un prodotto vendibile puo avere piu disponibilita specifiche |
+| Prodotto - Lotto | Prodotto `1` : lotto `0..*` | un prodotto vendibile puo avere piu raggruppamenti logici |
 | Fornitore - Acquisto | Party con ruolo Fornitore `0..1` : acquisto `0..*` | il fornitore puo essere indicato quando noto, senza bloccare la registrazione rapida |
 | Acquisto - Prodotto | Acquisto `0..*` : prodotto `0..1` | collegamento quando l'identita del prodotto e certa |
 | Acquisto - Lotto | Acquisto `0..1` : lotto `0..*` | un acquisto puo originare uno o piu lotti normalizzati |
@@ -278,13 +282,9 @@ Radice Fiera; comprende partecipazione, costi logistici, prodotti pianificati, v
 
 Radice Prodotto; comprende varianti, lotti e movimenti di magazzino. Le vendite conservano il prezzo storico del momento della cessione.
 
-`Lotto` e il confine che consente di distinguere disponibilita, costo e ammortamento futuro senza cambiare il Prodotto venduto. `Acquisto` puo originare un Lotto, ma nella V1 non genera ancora movimenti di magazzino o report.
+`Lotto` e il confine che consente di distinguere raggruppamenti operativi senza cambiare il Prodotto venduto. `Acquisto` puo originare un Lotto, ma nella V1 non genera movimenti di magazzino, giacenze, costi lotto o report.
 
-### Assegnazione lotto nelle vendite future
-
-Le vendite future non devono richiedere obbligatoriamente la selezione del Lotto. La vendita rapida puo registrare solo il Prodotto e restare completabile in seguito. Il dominio prepara tre stati di assegnazione: `Assegnato`, `Da verificare` e `Non assegnato`.
-
-Suggerimenti automatici futuri possono proporre un Lotto usando parole chiave, descrizione prodotto o storico, ad esempio descrizione `Ramba` verso `Lotto Tipografia Settembre 2026`. Il suggerimento non e assegnazione definitiva: la vendita puo restare `Da verificare`.
+La futura associazione vendita-lotto non fa parte di questa implementazione. Le vendite dovranno poter salvare rapidamente il Prodotto senza scelta obbligatoria del Lotto; in seguito potranno suggerire o verificare un Lotto usando gli alias, ma nessuno stato di assegnazione viene introdotto nella V1.
 
 ### Vendita
 

@@ -155,7 +155,7 @@ La V1 della feature Lotti non implementa statistiche o dashboard. Il modello dev
 - Vale la pena ristampare?
 - Quanto utile ha generato questo lotto?
 
-Filtri futuri minimi: prodotto, acquisto origine, periodo creazione lotto, disponibilita residua, costo totale e stato assegnazione vendite. Le vendite senza lotto assegnato devono restare analizzabili come `Non assegnato` o `Da verificare`, senza bloccare il workflow rapido in fiera.
+Filtri futuri minimi: prodotto, acquisto origine e alias. Le vendite non ancora collegate a un lotto dovranno restare analizzabili in futuro senza bloccare il workflow rapido in fiera, ma la relativa associazione non e implementata nella V1.
 
 ## Acquisti destinati alla vendita
 

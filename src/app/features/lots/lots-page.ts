@@ -1,4 +1,3 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
@@ -11,7 +10,7 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule],
   selector: 'app-lots-page',
   templateUrl: './lots-page.html',
   styleUrl: './lots-page.scss',
@@ -31,13 +30,14 @@ export class LotsPage implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: LotInput = this.emptyDraft();
+  protected aliasText = '';
 
   ngOnInit(): void { void this.loadAll(); }
 
   protected visibleLots(): readonly Lot[] {
     const normalized = this.query().trim().toLowerCase();
     if (!normalized) return this.lots();
-    return this.lots().filter((lot) => `${lot.name} ${this.productName(lot.productId)} ${this.purchaseLabel(lot.purchaseId)} ${lot.notes ?? ''}`.toLowerCase().includes(normalized));
+    return this.lots().filter((lot) => `${lot.name} ${this.productName(lot.productId)} ${this.purchaseLabel(lot.purchaseId)} ${(lot.aliases ?? []).join(' ')} ${lot.notes ?? ''}`.toLowerCase().includes(normalized));
   }
 
   protected productName(id: string): string {
@@ -49,14 +49,10 @@ export class LotsPage implements OnInit {
     return purchase ? `${purchase.purchaseDate} · ${purchase.description}` : 'Acquisto non indicato';
   }
 
-  protected availabilityLabel(lot: Lot): string {
-    if (lot.remainingQuantity == null || lot.initialQuantity == null) return 'n.d.';
-    return `${lot.remainingQuantity} / ${lot.initialQuantity}`;
-  }
-
   protected startCreating(): void {
     this.resetMessages();
     this.draft = this.emptyDraft();
+    this.aliasText = '';
     this.editingId.set(null);
     this.creating.set(true);
   }
@@ -67,12 +63,10 @@ export class LotsPage implements OnInit {
       name: lot.name,
       productId: lot.productId,
       purchaseId: lot.purchaseId,
-      lotDate: lot.lotDate ?? '',
-      initialQuantity: lot.initialQuantity,
-      remainingQuantity: lot.remainingQuantity,
-      totalCost: lot.totalCost,
+      aliases: lot.aliases ?? [],
       notes: lot.notes ?? '',
     };
+    this.aliasText = (lot.aliases ?? []).join(', ');
     this.editingId.set(lot.id);
     this.creating.set(false);
   }
@@ -85,9 +79,10 @@ export class LotsPage implements OnInit {
   protected async save(): Promise<void> {
     this.saving.set(true);
     this.resetMessages();
+    const input = { ...this.draft, aliases: this.parseAliases(this.aliasText) };
     try {
-      if (this.editingId()) await this.service.update(this.editingId()!, this.draft);
-      else await this.service.create(this.draft);
+      if (this.editingId()) await this.service.update(this.editingId()!, input);
+      else await this.service.create(input);
       this.cancelForm();
       this.successMessage.set('Lotto salvato localmente.');
       await this.loadLots();
@@ -138,7 +133,11 @@ export class LotsPage implements OnInit {
     this.successMessage.set('');
   }
 
+  private parseAliases(value: string): readonly string[] {
+    return value.split(',').map((alias) => alias.trim()).filter(Boolean);
+  }
+
   private emptyDraft(): LotInput {
-    return { name: '', productId: '', purchaseId: undefined, lotDate: new Date().toISOString().slice(0, 10), initialQuantity: undefined, remainingQuantity: undefined, totalCost: undefined, notes: '' };
+    return { name: '', productId: '', purchaseId: undefined, aliases: [], notes: '' };
   }
 }

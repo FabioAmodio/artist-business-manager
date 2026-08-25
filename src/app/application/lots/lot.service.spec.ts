@@ -23,20 +23,20 @@ describe('LotService', () => {
     TestBed.configureTestingModule({ providers: [LotService, { provide: LotRepository, useValue: repository }] });
     const service = TestBed.inject(LotService);
 
-    const created = await service.create({ name: 'Tipografia marzo 2026', productId: 'product-a5', purchaseId: 'purchase-1', lotDate: '2026-03-01', initialQuantity: 100, remainingQuantity: 100, totalCost: 180, notes: '' });
+    const created = await service.create({ name: 'Tipografia marzo 2026', productId: 'product-a5', purchaseId: 'purchase-1', aliases: ['Ramba', 'Ramba'], notes: '' });
 
     expect(created.productId).toBe('product-a5');
     expect(created.purchaseId).toBe('purchase-1');
-    expect(created.unitCost).toBe(1.8);
+    expect(created.aliases).toEqual(['Ramba']);
   });
 
-  it('rejects invalid quantities and delegates logical deletion', async () => {
+  it('rejects missing product and delegates logical deletion', async () => {
     const repository = createRepositoryMock();
     TestBed.configureTestingModule({ providers: [LotService, { provide: LotRepository, useValue: repository }] });
     const service = TestBed.inject(LotService);
 
-    await expect(service.create({ name: 'Invalid', productId: 'product-a5', purchaseId: undefined, lotDate: '', initialQuantity: 10, remainingQuantity: 11, totalCost: 1, notes: '' })).rejects.toThrow();
-    const created = await service.create({ name: 'Stampe casalinghe', productId: 'product-a5', purchaseId: undefined, lotDate: '2026-01-01', initialQuantity: 20, remainingQuantity: 5, totalCost: 0, notes: '' });
+    await expect(service.create({ name: 'Invalid', productId: '', purchaseId: undefined, aliases: [], notes: '' })).rejects.toThrow();
+    const created = await service.create({ name: 'Stampe casalinghe', productId: 'product-a5', purchaseId: undefined, aliases: [], notes: '' });
     await service.delete(created.id);
 
     expect(repository.lots.get(created.id)?.deletedAt).toBeDefined();

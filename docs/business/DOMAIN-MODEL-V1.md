@@ -135,11 +135,13 @@ Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch
 
 ### 3.12 Lotto e Movimento di magazzino
 
-`Lotto` rappresenta una specifica disponibilita del Prodotto. Attributi V1: nome lotto, `productId`, `purchaseId?`, data creazione, quantita iniziale, quantita residua, costo totale, costo unitario derivato e note. Product e Lot non sono la stessa cosa: Product e cio che viene venduto, Lot e origine/disponibilita/costo.
+`Lotto` rappresenta un raggruppamento logico subordinato al Prodotto. Attributi V1: nome lotto, `productId`, `purchaseId?`, alias e note. Product e Lot non sono la stessa cosa: Product e cio che viene venduto, Lot e classificazione operativa utile per futuri suggerimenti.
+
+Il Lotto V1 non contiene data creazione operativa, quantita iniziale, quantita residua, costo totale o costo unitario. Non e magazzino, giacenza o movimento inventariale.
 
 `Movimento di magazzino` registra entrata, uscita, reso o rettifica con prodotto/lotto, quantita, data, origine, Operazione, fiera e note.
 
-Stato futuro di assegnazione lotto nelle vendite: `assigned`, `needs-review`, `unassigned`. I suggerimenti automatici possono proporre un lotto, ma non devono rendere definitiva l'assegnazione senza verifica quando il dato e ambiguo.
+Gli alias del Lotto preparano futuri suggerimenti automatici, senza introdurre ora associazione vendita-lotto o stati di assegnazione.
 
 ### 3.12.1 Acquisto destinato alla vendita
 
@@ -222,7 +224,7 @@ Queste entita non fanno parte dell'MVP implementativo corrente, ma i loro riferi
 | Fornitore - Acquisto | `0..1 : 0..*` | fornitore opzionale, non bloccante |
 | Acquisto - Prodotto | `0..* : 0..1` | collegamento futuro quando normalizzato |
 | Acquisto - Lotto | `0..1 : 0..*` | un acquisto puo originare uno o piu lotti |
-| Prodotto - Lotto | `1 : 0..*` | un prodotto puo avere molti lotti |
+| Prodotto - Lotto | `1 : 0..*` | un prodotto puo avere molti raggruppamenti logici |
 | Prodotto - Movimento magazzino | `1 : 0..*` | entrate, uscite, resi e rettifiche |
 | Prodotto - Categoria | `0..* : 0..*` | post-V1 tramite ProductCategoryAssociation; non presente nel Product V1 |
 | Categoria - Tag | `1 : 0..*` | post-V1 per configurazioni e varianti |

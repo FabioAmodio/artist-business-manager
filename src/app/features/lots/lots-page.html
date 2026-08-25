@@ -13,7 +13,7 @@
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
   <div class="toolbar">
-    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Nome lotto, prodotto, acquisto, note" /></label>
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Nome lotto, prodotto, acquisto, alias, note" /></label>
   </div>
 
   <p class="lot-note">Il prodotto resta cio che viene venduto; il lotto rappresenta una produzione o un acquisto specifico.</p>
@@ -33,14 +33,11 @@
           </div>
           <div class="context-grid">
             <span><strong>Acquisto origine</strong>{{ purchaseLabel(lot.purchaseId) }}</span>
-            <span><strong>Data creazione</strong>{{ lot.lotDate ? (lot.lotDate | date:'dd/MM/yyyy') : 'n.d.' }}</span>
-            <span><strong>Quantita</strong>{{ lot.initialQuantity ?? 'n.d.' }}</span>
-            <span><strong>Disponibilita</strong>{{ availabilityLabel(lot) }}</span>
-            <span><strong>Costo totale</strong>{{ lot.totalCost != null ? (lot.totalCost | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
-            <span><strong>Costo unitario</strong>{{ lot.unitCost != null ? (lot.unitCost | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span><strong>Alias</strong>{{ lot.aliases?.length ? lot.aliases.join(', ') : 'n.d.' }}</span>
+            <span><strong>Note</strong>{{ lot.notes || 'n.d.' }}</span>
           </div>
           <div class="relation-badges" aria-label="Relazioni future">
-            <span>Vendite</span><span>Assegnazione</span><span>Ammortamento</span>
+            <span>Vendite</span><span>Assegnazione</span>
           </div>
           <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(lot)">Modifica</button><button class="danger-button" type="button" (click)="remove(lot)">Elimina</button></div>
         </article>
@@ -67,10 +64,7 @@
               @for (purchase of purchases(); track purchase.id) { <option [value]="purchase.id">{{ purchase.purchaseDate }} · {{ purchase.description }}</option> }
             </select>
           </label>
-          <label>Data creazione <input name="lotDate" type="date" [(ngModel)]="draft.lotDate" /></label>
-          <label>Quantita iniziale <input name="initialQuantity" type="number" min="0" step="1" [(ngModel)]="draft.initialQuantity" /></label>
-          <label>Quantita residua <input name="remainingQuantity" type="number" min="0" step="1" [(ngModel)]="draft.remainingQuantity" /></label>
-          <label>Costo totale <input name="totalCost" type="number" min="0" step="0.01" [(ngModel)]="draft.totalCost" /></label>
+          <label class="full-width">Alias <input name="aliases" [(ngModel)]="aliasText" /></label>
           <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
         </div>
         <app-form-actions [disabled]="lotForm.invalid === true" [saving]="saving()" saveLabel="Salva lotto" (cancel)="cancelForm()"></app-form-actions>

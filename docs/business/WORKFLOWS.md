@@ -223,20 +223,22 @@ La registrazione non crea movimento di magazzino, non alimenta statistiche, non 
 Artista che normalizza disponibilita, ristampe o acquisti collegandoli al Prodotto vendibile.
 
 ### Obiettivo
-Distinguere cio che viene venduto dal suo lotto di origine, preparando analisi future su costo recuperato, ammortamento, ristampa e utile per lotto.
+Distinguere cio che viene venduto da un raggruppamento operativo leggero, preparando futuri suggerimenti tramite alias senza introdurre magazzino o giacenze.
 
 ### Flusso
 1. Aprire la lista Lotti.
-2. Cercare per nome lotto, prodotto, acquisto origine o note.
-3. Creare un lotto con nome, prodotto associato, acquisto origine opzionale, data, quantita iniziale, quantita residua, costo totale e note.
+2. Cercare per nome lotto, prodotto, acquisto origine, alias o note.
+3. Creare un lotto con nome, prodotto associato, acquisto origine opzionale, alias e note.
 4. Usare nomi aderenti al workflow reale, ad esempio `Stampe casalinghe`, `Tipografia marzo 2026` o `Tipografia settembre 2026`.
 5. Salvare senza creare movimenti di magazzino, vendite o report.
 
 ### Dati coinvolti
-Lotto, prodotto, acquisto origine, quantita iniziale, quantita residua, costo totale, costo unitario derivato e note.
+Lotto, prodotto, acquisto origine, alias e note.
 
 ### Vincoli V1
-La vendita rapida continuera a selezionare il Prodotto, non necessariamente il Lotto. L'assegnazione del lotto potra essere automatica suggerita, manuale successiva o marcata `Da verificare`, ma nessuna assegnazione definitiva viene introdotta in questa feature.
+La vendita rapida continuera a selezionare il Prodotto, non necessariamente il Lotto. L'associazione vendita-lotto e rinviata: in futuro potra essere suggerita tramite alias e verificata successivamente, ma nessuno stato o workflow di assegnazione viene introdotto in questa feature.
+
+La V1 non gestisce data creazione lotto, quantita iniziale, quantita residua, costi lotto, riordini, movimentazioni o giacenze.
 
 ## 8. Registrazione spese
 

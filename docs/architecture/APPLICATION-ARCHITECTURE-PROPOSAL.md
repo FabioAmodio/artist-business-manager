@@ -289,7 +289,7 @@ Responsabilita: prodotti di catalogo, inclusi Stampa A4, Sketch, Commissione e B
 
 ### ILotRepository
 
-Responsabilita: disponibilita specifiche dei prodotti, con collegamento Product 1:N, acquisto origine opzionale, quantita, costi e note. Non gestisce vendite, assegnazioni definitive o movimenti di magazzino.
+Responsabilita: raggruppamenti logici subordinati ai prodotti, con collegamento Product 1:N, acquisto origine opzionale, alias e note. Non gestisce vendite, assegnazioni definitive, giacenze, costi o movimenti di magazzino.
 
 ```typescript
 interface ILotRepository {

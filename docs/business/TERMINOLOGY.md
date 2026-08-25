@@ -104,13 +104,15 @@ Registrazione del costo sostenuto per acquistare o produrre prodotti destinati a
 
 ### Lotto
 
-Disponibilita specifica di un Prodotto, derivata da produzione, stampa, ristampa o acquisto. Un Prodotto puo avere molti Lotti; un Lotto appartiene a un solo Prodotto. Il Prodotto e cio che viene venduto, mentre il Lotto spiega origine, quantita, costo e disponibilita.
+Raggruppamento logico subordinato a un Prodotto, derivato da produzione, stampa, ristampa o acquisto. Un Prodotto puo avere molti Lotti; un Lotto appartiene a un solo Prodotto. Il Prodotto e cio che viene venduto, mentre il Lotto aiuta a classificare e riconoscere gruppi operativi.
 
 Esempio: il Prodotto vendibile e `Stampa A5`; i Lotti possono essere `Stampe casalinghe`, `Acquisto tipografia marzo 2026` e `Acquisto tipografia settembre 2026`. Codici storici come `A5`, `A5+` e `A5-` vanno trattati come indizi di lotti diversi dello stesso prodotto, non come nomi prodotto da mostrare al cliente.
 
-### Stato assegnazione lotto
+Il Lotto V1 non e magazzino, giacenza, movimento inventariale o produzione monitorata quantitativamente.
 
-Stato futuro della relazione tra una vendita e il Lotto che ha fornito la disponibilita: `Assegnato`, `Da verificare` o `Non assegnato`. La vendita rapida non deve obbligare l'artista a scegliere un lotto durante una fiera.
+### Alias del lotto
+
+Termini testuali alternativi associati a un Lotto per facilitarne il riconoscimento futuro. Gli alias non assegnano vendite e non introducono stati di verifica nella V1.
 
 ### Canale
 
