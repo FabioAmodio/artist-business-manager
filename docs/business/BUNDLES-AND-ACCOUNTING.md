@@ -8,7 +8,7 @@ Questo documento descrive l'architettura dei bundle, la logica di contabilizzazi
 
 ### Definizione
 
-Un bundle e un prodotto virtuale composto da una o piu istanze di prodotti reali, venduto come singola unita commerciale.
+Un bundle e un Prodotto di catalogo, composto da una o piu istanze di altri prodotti e venduto come singola unita commerciale.
 
 **Esempio A:**
 ```
@@ -42,16 +42,16 @@ Un bundle ha le seguenti proprieta:
 - **Stato:** attivo/inattivo
 - **Timestamp:** createdAt, updatedAt, archivedAt (se eliminato)
 
-### Differenza da prodotto ordinario
+### Differenza da prodotto semplice
 
-Un bundle NON e un prodotto nel senso tradizionale:
+Un bundle e un Prodotto, ma non e un prodotto semplice:
 
 - Non e soggetto a magazzino fisico se i componenti sono virtuali
 - La sua disponibilita dipende dalla disponibilita dei componenti
 - Non ha un costo unitario proprio (e virtuale)
 - Il suo prezzo puo essere differente dalla somma (sconto o premium)
 
-Un bundle SI e un'entita commerciale:
+Un bundle resta una voce commerciale del catalogo:
 
 - Puo essere venduto come qualsiasi altro prodotto
 - Ha un'identita distinta nel catalogo

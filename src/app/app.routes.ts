@@ -43,8 +43,8 @@ export const routes: Routes = [
 	},
 	{
 		path: 'catalog',
-		data: { title: 'Catalogo' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		data: { title: 'Prodotti' },
+		loadComponent: () => import('./features/products/products-page').then((m) => m.ProductsPage),
 	},
 	{
 		path: 'finance',

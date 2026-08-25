@@ -102,7 +102,7 @@ All technical infrastructure components have been implemented without business l
 | `/works` | Lavori | Lazy-loaded placeholder |
 | `/events` | Eventi | Lazy-loaded placeholder |
 | `/sales` | Vendite | Lazy-loaded placeholder |
-| `/catalog` | Catalogo | Lazy-loaded placeholder |
+| `/catalog` | Prodotti | Lazy-loaded feature |
 | `/finance` | Finanza | Lazy-loaded placeholder |
 | `/deadlines` | Scadenze | Lazy-loaded placeholder |
 | `/settings` | Impostazioni | Lazy-loaded placeholder |

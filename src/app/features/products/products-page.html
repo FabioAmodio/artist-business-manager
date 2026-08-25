@@ -1,0 +1,71 @@
+<section class="products-page" aria-labelledby="products-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Catalogo</p>
+      <h1 id="products-title">Prodotti</h1>
+    </div>
+    @if (!editingId()) {
+      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo prodotto</button>
+    }
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="toolbar">
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, descrizione, tag" /></label>
+    <label>Stato
+      <select name="activeFilter" [(ngModel)]="activeFilter">
+        <option value="all">Tutti</option>
+        <option value="active">Attivi</option>
+        <option value="inactive">Non attivi</option>
+      </select>
+    </label>
+  </div>
+
+  <p class="product-note">Catalogo centrale: Stampa A4, Sketch, Commissione e Bundle sono prodotti, non categorie.</p>
+
+  <div class="list-heading"><h2>Elenco prodotti</h2><span>{{ visibleProducts().length }} registrati</span></div>
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!visibleProducts().length) {
+    <div class="empty-state"><h3>Nessun prodotto registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo prodotto</button></div>
+  } @else {
+    <div class="product-list">
+      @for (product of visibleProducts(); track product.id) {
+        <article class="product-row">
+          <div>
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.active ? 'Attivo' : 'Non attivo' }}</p>
+          </div>
+          <div class="context-grid">
+            <span><strong>Prezzo suggerito</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span><strong>Descrizione</strong>{{ product.description || 'n.d.' }}</span>
+            <span><strong>Tag</strong>{{ product.tags.length ? product.tags.join(', ') : 'n.d.' }}</span>
+          </div>
+          <div class="relation-badges" aria-label="Relazioni future">
+            <span>Vendite</span><span>Lotti</span><span>Acquisti</span><span>Bundle</span>
+          </div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(product)">Modifica</button><button class="danger-button" type="button" (click)="remove(product)">Elimina</button></div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="product-dialog" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
+      <form class="product-form" (ngSubmit)="save()" #productForm="ngForm">
+        <div class="form-heading"><div><p class="eyebrow">Catalogo</p><h2 id="product-form-title">{{ editingId() ? 'Modifica prodotto' : 'Nuovo prodotto' }}</h2></div></div>
+        <div class="form-grid">
+          <label class="wide">Nome <input name="name" required [(ngModel)]="draft.name" /></label>
+          <label>Prezzo suggerito <input name="suggestedPrice" type="number" min="0" step="0.01" [(ngModel)]="draft.suggestedPrice" /></label>
+          <label class="checkbox-label"><input name="active" type="checkbox" [(ngModel)]="draft.active" /> Attivo</label>
+          <label class="full-width">Tag <input name="tags" [(ngModel)]="tagText" placeholder="fiera, novita, personalizzabile" /></label>
+          <label class="full-width">Descrizione <textarea name="description" rows="4" [(ngModel)]="draft.description"></textarea></label>
+        </div>
+        <app-form-actions [disabled]="productForm.invalid === true" [saving]="saving()" saveLabel="Salva prodotto" (cancel)="cancelForm()"></app-form-actions>
+      </form>
+    </section>
+  }
+</section>

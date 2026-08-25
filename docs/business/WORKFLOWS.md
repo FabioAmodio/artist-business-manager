@@ -176,6 +176,24 @@ Registrare una transazione verificabile, aggiornando la disponibilita e distingu
 ### Dati coinvolti
 Vendita, data, canale ed evento; cliente; prodotti, varianti, SKU e righe; quantita, prezzo, sconti e totale; magazzino; incasso, metodo, valuta e stato; resi e rettifiche.
 
+## 6.1 Gestione prodotti di catalogo
+
+### Attore
+Artista che prepara o aggiorna l'offerta vendibile.
+
+### Obiettivo
+Mantenere un catalogo rapido e coerente di prodotti fisici, offerte creative e bundle, senza attivare ancora workflow commissioni, vendite o magazzino.
+
+### Flusso
+1. Aprire la lista Prodotti.
+2. Cercare un prodotto esistente per nome, descrizione o tag.
+3. Creare o modificare nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo e tag.
+4. Inserire come nome prodotto le voci operative reali: Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch, Copertina, Illustrazione, Bundle o varianti effettivamente usate.
+5. Salvare localmente senza obbligare l'artista a definire categorie, varianti, lotti, magazzino o vendite.
+
+### Vincoli V1
+Commissione, Sketch e Bundle sono Prodotti. La loro presenza in catalogo non avvia workflow commissioni, non crea vendita e non modifica disponibilita. Durante una fiera questa scelta permette di cercare rapidamente l'offerta commerciale per nome senza scegliere una categoria intermedia.
+
 ## 7. Registrazione acquisti destinati alla vendita
 
 ### Attore

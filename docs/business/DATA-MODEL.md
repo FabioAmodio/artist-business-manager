@@ -64,7 +64,7 @@ Etichetta trasversale applicabile a piu entita per ricerca e classificazione. No
 
 ### WorkType
 
-Classificazione della natura di un lavoro, come commissione privata, editoriale, fumetto o illustrazione. Non e lo stato del lavoro e non identifica la sua origine commerciale.
+Classificazione della natura operativa di un lavoro, come commissione privata, editoriale o altro profilo creativo. Non e lo stato del lavoro e non identifica la sua origine commerciale. Quando il lavoro viene venduto o proposto come offerta ripetibile, il relativo formato deve essere anche un Prodotto di catalogo, ad esempio Commissione, Sketch, Copertina o Illustrazione.
 
 ### Work
 
@@ -159,7 +159,13 @@ Opera narrativa organizzata in serie, volume, episodio e tavole. Attributi: tito
 
 ### Prodotto
 
-Articolo o servizio vendibile di catalogo. Attributi: identita, tipo o categoria, descrizione, variante, SKU, data di acquisto o produzione, costo unitario, prezzo, soglia e stato. Nell'Excel `Tipo` puo essere solo una classificazione.
+Concetto centrale del catalogo: articolo, servizio, offerta creativa o composizione vendibile. Sono Prodotti sia oggetti fisici sia offerte creative: Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch, Copertina, Illustrazione e Bundle.
+
+Attributi V1: identita, nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo, tag come placeholder, riferimento futuro opzionale a Lotto, date di creazione e aggiornamento. Attributi futuri: variante, SKU, costo unitario, soglia, specializzazioni e configurazioni di categoria/tag.
+
+Nel foglio Excel storico `Tipo` puo indicare direttamente il prodotto venduto o acquistato, non una categoria stabile. Per la V1 le voci come Stampa A4, Stampa A5, Sketch, Commissione, Originale, Artbook, Fumetto, Calamita, Copertina, Illustrazione e Bundle devono quindi essere create come Prodotti distinti, non selezionate da una tendina Categoria.
+
+Commissione e Sketch non sono anagrafiche operative separate dal catalogo: sono Prodotti. Una Operation puo usare un Prodotto chiamato Commissione o Sketch e aggiungere workflow, cliente, stato e pagamenti, ma il catalogo resta la fonte della definizione commerciale ripetibile.
 
 ### Lotto o produzione prodotto
 
@@ -229,6 +235,7 @@ Le cardinalita indicano il modello concettuale previsto. Dove l'Excel non contie
 | Evento - Fiera | Evento `1` : Fiera `0..1` | ogni fiera e un evento specializzato |
 | Fiera - Operazione | Fiera `1` : operazione `0..*` per ruolo fieristico | relazione osservata tramite `Fiera + Anno` e distinta per origine, consegna e contabilizzazione |
 | Prodotto - Lotto | Prodotto `0..1` : lotto `0..*` | una tipologia puo avere piu produzioni |
+| Prodotto - Lotto V1 | Prodotto `0..*` : lotto `0..1` | riferimento tecnico opzionale preparatorio, senza gestione lotti |
 | Fornitore - Acquisto | Party con ruolo Fornitore `0..1` : acquisto `0..*` | il fornitore puo essere indicato quando noto, senza bloccare la registrazione rapida |
 | Acquisto - Prodotto | Acquisto `0..*` : prodotto `0..1` | collegamento futuro quando l'identita del prodotto e certa |
 | Acquisto - Lotto | Acquisto `0..*` : lotto `0..1` | collegamento futuro a stampa, ristampa o acquisto normalizzato |
@@ -245,11 +252,11 @@ Le cardinalita indicano il modello concettuale previsto. Dove l'Excel non contie
 | Attivita - Task | Attivita `1` : task `0..*` | scomposizione operativa |
 | Entita operativa - Scadenza | entita `0..1` : scadenza `0..*` | lavori, task, eventi e pagamenti hanno obblighi |
 | Entita - Allegato | Entita `1` : allegato `0..*` | documenti, ricevute e consegne |
-| Categoria - Tag | Categoria `1` : tag `1..*` | una categoria contiene uno o piu tag |
-| Prodotto - Categoria | Prodotto `0..*` : categoria `0..*` | un prodotto utilizza zero o piu categorie |
-| Tag - PriceModifier | Tag `1` : modificatore `0..1` | un tag puo avere fino a un modificatore di prezzo |
-| Categoria - ProductCategoryAssociation | Categoria `1` : associazione `0..*` | legami espliciti con prodotti |
-| Prodotto - ProductCategoryAssociation | Prodotto `1` : associazione `0..*` | un prodotto associato a piu categorie |
+| Categoria - Tag | Categoria `1` : tag `1..*` | relazione futura per configurazioni post-V1 |
+| Prodotto - Categoria | Prodotto `0..*` : categoria `0..*` | relazione futura; nella V1 il prodotto non ha categoria |
+| Tag - PriceModifier | Tag `1` : modificatore `0..1` | relazione futura per pricing configurabile |
+| Categoria - ProductCategoryAssociation | Categoria `1` : associazione `0..*` | relazione futura per legami espliciti con prodotti |
+| Prodotto - ProductCategoryAssociation | Prodotto `1` : associazione `0..*` | relazione futura; non parte del Product V1 |
 | Bundle - Prodotto | Bundle `1` : prodotto `1..*` | un bundle contiene almeno un prodotto (con quantita) |
 | Bundle - Categoria | Bundle `0..*` : categoria `0..*` | ereditate dai prodotti componenti |
 | Bundle - BundleOverride | Bundle `1` : override `0..*` | personalizzazioni di bundle rispetto ai prodotti |
@@ -432,10 +439,10 @@ I value object descrivono valori senza identita propria.
 - **ReferenceCode:** SKU, numero contratto o codice esterno distinto dal nome e dall'identita interna.
 - **DataQualityStatus:** noto, mancante, non applicabile, stimato o non classificato.
 - **PriceModifier:** tipo (Percentuale | ValoreOValore), valore numerico, valuta opzionale per ValoreFixo, descrizione opzionale.
-- **CategorySelectionMode:** Singola (uno solo) o Multipla (zero o piu).
-- **CategoryDefault:** categoria, tag predefinito opzionale, ordinamento, stato.
-- **ProductCategoryOverride:** prodotto, categoria, tag predefinito opzionale, ordinamento, valore libero suggerito.
-- **BundleOverride:** bundle, categoria, tag predefinito opzionale, valore libero precompilato.
+- **CategorySelectionMode:** futura configurazione post-V1: Singola (uno solo) o Multipla (zero o piu).
+- **CategoryDefault:** futura configurazione post-V1: categoria, tag predefinito opzionale, ordinamento, stato.
+- **ProductCategoryOverride:** futura configurazione post-V1: prodotto, categoria, tag predefinito opzionale, ordinamento, valore libero suggerito.
+- **BundleOverride:** futura configurazione post-V1: bundle, categoria, tag predefinito opzionale, valore libero precompilato.
 
 ## Regole di interpretazione e questioni aperte
 

@@ -26,6 +26,8 @@ La velocita di registrazione e una priorita di dominio. Registrare un'informazio
 
 `Operazione` e l'entita persistente primaria per ogni fatto commerciale o incarico. Non si devono modellare Vendita e Commissione come cicli di vita totalmente separati.
 
+Il Prodotto e invece la definizione commerciale di catalogo. Commissione, Sketch e Bundle sono Prodotti quando descrivono l'offerta vendibile; diventano Operazione solo quando esiste un caso concreto con cliente, stato, consegna, vendita o pagamento.
+
 Tipi iniziali di Operazione:
 
 - vendita immediata;

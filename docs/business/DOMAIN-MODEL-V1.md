@@ -103,7 +103,7 @@ Attributi:
 
 ### 3.6 Profilo Commissione
 
-Specializzazione di Operazione con brief, risultato, revisioni, consegne e stato operativo della commissione. Non crea una seconda identita persistente.
+Specializzazione di Operazione con brief, risultato, revisioni, consegne e stato operativo della commissione. Non crea una seconda identita persistente. La definizione commerciale ripetibile della commissione appartiene al catalogo come Prodotto di categoria `commission`.
 
 ### 3.7 Profilo Lavoro editoriale
 
@@ -127,7 +127,11 @@ Una scadenza mancante puo essere evidenziata come dato da completare; una scaden
 
 ### 3.11 Prodotto
 
-Articolo o servizio vendibile. Attributi: nome, descrizione, categoria/tipo, variante, SKU, costo unitario, prezzo base, soglia, stato, date e metadati comuni.
+Concetto centrale del catalogo e dell'offerta commerciale. Puo rappresentare oggetti fisici, originali, servizi creativi, commissioni, sketch, copertine, illustrazioni e bundle.
+
+Attributi V1: nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo, tag come placeholder, `lotId?` preparatorio, date e metadati comuni. Attributi futuri: variante, SKU, costo unitario, soglia, configurazioni, specializzazioni e gestione lotti.
+
+Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch, Copertina, Illustrazione e Bundle sono valori di Prodotto, non categorie. Diventano profili di Operazione solo quando esiste un caso concreto con cliente, stato, consegna o pagamento. Bundle e un Prodotto, eventualmente composto da altri prodotti in una fase successiva.
 
 ### 3.12 Lotto e Movimento di magazzino
 
@@ -147,7 +151,7 @@ Nella V1 l'Acquisto non genera Movimento di magazzino, non crea Lotto automatica
 
 `Tag` appartiene a una Categoria e contiene nome, ordine, stato, modificatore di prezzo e configurazione di testo libero.
 
-`ProductCategoryAssociation` collega prodotto e categoria con ordine, stato, default locale e valore libero suggerito.
+`ProductCategoryAssociation` collega prodotto e categoria con ordine, stato, default locale e valore libero suggerito. Non appartiene alla V1 del Prodotto: resta una specializzazione futura per varianti e configurazioni.
 
 `PriceModifier` e `percentage | fixed`, valore e valuta se fisso.
 
@@ -218,9 +222,9 @@ Queste entita non fanno parte dell'MVP implementativo corrente, ma i loro riferi
 | Acquisto - Lotto | `0..* : 0..1` | collegamento futuro a stampa/ristampa/acquisto |
 | Prodotto - Lotto | `0..1 : 0..*` | produzioni e acquisti |
 | Prodotto - Movimento magazzino | `1 : 0..*` | entrate, uscite, resi e rettifiche |
-| Prodotto - Categoria | `0..* : 0..*` | tramite ProductCategoryAssociation |
-| Categoria - Tag | `1 : 0..*` | ogni tag appartiene a una categoria |
-| Tag - PriceModifier | `1 : 0..1` | modificatore opzionale |
+| Prodotto - Categoria | `0..* : 0..*` | post-V1 tramite ProductCategoryAssociation; non presente nel Product V1 |
+| Categoria - Tag | `1 : 0..*` | post-V1 per configurazioni e varianti |
+| Tag - PriceModifier | `1 : 0..1` | post-V1 per pricing configurabile |
 | Bundle - BundleComponent | `1 : 1..*` | bundle con almeno un componente |
 | Bundle - BundleOverride | `1 : 0..*` | override per categoria o tag |
 | Progetto - Operazione | `1 : 0..*` | progetto puo contenere operazioni |

@@ -49,7 +49,7 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
   },
   {
     path: '/catalog',
-    label: 'Catalogo',
+    label: 'Prodotti',
     icon: '📦',
   },
   {

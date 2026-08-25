@@ -115,7 +115,7 @@ L'app ha una sidebar con 11 voci di navigazione:
 - Acquisti
 - Eventi
 - Vendite
-- Catalogo
+- Prodotti
 - Finanza
 - Scadenze
 - Impostazioni

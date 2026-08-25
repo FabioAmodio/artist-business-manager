@@ -27,6 +27,8 @@ Questa scelta evita duplicazione e divergenza tra commissioni, vendite e pagamen
 - solo Sale, ad esempio un fumetto venduto allo stand;
 - Work + Sale, ad esempio uno sketch richiesto, pagato e ritirato in giornata.
 
+`Prodotto` resta la definizione commerciale di catalogo. Commissione, Sketch e Bundle sono Prodotti quando descrivono l'offerta ripetibile; diventano parte di una `Operation` solo quando esiste un caso concreto con cliente, stato, consegna, vendita o pagamento.
+
 Permette inoltre di mantenere nello stesso confine:
 
 - cliente registrato o Cliente soft;
@@ -63,6 +65,10 @@ Scartata perche il pagamento non rappresenta il fatto creativo o commerciale com
 ### Acquisto destinato alla vendita come Operation
 
 Scartata per la V1 perche l'acquisto di prodotti destinati alla vendita non rappresenta una vendita al cliente ne un incarico creativo. E un costo di approvvigionamento osservabile nel foglio storico `Prodotti`, spesso senza prodotto o lotto normalizzato. Modellarlo come `Operation` rallenterebbe il workflow reale e confonderebbe Work/Sale con approvvigionamento. Resta collegabile in futuro a Prodotto, Lotto, Uscita o Pagamento.
+
+### Commissione, Sketch e Bundle come entita separate dal catalogo
+
+Scartata perche peggiora la velocita operativa e duplica l'offerta commerciale. In fiera l'artista deve poter cercare rapidamente un prodotto chiamato Sketch, Commissione o Bundle, poi aprire una Operation solo se serve gestire cliente, consegna, stato o pagamento. Il catalogo resta la fonte della definizione vendibile; Operation resta la fonte del fatto operativo. La V1 rimuove anche la categoria prodotto per evitare una selezione intermedia non presente nell'Excel storico.
 
 ## Criteri di revisione
 

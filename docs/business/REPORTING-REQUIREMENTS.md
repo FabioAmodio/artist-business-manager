@@ -132,6 +132,20 @@ Deve rispondere almeno a queste domande:
 - Quali prodotti hanno avuto il maggior numero di resi o rettifiche?
 - Quali sono le vendite per periodo, evento, cliente e canale?
 
+## Prodotti
+
+La V1 della feature Prodotti non implementa statistiche o dashboard. Il modello deve pero conservare le dimensioni minime per i report futuri: nome prodotto, stato attivo/non attivo, prezzo suggerito, tag e collegamento futuro a Lotto.
+
+Quando saranno implementati vendite e report, il reporting prodotti dovra rispondere almeno a queste domande:
+
+- Quali prodotti generano piu vendite o ricavi?
+- Quali prodotti attivi non sono stati venduti in un periodo?
+- Quali prodotti chiamati Commissione, Sketch, Copertina o Illustrazione generano piu richieste o incassi?
+- Quali bundle sono piu venduti e quali prodotti componenti contribuiscono al risultato?
+- Quali tag descrivono meglio vendite, richieste o prodotti portati in fiera?
+
+Filtri futuri minimi: periodo, prodotto, stato attivo, tag, lotto, evento, canale e intervallo di prezzo. I report devono distinguere il prezzo suggerito del catalogo dal prezzo effettivo registrato nella vendita.
+
 ## Acquisti destinati alla vendita
 
 La V1 della feature Acquisti non implementa statistiche o dashboard. Il modello deve pero conservare i dati necessari a ricostruire in futuro il costo di prodotti acquistati o prodotti per la vendita, coerentemente con il foglio storico `Prodotti`.

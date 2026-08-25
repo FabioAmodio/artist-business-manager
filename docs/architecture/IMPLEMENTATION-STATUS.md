@@ -18,11 +18,12 @@ Ultimo aggiornamento: 2026-08-25.
 | Fair / Eventi | Implementata V1 | CRUD, persistenza, validazioni, List First, FairSeries/FairEdition |
 | Party / Clienti / Fornitori | Implementata V1 | CRUD anagrafico, ricerca, filtro, persistenza; Fornitori come ruolo Party |
 | Acquisti | Implementata V1 | CRUD acquisti destinati alla vendita, ricerca, fornitore opzionale, persistenza |
+| Prodotti | Implementata V1 | CRUD prodotti di catalogo, ricerca, prezzo suggerito, tag placeholder, stato attivo |
 | Dashboard | Parziale | Pagina reale ma dati quasi tutti placeholder/in-memory |
 | Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
 | Operation | Solo documentata | Modello e ADR definiti, nessuna feature Angular |
 | Work / Sale | Solo documentate | Confini e lifecycle documentati |
-| Catalogo / Product / Bundle | Solo scheletro | Modelli e contratti, nessuna UI o persistenza concreta |
+| Catalogo / Product / Bundle | Parziale | Product implementato V1; Bundle come prodotto, composizione avanzata non implementata |
 | Finance / Pagamenti / Incassi | Solo documentata | Nessuna UI o repository reale |
 | Scadenze | Solo documentata | Nessuna UI o repository reale |
 | Import storico Excel | Solo documentata | Post-MVP/MVP+1 |
@@ -39,7 +40,7 @@ Ultimo aggiornamento: 2026-08-25.
 | `/settings` | `SettingsPage` | Parziale | Trasparenza AI e preferenze non persistite |
 | `/works` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
 | `/sales` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
-| `/catalog` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
+| `/catalog` | `ProductsPage` | Implementata V1 | Prodotti di catalogo: nome, prezzo suggerito, stato, tag, dialog |
 | `/finance` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
 | `/deadlines` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
 | `/404` | `NotFoundPage` | Implementata | Pagina errore |
@@ -53,6 +54,7 @@ Ultimo aggiornamento: 2026-08-25.
 | `ClientService` | Implementato V1 | CRUD Party, validazione nome, soft delete | Nessuna conversione reale Cliente soft -> Party, nessuna relazione Operation |
 | `SupplierService` | Implementato V1 | CRUD Party con ruolo Fornitore, validazione nome, soft delete | Nessuna relazione Acquisti/Spese/Pagamenti |
 | `PurchaseService` | Implementato V1 | CRUD Acquisti, validazione data/descrizione/importo, soft delete | Nessun magazzino, lotti, prodotti o pagamenti collegati |
+| `ProductService` | Implementato V1 | CRUD Prodotti, validazione nome/prezzo, normalizzazione tag, soft delete | Nessun workflow commissioni/sketch, vendite, magazzino, lotti o composizione bundle |
 | `FairContextService` | Parziale | Stato fiera attiva e AI settings in memoria | Non persistito, dati demo/in-memory, non usa repository |
 | `AppStateService` | Parziale | Online/offline, database ready, backup timestamp in memoria | Nessuna gestione quota, sync status, errori persistenti |
 | `AppNavigationService` | Implementato base | Navigazione applicativa | Nessuna policy avanzata |
@@ -68,8 +70,9 @@ Ultimo aggiornamento: 2026-08-25.
 | `ClientRepository` | Implementato V1 | `parties` | Ricerca attiva filtrata su clienti legacy/customer/commissioner, ordinamento nome, soft delete |
 | `SupplierRepository` | Implementato V1 | `parties` | Ricerca attiva filtrata su ruolo `supplier`, ordinamento nome, soft delete |
 | `PurchaseRepository` | Implementato V1 | `purchases` | Ricerca attiva, filtro fornitore, ordinamento per data acquisto decrescente, soft delete |
+| `ProductRepository` | Implementato V1 | `products` | Ricerca attiva, filtro stato, ordinamento nome, soft delete |
 | `IOperationRepository` | Solo contratto | nessuna | Nessuna implementazione |
-| `IProductRepository` | Solo contratto | nessuna | Nessuna implementazione |
+| `IProductRepository` | Contratto + implementazione | `products` | CRUD V1 prodotto centrale |
 | `IBundleRepository` | Solo contratto | nessuna | Nessuna implementazione |
 | `IClientRepository` | Contratto + implementazione | `parties` | `convertSoftCustomer` e placeholder |
 
@@ -78,7 +81,7 @@ Ultimo aggiornamento: 2026-08-25.
 ### IndexedDB / Dexie
 
 Database: `AppDatabase`  
-Versione schema: `6`
+Versione schema: `8`
 
 Collection reali:
 
@@ -87,6 +90,7 @@ Collection reali:
 - `fairEditions`;
 - `parties`;
 - `operations`;
+- `products`;
 - `purchases`.
 
 ### Migrazioni
@@ -95,6 +99,8 @@ Collection reali:
 - Versione 4: aggiunta `parties`.
 - Versione 5: aggiunta `operations`.
 - Versione 6: aggiunta `purchases`.
+- Versione 7: aggiunta `products`.
+- Versione 8: rimozione indice categoria da `products`, perche il Product V1 non ha categoria.
 
 ### Storage Provider
 

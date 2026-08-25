@@ -285,7 +285,7 @@ interface ISupplierRepository {
 
 ### IProductRepository
 
-Responsabilita: prodotti, bundle e snapshot di catalogo. Stock, lotti, soglie, movimenti di magazzino e inventario avanzato sono rinviati.
+Responsabilita: prodotti di catalogo, inclusi Stampa A4, Sketch, Commissione e Bundle come record prodotto. Stock, gestione lotti, soglie, movimenti di magazzino, composizione bundle avanzata e inventario avanzato sono rinviati.
 
 ### IPurchaseRepository
 
@@ -305,6 +305,7 @@ interface IProductRepository {
   getById(id: EntityId): Promise<Product | null>;
   list(filter?: ProductFilter): Promise<readonly Product[]>;
   save(product: Product): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
 }
 ```
 

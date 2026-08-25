@@ -4,7 +4,10 @@ export interface Product {
   readonly id: EntityId;
   readonly name: string;
   readonly description?: string;
-  readonly basePrice?: number;
+  readonly suggestedPrice?: number;
+  readonly active: boolean;
+  readonly tags: readonly string[];
+  readonly lotId?: EntityId;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;
   readonly deletedAt?: IsoDateTime;

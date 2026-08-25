@@ -69,7 +69,7 @@ Ripeti il Test 1.1 per ogni rotta:
 | Acquisti | `/purchases` | Test con lista |
 | Eventi | `/events` | Test calendario |
 | Vendite | `/sales` | Test storico |
-| Catalogo | `/catalog` | Test config |
+| Prodotti | `/catalog` | Test con lista |
 | Finanza | `/finance` | Test report |
 | Scadenze | `/deadlines` | Test calendar |
 | Impostazioni | `/settings` | Test config |
@@ -161,7 +161,7 @@ Ripeti il Test 1.1 per ogni rotta:
   - 👥 Clienti
   - 📅 Eventi
   - 💰 Vendite
-  - 📦 Catalogo
+   - 📦 Prodotti
   - 💳 Finanza
   - ⏰ Scadenze
   - ⚙ Impostazioni

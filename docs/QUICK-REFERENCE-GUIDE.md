@@ -415,7 +415,7 @@ npm run build
 | 5 | /purchases | Acquisti | ＋ |
 | 6 | /events | Eventi | 📅 |
 | 7 | /sales | Vendite | 💰 |
-| 8 | /catalog | Catalogo | 📦 |
+| 8 | /catalog | Prodotti | 📦 |
 | 9 | /finance | Finanza | 💳 |
 | 10 | /deadlines | Scadenze | ⏰ |
 | 11 | /settings | Impostazioni | ⚙ |

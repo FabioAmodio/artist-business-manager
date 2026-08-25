@@ -6,4 +6,5 @@ export interface IProductRepository {
   getById(id: EntityId): Promise<Product | null>;
   list(filter?: ProductFilter): Promise<readonly Product[]>;
   save(product: Product): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
 }

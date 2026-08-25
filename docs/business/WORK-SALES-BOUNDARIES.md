@@ -62,6 +62,8 @@ Esempi:
 
 Una commissione e un Work quando richiede produzione o completamento di un risultato creativo personalizzato.
 
+Nel catalogo, Commissione e Sketch restano Prodotti: descrivono l'offerta vendibile, il prezzo suggerito e i tag. Diventano Work solo quando esiste una richiesta concreta da gestire come Operation.
+
 Esempi:
 
 - il cliente chiede: "Puoi farmi un ritratto del mio personaggio?";

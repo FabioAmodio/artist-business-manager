@@ -54,7 +54,7 @@ Azione operativa atomica assegnabile e verificabile, necessaria per completare u
 
 ### Commissione
 
-Incarico richiesto da un committente per produrre un risultato specifico, generalmente con brief, compenso concordato, revisioni e consegna. Una commissione e un tipo di lavoro; non coincide con il progetto che puo contenerla ne con il pagamento che la remunera.
+Incarico richiesto da un committente per produrre un risultato specifico, generalmente con brief, compenso concordato, revisioni e consegna. Nel catalogo, Commissione e anche un tipo di Prodotto vendibile. Nel workflow operativo, una commissione concreta e una Operation con componente Work/Sale, cliente, stato e pagamenti.
 
 ## Eventi e commercio
 
@@ -92,7 +92,11 @@ Transazione commerciale in cui uno o piu prodotti vengono ceduti a un acquirente
 
 ### Prodotto
 
-Articolo o servizio definito nel catalogo e potenzialmente vendibile, con nome, identificativo, prezzo e regole proprie. Una vendita registra una fotografia del prodotto venduto, mentre il prodotto di catalogo puo cambiare in seguito.
+Articolo, servizio creativo, offerta o composizione definita nel catalogo e potenzialmente vendibile, con nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo e tag. Sono Prodotti anche Stampa A4, Stampa A5, Commissione, Sketch, Copertina, Illustrazione e Bundle. Una vendita registra una fotografia del prodotto venduto, mentre il prodotto di catalogo puo cambiare in seguito.
+
+### Categorie configurabili future
+
+Concetto non previsto nella V1. Le voci Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch, Copertina, Illustrazione e Bundle sono Prodotti, non categorie. Eventuali categorie configurabili future descriveranno varianti o opzioni, non sostituiranno il nome prodotto.
 
 ### Acquisto destinato alla vendita
 
