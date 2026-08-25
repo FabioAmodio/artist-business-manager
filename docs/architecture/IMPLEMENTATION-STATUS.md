@@ -6,6 +6,10 @@ Questo documento fotografa lo stato reale dell'implementazione rispetto alla doc
 
 Ultimo aggiornamento: 2026-08-25.
 
+## Priorita di implementazione
+
+Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design system e poi performance. I budget Angular sugli stili dei componenti sono soglie di controllo, non un motivo per impoverire layout, accessibilita o leggibilita. Il budget `anyComponentStyle` e impostato a 8 kB warning e 12 kB errore per lasciare spazio a componenti operativi complessi come Wizard Fiera e Backoffice, mantenendo comunque un limite esplicito.
+
 ## Sintesi generale
 
 | Area | Stato | Note |
@@ -22,7 +26,7 @@ Ultimo aggiornamento: 2026-08-25.
 | Lotti | Implementata V1 | CRUD lotti, ricerca, Product 1:N, acquisto origine opzionale, alias |
 | Dashboard | Parziale | Pagina reale ma dati quasi tutti placeholder/in-memory |
 | Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
-| Operation | Solo documentata | Modello e ADR definiti, nessuna feature Angular |
+| Operation | Implementata V1 | Lista, wizard fiera rapido, backoffice, persistenza IndexedDB |
 | Work / Sale | Solo documentate | Confini e lifecycle documentati |
 | Catalogo / Product / Bundle | Parziale | Product implementato V1; Bundle come prodotto, composizione avanzata non implementata |
 | Finance / Pagamenti / Incassi | Solo documentata | Nessuna UI o repository reale |
@@ -40,8 +44,8 @@ Ultimo aggiornamento: 2026-08-25.
 | `/lots` | `LotsPage` | Implementata V1 | Lotti: prodotto, acquisto origine, alias, note |
 | `/events` | `FairsPage` | Implementata V1 | Gestione FairSeries/FairEdition con dati economici aggregati V1 |
 | `/settings` | `SettingsPage` | Parziale | Trasparenza AI e preferenze non persistite |
-| `/works` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
-| `/sales` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
+| `/works` | `OperationsPage` | Implementata V1 | Backoffice/registrazione Operazioni con profilo Work/Sale |
+| `/sales` | `OperationsPage` | Implementata V1 | Wizard fiera e lista Operazioni |
 | `/catalog` | `ProductsPage` | Implementata V1 | Prodotti di catalogo: nome, prezzo suggerito, stato, tag, dialog |
 | `/finance` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
 | `/deadlines` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
@@ -58,6 +62,7 @@ Ultimo aggiornamento: 2026-08-25.
 | `PurchaseService` | Implementato V1 | CRUD Acquisti, validazione data/descrizione/importo, soft delete | Nessun magazzino, prodotti/pagamenti solo collegamenti preparatori |
 | `ProductService` | Implementato V1 | CRUD Prodotti, validazione nome/prezzo, normalizzazione tag, soft delete | Nessun workflow commissioni/sketch, vendite, magazzino o composizione bundle |
 | `LotService` | Implementato V1 | CRUD Lotti, validazione nome/prodotto, normalizzazione alias, soft delete | Nessuna assegnazione vendita, costo, giacenza o movimento magazzino |
+| `OperationService` | Implementato V1 | CRUD Operazioni, prodotto/lotto/cliente soft/fiera, soft delete | Nessun incasso, nessun workflow avanzato di vendita o commissione |
 | `FairContextService` | Parziale | Stato fiera attiva e AI settings in memoria | Non persistito, dati demo/in-memory, non usa repository |
 | `AppStateService` | Parziale | Online/offline, database ready, backup timestamp in memoria | Nessuna gestione quota, sync status, errori persistenti |
 | `AppNavigationService` | Implementato base | Navigazione applicativa | Nessuna policy avanzata |

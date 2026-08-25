@@ -20,7 +20,10 @@ export interface Operation {
   readonly partyId?: EntityId;
   readonly fairEditionId?: EntityId;
   readonly productId?: EntityId;
+  readonly lotId?: EntityId;
+  readonly customerName?: string;
   readonly amount?: number;
+  readonly notes?: string;
   readonly workStatus?: 'draft' | 'requested' | 'accepted' | 'in-progress' | 'ready' | 'delivered' | 'completed' | 'cancelled';
   readonly saleStatus?: 'draft' | 'pending-payment' | 'partially-paid' | 'paid' | 'refunded' | 'cancelled';
   readonly economicStatus?: 'preventivato' | 'concordato' | 'acconto-ricevuto' | 'parzialmente-pagato' | 'pagato' | 'insoluto' | 'annullato';

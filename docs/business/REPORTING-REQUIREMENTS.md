@@ -120,6 +120,8 @@ Il margine deve dichiarare se considera solo spese direttamente associate oppure
 
 ## Vendite
 
+I report vendite dovranno considerare che la Modalita Fiera salva Operazioni rapide e potenzialmente incomplete. I totali devono distinguere dati completi, dati mancanti e record da completare in Backoffice.
+
 Deve rispondere almeno a queste domande:
 
 - Quali prodotti vendo di piu per quantita?

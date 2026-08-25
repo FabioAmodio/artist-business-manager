@@ -161,20 +161,30 @@ Evento, tipo, luogo, date e organizzatore; stand e logistica; prodotti, varianti
 Artista o collaboratore che registra una vendita online, in fiera, in negozio o diretta.
 
 ### Obiettivo
-Registrare una transazione verificabile, aggiornando la disponibilita e distinguendo vendita, incasso e reso.
+Registrare una transazione o richiesta verificabile come Operazione, privilegiando velocita in fiera e completamento successivo in backoffice.
 
 ### Flusso
-1. Selezionare canale, con eventuale evento associato come contesto distinto.
-2. Creare vendita con data, cliente opzionale e stato.
-3. Aggiungere una riga per ogni prodotto o variante.
-4. Conservare nella riga quantita e prezzo applicato.
-5. Registrare il movimento di uscita dal magazzino.
-6. Registrare incasso, metodo, valuta e stato oppure il residuo.
-7. Gestire annullamenti e resi con movimenti compensativi tracciati.
-8. Rendere la vendita disponibile nei report.
+1. Premere `+` in Modalita Fiera.
+2. Selezionare subito il Prodotto da prodotti recenti o dal catalogo completo.
+3. Aprire il form rapido gia precompilato con il prodotto scelto.
+4. Inserire solo descrizione, importo e cliente opzionale.
+5. Se esiste una fiera corrente attiva, associarla automaticamente senza chiedere selezione manuale.
+6. Salvare l'Operazione anche se mancano cliente, lotto, stato economico o dettagli completi.
+7. In Backoffice correggere descrizione, importi, cliente, evento, lotto, note e dati mancanti.
+8. Rendere l'Operazione disponibile per future vendite, incassi e report.
 
 ### Dati coinvolti
-Vendita, data, canale ed evento; cliente; prodotti, varianti, SKU e righe; quantita, prezzo, sconti e totale; magazzino; incasso, metodo, valuta e stato; resi e rettifiche.
+Operazione, prodotto, descrizione, importo, cliente assente/soft/registrato, fiera, lotto opzionale solo in backoffice, note e stato di completezza. Magazzino, incassi completi, resi e rettifiche non sono parte del wizard rapido.
+
+### Catalogo rapido fiera
+
+La Modalita Fiera mostra nella selezione iniziale un unico elenco con tutti i prodotti attivi del catalogo. I prodotti piu usati nelle ultime 10 fiere concluse in assoluto sono ordinati piu in alto, senza creare gruppi separati. Non usa le ultime 10 partecipazioni alla stessa fiera, ne statistiche per citta o organizzatore.
+
+### Vincoli fiera
+
+Il wizard rapido non richiede Lotto e non obbliga alla creazione di un Party. Il cliente puo essere assente, soft o selezionato tra quelli esistenti. La completezza dei dati viene recuperata successivamente in Backoffice.
+
+Quando l'artista digita un nome cliente, l'app puo mostrare Party esistenti simili e l'opzione di continuare con Cliente soft. Non deve mai associare automaticamente un Party basandosi solo sul nome digitato.
 
 ## 6.1 Gestione prodotti di catalogo
 

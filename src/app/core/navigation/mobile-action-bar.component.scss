@@ -16,7 +16,8 @@
   z-index: var(--z-fixed);
 }
 
-.mobile-bar a {
+.mobile-bar a,
+.mobile-bar button {
   align-items: center;
   color: inherit;
   display: flex;
@@ -27,6 +28,8 @@
   min-width: 3.5rem;
   text-decoration: none;
 }
+
+.mobile-bar button { border: 0; font-family: inherit; }
 
 .mobile-bar span {
   font: 600 .65rem var(--font-sans);

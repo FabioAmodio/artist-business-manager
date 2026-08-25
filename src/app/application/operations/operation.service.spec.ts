@@ -23,11 +23,13 @@ describe('OperationService', () => {
     TestBed.configureTestingModule({ providers: [OperationService, { provide: OperationRepository, useValue: repository }] });
     const service = TestBed.inject(OperationService);
 
-    const created = await service.create({ type: 'commission', title: 'Ritratto', description: '', workStatus: 'draft', needsReview: false });
+    const created = await service.create({ type: 'commission', title: 'Ritratto', description: '', productId: 'product-1', customerName: 'Cliente fiera', workStatus: 'draft', needsReview: false });
     const updated = await service.update(created.id, { ...created, title: 'Ritratto A4' });
 
     expect(updated.id).toBe(created.id);
     expect(updated.title).toBe('Ritratto A4');
+    expect(updated.productId).toBe('product-1');
+    expect(updated.customerName).toBe('Cliente fiera');
     expect(repository.operations.size).toBe(1);
   });
 

@@ -187,7 +187,11 @@ L'Acquisto rappresenta il fatto osservabile nel foglio storico `Prodotti`: una s
 
 ### Vendita
 
-Transazione commerciale in cui prodotti vengono ceduti a fronte di un prezzo. Attributi: identita, data o contesto temporale, fiera/evento, canale, cliente opzionale, righe, totale, stato, metodo di pagamento e note. Le righe Excel sono il livello osservabile piu vicino.
+Transazione commerciale in cui prodotti vengono ceduti a fronte di un prezzo. Nella V1 viene registrata come Operazione, con Prodotto, descrizione, importo, cliente opzionale, fiera/evento, lotto opzionale per backoffice e note. Le righe Excel sono il livello osservabile piu vicino, ma durante una fiera il salvataggio rapido prevale sulla completezza.
+
+La Modalita Fiera apre prima un unico elenco di Prodotti ordinato per uso recente nelle ultime 10 fiere concluse, poi un form rapido gia precompilato. Puo salvare una Operazione con solo Prodotto, descrizione, importo e cliente opzionale. Se una fiera corrente e attiva viene collegata automaticamente. Il Lotto non e richiesto al salvataggio rapido.
+
+Il cliente digitato in fiera puo restare Cliente soft. Eventuali Party esistenti vengono solo suggeriti: l'associazione a un Party richiede scelta esplicita dell'utente.
 
 ### Riga di vendita
 

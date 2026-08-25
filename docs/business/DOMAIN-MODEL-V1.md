@@ -90,9 +90,10 @@ Attributi:
 - `createdAt`, date dell'operazione, consegna e ultimo contatto;
 - `description`, note e testo libero;
 - `customer`: Cliente soft;
+- `partyId?` oppure `customerName?` per cliente registrato o cliente soft;
 - `commissionerId?` e `publisherId?`;
 - `channelId?`;
-- `productId?`, `bundleId?`, righe e quantita;
+- `productId?`, `lotId?`, `bundleId?`, righe e quantita;
 - tag e configurazione applicata;
 - `plannedAmount?`, `agreedAmount?`, `invoicedAmount?`, `receivedAmount`, `outstandingAmount`;
 - valuta e metodo di pagamento quando applicabili;
@@ -100,6 +101,10 @@ Attributi:
 - stato di completezza, `missingFields`, `needsReview`, `nextAction`;
 - `originFairId?`, `deliveryFairId?`, `accountingFairId?`;
 - scadenze, incassi, allegati, audit e provenance.
+
+La Modalita Fiera crea Operazioni tolleranti ai dati mancanti: il wizard parte dalla selezione Prodotto e richiede poi solo descrizione, importo e cliente opzionale. La fiera attiva viene associata automaticamente quando presente; il Lotto resta opzionale e viene gestito in Backoffice.
+
+I suggerimenti su Party esistenti sono assistivi e non decisionali: l'associazione a `partyId` richiede selezione esplicita, altrimenti il testo resta `customerName`.
 
 ### 3.6 Profilo Commissione
 

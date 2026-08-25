@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FairContextService } from '../event/fair-context.service';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -10,6 +9,9 @@ import { FairContextService } from '../event/fair-context.service';
   styleUrl: './mobile-action-bar.component.scss',
 })
 export class MobileActionBarComponent {
-  private readonly fairContext = inject(FairContextService);
-  protected readonly fairModeActive = this.fairContext.fairModeActive;
+  private readonly router = inject(Router);
+
+  protected openQuickAction(): void {
+    void this.router.navigate(['/sales'], { queryParams: { create: Date.now().toString() } });
+  }
 }

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { OperationRepository } from '../../core/repositories/operation.repository';
 import type { Operation, OperationType } from '../../domain/models/operation';
 
-export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'amount' | 'workStatus' | 'saleStatus' | 'economicStatus' | 'needsReview'>;
+export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'productId' | 'lotId' | 'customerName' | 'amount' | 'notes' | 'workStatus' | 'saleStatus' | 'economicStatus' | 'needsReview'>;
 
 @Injectable({ providedIn: 'root' })
 export class OperationService {

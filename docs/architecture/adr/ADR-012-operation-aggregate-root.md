@@ -31,6 +31,8 @@ Questa scelta evita duplicazione e divergenza tra commissioni, vendite e pagamen
 
 `Lotto` resta distinto da `Prodotto`: rappresenta un raggruppamento operativo di quel prodotto. Una vendita rapida deve poter salvare il Prodotto senza selezionare subito il Lotto.
 
+La registrazione Operazioni ha due superfici: Modalita Fiera, ottimizzata per pochi passaggi e dati incompleti, e Backoffice, dedicato a correzioni e completamento. Entrambe scrivono la stessa `Operation`.
+
 Permette inoltre di mantenere nello stesso confine:
 
 - cliente registrato o Cliente soft;
@@ -47,6 +49,7 @@ Permette inoltre di mantenere nello stesso confine:
 - Il futuro `OperationRepository` sara il repository principale di scrittura per questi casi.
 - `WorkRepository` e `SaleRepository`, se introdotti, dovranno essere query/proiezioni o adapter di lettura, non fonti di verita autonome.
 - Le feature Angular dovranno evitare di creare una commissione e una vendita separate quando descrivono lo stesso fatto reale.
+- La Modalita Fiera non deve richiedere selezione Lotto o creazione Party; questi dati possono essere recuperati dopo.
 - Le transizioni operative e gli stati economici devono essere coordinati dalla `Operation`, mantenendo concetti separati.
 - La migrazione da dati storici dovra mappare righe legacy verso Operation, marcando i casi ambigui come `needsReview`.
 

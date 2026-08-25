@@ -1,7 +1,7 @@
 <nav class="mobile-bar" aria-label="Navigazione mobile">
   <a routerLink="/dashboard">⌂<span>Home</span></a>
   <a routerLink="/events">◷<span>Eventi</span></a>
-  <a class="fab" [routerLink]="fairModeActive() ? '/sales' : '/works'" [attr.aria-label]="fairModeActive() ? 'Nuova vendita fiera' : 'Nuova commissione'">+</a>
+  <button class="fab" type="button" (click)="openQuickAction()" aria-label="Nuova operazione fiera">+</button>
   <a routerLink="/catalog">□<span>Prodotti</span></a>
   <a routerLink="/settings">•••<span>Altro</span></a>
 </nav>

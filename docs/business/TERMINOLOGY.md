@@ -90,6 +90,10 @@ Entrate collegate alla partecipazione a una fiera. Il rimborso compensa costi sp
 
 Transazione commerciale in cui uno o piu prodotti vengono ceduti a un acquirente a fronte di un prezzo. La vendita contiene righe, quantita e prezzi applicati; puo risultare non ancora incassata e non e sinonimo di entrata.
 
+Nella V1 operativa, una vendita in fiera viene salvata come Operazione rapida: selezione prodotto, descrizione, importo e cliente opzionale. Evento e lotto non devono rallentare il salvataggio; l'evento attivo puo essere automatico e il lotto resta completabile in Backoffice.
+
+Un nome cliente digitato puo generare suggerimenti di Party esistenti, ma non viene associato automaticamente: senza scelta esplicita resta Cliente soft.
+
 ### Prodotto
 
 Articolo, servizio creativo, offerta o composizione definita nel catalogo e potenzialmente vendibile, con nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo e tag. Sono Prodotti anche Stampa A4, Stampa A5, Commissione, Sketch, Copertina, Illustrazione e Bundle. Una vendita registra una fotografia del prodotto venduto, mentre il prodotto di catalogo puo cambiare in seguito.
