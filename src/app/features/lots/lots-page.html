@@ -1,11 +1,10 @@
 <section class="lots-page" aria-labelledby="lots-title">
   <header class="page-header">
     <div>
-      <p class="eyebrow">Catalogo</p>
-      <h1 id="lots-title">Lotti</h1>
+      <h1 id="lots-title">Collegamenti</h1>
     </div>
     @if (!editingId()) {
-      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo lotto</button>
+      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo collegamento</button>
     }
   </header>
 
@@ -13,16 +12,14 @@
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
   <div class="toolbar">
-    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Nome lotto, prodotto, acquisto, alias, note" /></label>
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Nome collegamento, prodotto, acquisto, alias, note" /></label>
   </div>
 
-  <p class="lot-note">Il prodotto resta cio che viene venduto; il lotto rappresenta una produzione o un acquisto specifico.</p>
-
-  <div class="list-heading"><h2>Elenco lotti</h2><span>{{ visibleLots().length }} registrati</span></div>
+  <div class="list-heading"><h2>Elenco collegamenti</h2><span>{{ visibleLots().length }} registrati</span></div>
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleLots().length) {
-    <div class="empty-state"><h3>Nessun lotto registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo lotto</button></div>
+    <div class="empty-state"><h3>Nessun collegamento registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo collegamento</button></div>
   } @else {
     <div class="lot-list">
       @for (lot of visibleLots(); track lot.id) {
@@ -36,10 +33,7 @@
             <span><strong>Alias</strong>{{ lot.aliases?.length ? lot.aliases.join(', ') : 'n.d.' }}</span>
             <span><strong>Note</strong>{{ lot.notes || 'n.d.' }}</span>
           </div>
-          <div class="relation-badges" aria-label="Relazioni future">
-            <span>Vendite</span><span>Assegnazione</span>
-          </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(lot)">Modifica</button><button class="danger-button" type="button" (click)="remove(lot)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(lot)">Modifica</button><button class="danger-button" type="button" [disabled]="isLotUsed(lot)" [title]="isLotUsed(lot) ? 'Collegamento usato in un\'operazione' : 'Elimina collegamento'" (click)="remove(lot)">Elimina</button></div>
         </article>
       }
     </div>
@@ -49,9 +43,9 @@
     <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
     <section class="lot-dialog" role="dialog" aria-modal="true" aria-labelledby="lot-form-title">
       <form class="lot-form" (ngSubmit)="save()" #lotForm="ngForm">
-        <div class="form-heading"><div><p class="eyebrow">Lotto</p><h2 id="lot-form-title">{{ editingId() ? 'Modifica lotto' : 'Nuovo lotto' }}</h2></div></div>
+        <div class="form-heading"><div><h2 id="lot-form-title">{{ editingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2></div></div>
         <div class="form-grid">
-          <label class="wide">Nome lotto <input name="name" required [(ngModel)]="draft.name" placeholder="Es. Tipografia marzo 2026" /></label>
+          <label class="wide">Nome collegamento <input name="name" required [(ngModel)]="draft.name" placeholder="Es. Tipografia marzo 2026" /></label>
           <label>Prodotto
             <select name="productId" required [(ngModel)]="draft.productId">
               <option value="">Seleziona prodotto</option>
@@ -67,7 +61,7 @@
           <label class="full-width">Alias <input name="aliases" [(ngModel)]="aliasText" /></label>
           <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
         </div>
-        <app-form-actions [disabled]="lotForm.invalid === true" [saving]="saving()" saveLabel="Salva lotto" (cancel)="cancelForm()"></app-form-actions>
+        <app-form-actions [disabled]="lotForm.invalid === true" [saving]="saving()" saveLabel="Salva collegamento" (cancel)="cancelForm()"></app-form-actions>
       </form>
     </section>
   }

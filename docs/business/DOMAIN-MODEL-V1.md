@@ -102,7 +102,7 @@ Attributi:
 - `originFairId?`, `deliveryFairId?`, `accountingFairId?`;
 - scadenze, incassi, allegati, audit e provenance.
 
-La Modalita Fiera crea Operazioni tolleranti ai dati mancanti: il wizard parte dalla selezione Prodotto e richiede poi solo descrizione, importo e cliente opzionale. La fiera attiva viene associata automaticamente quando presente; il Lotto resta opzionale e viene gestito in Backoffice.
+La Modalita Fiera crea Operazioni tolleranti ai dati mancanti: il wizard parte dalla selezione Prodotto e richiede poi solo descrizione, importo e cliente opzionale. La fiera attiva viene associata automaticamente quando presente; il Lotto resta opzionale e viene gestito in Backoffice. Il `+` mobile apre sempre questo flusso.
 
 I suggerimenti su Party esistenti sono assistivi e non decisionali: l'associazione a `partyId` richiede selezione esplicita, altrimenti il testo resta `customerName`.
 

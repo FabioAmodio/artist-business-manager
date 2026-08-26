@@ -99,7 +99,7 @@ All technical infrastructure components have been implemented without business l
 | `/clients` | Clienti | Lazy-loaded placeholder |
 | `/suppliers` | Fornitori | Lazy-loaded feature |
 | `/purchases` | Acquisti | Lazy-loaded feature |
-| `/lots` | Lotti | Lazy-loaded feature |
+| `/lots` | Collegamenti | Lazy-loaded feature tecnica, non presente nel menu |
 | `/works` | Lavori | Lazy-loaded placeholder |
 | `/events` | Eventi | Lazy-loaded placeholder |
 | `/sales` | Vendite | Lazy-loaded placeholder |

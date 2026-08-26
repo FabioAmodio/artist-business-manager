@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { FairService, type FairInput } from '../../application/fairs/fair.service';
 import { FairValidationError } from '../../application/fairs/fair.service';
+import { OperationService } from '../../application/operations/operation.service';
 import type { FairValidationIssue } from '../../domain/rules/fair-validation';
 import type { Fair } from '../../domain/models/fair';
 import type { FairSeries } from '../../domain/models/fair';
+import type { Operation } from '../../domain/models/operation';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 
 @Component({
@@ -16,7 +18,9 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 })
 export class FairsPage implements OnInit {
   private readonly service = inject(FairService);
+  private readonly operationService = inject(OperationService);
   protected readonly fairs = signal<readonly Fair[]>([]);
+  protected readonly operations = signal<readonly Operation[]>([]);
   protected readonly series = signal<readonly FairSeries[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -90,12 +94,13 @@ export class FairsPage implements OnInit {
     catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare la fiera.'); }
   }
 
-  private async load(): Promise<void> { this.loading.set(true); try { this.fairs.set(await this.service.list()); } catch { this.errorMessage.set('Impossibile caricare le fiere.'); } finally { this.loading.set(false); } }
+  private async load(): Promise<void> { this.loading.set(true); try { const [fairs, operations] = await Promise.all([this.service.list(), this.operationService.list()]); this.fairs.set(fairs); this.operations.set(operations); } catch { this.errorMessage.set('Impossibile caricare le fiere.'); } finally { this.loading.set(false); } }
   private async loadSeries(): Promise<void> { try { this.series.set(await this.service.listSeries()); } catch { this.errorMessage.set('Impossibile caricare le serie di fiere.'); } }
   private resetMessages(): void { this.errorMessage.set(''); this.successMessage.set(''); }
   private warningsAcknowledged = false;
   protected hasWarnings(): boolean { return this.validationIssues().some((issue) => issue.severity === 'WARNING'); }
   protected hasFieldError(field: string): boolean { return this.validationIssues().some((issue) => issue.severity === 'ERROR' && issue.fields?.includes(field)); }
+  protected isFairUsed(fair: Fair): boolean { return this.operations().some((operation) => operation.fairEditionId === fair.id); }
 
   protected totalCosts(fair: Fair): number | undefined {
     const values = [fair.standCost, fair.hotelCost, fair.travelCost, fair.otherCosts]
@@ -105,50 +110,44 @@ export class FairsPage implements OnInit {
   }
 
   protected fairBalance(fair: Fair): number | undefined {
+    const revenue = this.fairRevenue(fair);
     const total = this.totalCosts(fair);
-    const reimbursement = this.amountValue(fair.reimbursement);
-    if (typeof total !== 'number' && typeof reimbursement !== 'number') return undefined;
-    return (reimbursement ?? 0) - (total ?? 0);
+    if (typeof revenue !== 'number' && typeof total !== 'number') return undefined;
+    return (revenue ?? 0) - (total ?? 0);
   }
+
+  protected fairRevenue(fair: Fair): number | undefined {
+    const sales = this.operations()
+      .filter((operation) => operation.type === 'sale' && operation.fairEditionId === fair.id)
+      .reduce((total, operation) => total + (operation.amount ?? 0), 0);
+    const reimbursement = this.amountValue(fair.reimbursement);
+    if (!sales && typeof reimbursement !== 'number') return undefined;
+    return sales + (reimbursement ?? 0);
+  }
+
+  protected isCostCovered(fair: Fair, cost: 'stand' | 'travel' | 'hotel' | 'other'): boolean {
+    let available = this.fairRevenue(fair) ?? 0;
+    for (const currentCost of ['stand', 'travel', 'hotel', 'other'] as const) {
+      const amount = this.amountValue(this.costAmount(fair, currentCost)) ?? 0;
+      if (currentCost === cost) return available >= amount;
+      available -= amount;
+    }
+    return false;
+  }
+
+  protected coverageLabel(fair: Fair, cost: 'stand' | 'travel' | 'hotel' | 'other'): string {
+    const labels = { stand: 'Stand', travel: 'Viaggio', hotel: 'Hotel', other: 'Altri costi' };
+    return `${labels[cost]} ${this.isCostCovered(fair, cost) ? 'coperto' : 'non coperto'}`;
+  }
+
+  protected hasOtherCosts(fair: Fair): boolean { return (this.amountValue(fair.otherCosts) ?? 0) !== 0; }
 
   protected formatMoney(value: number | undefined): string {
     return typeof value === 'number' ? `${value.toFixed(2)} €` : 'n.d.';
   }
 
-  protected budgetLabel(fair: Fair): string {
-    const balance = this.fairBalance(fair);
-    if (typeof balance !== 'number') return 'Budget n.d.';
-    if (balance > 0) return 'Budget positivo';
-    if (balance < 0) return 'Budget negativo';
-    return 'Budget neutro';
-  }
-
-  protected budgetKind(fair: Fair): 'success' | 'warning' | 'neutral' {
-    const balance = this.fairBalance(fair);
-    if (typeof balance !== 'number') return 'neutral';
-    return balance >= 0 ? 'success' : 'warning';
-  }
-
-  protected hotelLabel(fair: Fair): string { return fair.hotelPaid ? 'Hotel pagato' : (this.amountValue(fair.hotelCost) ? 'Hotel da pagare' : 'Hotel non registrato'); }
-  protected travelLabel(fair: Fair): string { return fair.travelPaid ? 'Viaggio pagato' : (this.amountValue(fair.travelCost) ? 'Viaggio da pagare' : 'Viaggio non definito'); }
-  protected standLabel(fair: Fair): string { return fair.standPaid ? 'Stand pagato' : (this.amountValue(fair.standCost) ? 'Stand da pagare' : 'Stand da verificare'); }
-  protected reimbursementLabel(fair: Fair): string {
-    const reimbursement = this.amountValue(fair.reimbursement);
-    return typeof reimbursement === 'number' ? `Rimborso ${this.formatMoney(reimbursement)}` : 'Rimborso n.d.';
-  }
-
-  protected eventStatusLabel(fair: Fair): string {
-    const today = new Date().toISOString().slice(0, 10);
-    if (fair.startDate <= today && today <= fair.endDate) return 'In corso';
-    if (fair.endDate < today) return 'Conclusa';
-    return 'Solo pianificata';
-  }
-
-  protected eventStatusKind(fair: Fair): 'success' | 'warning' | 'neutral' {
-    const today = new Date().toISOString().slice(0, 10);
-    if (fair.startDate <= today && today <= fair.endDate) return 'success';
-    if (fair.endDate < today) return 'neutral';
-    return 'warning';
+  private costAmount(fair: Fair, cost: 'stand' | 'travel' | 'hotel' | 'other'): number | undefined {
+    return { stand: fair.standCost, travel: fair.travelCost, hotel: fair.hotelCost, other: fair.otherCosts }[cost];
   }
 
   private emptyDraft(): FairInput {

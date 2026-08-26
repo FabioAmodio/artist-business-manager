@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ClientService, type ClientInput } from '../../application/clients/client.service';
+import { OperationService } from '../../application/operations/operation.service';
+import type { Operation } from '../../domain/models/operation';
 import type { Party } from '../../domain/models/party';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 
@@ -13,7 +15,9 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 })
 export class ClientsPage implements OnInit {
   private readonly service = inject(ClientService);
+  private readonly operationService = inject(OperationService);
   protected readonly clients = signal<readonly Party[]>([]);
+  protected readonly operations = signal<readonly Operation[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly creating = signal(false);
@@ -32,6 +36,8 @@ export class ClientsPage implements OnInit {
     const type = this.typeFilter();
     return type === 'all' ? this.clients() : this.clients().filter((client) => client.type === type);
   }
+
+  protected isClientUsed(client: Party): boolean { return this.operations().some((operation) => operation.partyId === client.id); }
 
   protected startCreating(): void {
     this.resetMessages();
@@ -95,7 +101,9 @@ export class ClientsPage implements OnInit {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      this.clients.set(await this.service.list(this.query()));
+      const [clients, operations] = await Promise.all([this.service.list(this.query()), this.operationService.list()]);
+      this.clients.set(clients);
+      this.operations.set(operations);
     } catch {
       this.errorMessage.set('Impossibile caricare i clienti.');
     } finally {

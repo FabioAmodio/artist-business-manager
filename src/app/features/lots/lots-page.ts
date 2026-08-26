@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
 import { ProductService } from '../../application/products/product.service';
+import { OperationService } from '../../application/operations/operation.service';
 import { PurchaseService } from '../../application/purchases/purchase.service';
 import type { Lot } from '../../domain/models/lot';
 import type { Product } from '../../domain/models/product';
@@ -17,9 +18,11 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 })
 export class LotsPage implements OnInit {
   private readonly service = inject(LotService);
+  private readonly operationService = inject(OperationService);
   private readonly productService = inject(ProductService);
   private readonly purchaseService = inject(PurchaseService);
   protected readonly lots = signal<readonly Lot[]>([]);
+  protected readonly operations = signal<readonly import('../../domain/models/operation').Operation[]>([]);
   protected readonly products = signal<readonly Product[]>([]);
   protected readonly purchases = signal<readonly Purchase[]>([]);
   protected readonly loading = signal(true);
@@ -48,6 +51,7 @@ export class LotsPage implements OnInit {
     const purchase = this.purchases().find((item) => item.id === id);
     return purchase ? `${purchase.purchaseDate} · ${purchase.description}` : 'Acquisto non indicato';
   }
+  protected isLotUsed(lot: Lot): boolean { return this.operations().some((operation) => operation.lotId === lot.id); }
 
   protected startCreating(): void {
     this.resetMessages();
@@ -84,10 +88,10 @@ export class LotsPage implements OnInit {
       if (this.editingId()) await this.service.update(this.editingId()!, input);
       else await this.service.create(input);
       this.cancelForm();
-      this.successMessage.set('Lotto salvato localmente.');
+      this.successMessage.set('Collegamento salvato localmente.');
       await this.loadLots();
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare il lotto.');
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare il collegamento.');
     } finally {
       this.saving.set(false);
     }
@@ -98,22 +102,23 @@ export class LotsPage implements OnInit {
     this.resetMessages();
     try {
       await this.service.delete(lot.id);
-      this.successMessage.set('Lotto eliminato logicamente.');
+      this.successMessage.set('Collegamento eliminato logicamente.');
       await this.loadLots();
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare il lotto.');
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare il collegamento.');
     }
   }
 
   private async loadAll(): Promise<void> {
     this.loading.set(true);
     try {
-      const [lots, products, purchases] = await Promise.all([this.service.list(), this.productService.list(), this.purchaseService.list()]);
+      const [lots, products, purchases, operations] = await Promise.all([this.service.list(), this.productService.list(), this.purchaseService.list(), this.operationService.list()]);
       this.lots.set(lots);
       this.products.set(products);
       this.purchases.set(purchases);
+      this.operations.set(operations);
     } catch {
-      this.errorMessage.set('Impossibile caricare i lotti.');
+      this.errorMessage.set('Impossibile caricare i collegamenti.');
     } finally {
       this.loading.set(false);
     }

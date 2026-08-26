@@ -2,7 +2,6 @@
   @if (dashboard().fair; as fair) {
     <header class="dashboard-header fair-header">
       <div>
-        <p class="eyebrow">Modalita fiera</p>
         <h1 id="dashboard-title">{{ fair.name }}</h1>
         <p class="muted">{{ fair.location }} · {{ fair.startDate }} - {{ fair.endDate }}</p>
       </div>
@@ -15,15 +14,14 @@
       <article class="kpi"><span>Numero vendite</span><strong>{{ dashboard().saleCount }}</strong></article>
     </div>
     <section class="coverage" aria-labelledby="coverage-title">
-      <div><p class="eyebrow">Sostenibilita evento</p><h2 id="coverage-title">Copertura costi</h2></div>
+      <div><h2 id="coverage-title">Copertura costi</h2></div>
       <strong [class.positive]="dashboard().profit >= 0">{{ dashboard().profit | currency }}</strong>
       <p>{{ dashboard().uncoveredCosts > 0 ? ('Mancano ' + (dashboard().uncoveredCosts | currency) + ' per coprire i costi') : 'Costi previsti coperti' }}</p>
     </section>
     <a class="primary-action" routerLink="/sales">+ Nuova vendita fiera</a>
   } @else {
     <header class="dashboard-header">
-      <div><p class="eyebrow">Quadro generale</p><h1 id="dashboard-title">La tua attivita</h1><p class="muted">Nessuna fiera attiva oggi.</p></div>
-      <a class="primary-action" routerLink="/works">+ Nuova commissione</a>
+      <div><h1 id="dashboard-title">La tua attivita</h1></div>
     </header>
     <div class="kpi-grid">
       <article class="kpi"><span>Vendite del periodo</span><strong>0,00 €</strong></article>
@@ -31,6 +29,5 @@
       <article class="kpi"><span>Clienti attivi</span><strong>0</strong></article>
       <article class="kpi"><span>Prossime fiere</span><strong>0</strong></article>
     </div>
-    <section class="empty-state"><h2>Pronto per il prossimo passo?</h2><p>Attiva una fiera dalla sezione Eventi per trasformare questa dashboard nel tuo pannello operativo.</p><a routerLink="/events">Gestisci fiere</a></section>
   }
 </section>

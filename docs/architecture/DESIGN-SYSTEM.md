@@ -251,9 +251,9 @@ styles/
       └── [nessun hardcode colore, usa variabili]
 ```
 
-### Light Mode (default)
+### Artist Theme (default e fisso)
 
-Tema chiaro, professionale e facile da leggere. Adatto per uffici, studi e ambienti ben illuminati.
+Tema fisso, professionale e creativo, ispirato alla palette CMYK. E il solo tema runtime dell'applicazione.
 
 Variabili principali:
 ```css
@@ -269,11 +269,9 @@ Variabili principali:
 }
 ```
 
-### Dark Mode
+### Temi alternativi non attivi
 
-Tema scuro, riduce l'affaticamento visivo in ambienti con poca luce.
-
-Nel codice attuale la modalita scura e automatica via `prefers-color-scheme`. Non esiste ancora selezione manuale tramite `data-theme` o servizio Angular.
+Dark, Light alternativi e temi personalizzati restano concetti documentali futuri e non sono attivi.
 
 I token semantici devono essere sovrascritti in dark mode per evitare doppi ruoli ambigui: `--color-surface` resta superficie, mentre `--color-primary-action-text` e `--color-text-inverse` gestiscono il testo su azioni primarie.
 
@@ -291,9 +289,9 @@ Variabili principali:
 }
 ```
 
-### Artist Theme
+### Artist Theme: implementazione runtime
 
-Tema vibrant e creativo, ispirato alla palette CMYK piena.
+La palette Artist e applicata direttamente ai token globali. `color-scheme: light` impedisce ai controlli nativi di seguire le preferenze del browser o del sistema operativo; non esistono selettori `prefers-color-scheme`, `data-theme` o impostazioni utente per cambiare stile.
 
 Variabili principali:
 ```css
@@ -321,7 +319,7 @@ L'applicazione deve permettere all'utente di scegliere il tema preferito in "Imp
 - Segui preferenze di sistema (prefers-color-scheme)
 - Temi personalizzati (future)
 
-Questa selezione e target futuro. L'implementazione attuale segue automaticamente la preferenza del sistema tramite CSS.
+La selezione tema non e disponibile: Artist Theme e una scelta fissa di progetto fino a nuova decisione esplicita.
 
 ## Componenti e pattern UI
 

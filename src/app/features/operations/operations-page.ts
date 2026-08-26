@@ -62,7 +62,7 @@ export class OperationsPage implements OnInit {
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }
   protected fairName(id?: string): string { const fair = this.fairs().find((item) => item.id === id); return fair ? `${fair.name} · ${fair.edition || fair.year}` : 'Fiera non indicata'; }
   protected productName(id?: string): string { return this.products().find((product) => product.id === id)?.name ?? 'Prodotto non indicato'; }
-  protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Lotto non assegnato'; }
+  protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
   protected hasWork(operation: Operation): boolean { return operation.type === 'commission' || operation.type === 'sketch' || Boolean(operation.workStatus); }
   protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || Boolean(operation.saleStatus) || typeof operation.amount === 'number'; }
   protected activeFair(): Fair | null { const today = new Date().toISOString().slice(0, 10); return this.fairs().find((fair) => fair.startDate <= today && today <= fair.endDate) ?? null; }

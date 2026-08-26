@@ -29,7 +29,7 @@ export class LotService {
   async update(id: string, input: LotInput): Promise<Lot> {
     this.validate(input);
     const existing = await this.repository.getById(id);
-    if (!existing) throw new Error('Lotto non trovato.');
+    if (!existing) throw new Error('Collegamento non trovato.');
     const lot: Lot = { ...existing, ...input, aliases: this.normalizeAliases(input.aliases), updatedAt: new Date().toISOString() };
     await this.repository.save(lot);
     return lot;
@@ -40,7 +40,7 @@ export class LotService {
   }
 
   private validate(input: LotInput): void {
-    if (!input.name.trim()) throw new Error('Il nome lotto e obbligatorio.');
+    if (!input.name.trim()) throw new Error('Il nome collegamento e obbligatorio.');
     if (!input.productId) throw new Error('Il prodotto associato e obbligatorio.');
   }
 

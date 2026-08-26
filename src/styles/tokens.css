@@ -1,25 +1,27 @@
 /* Design System Tokens */
 
 :root {
-  /* Color Palette - Light Mode */
-  --color-primary: #183c37;
-  --color-primary-light: #2d5b54;
-  --color-primary-lighter: #45524d;
+  color-scheme: light;
 
-  --color-accent: #d28b4c;
-  --color-accent-light: #e8b86a;
-  --color-accent-lighter: #f0c98d;
+  /* Color Palette - Fixed Artist Theme */
+  --color-primary: #c41d7f;
+  --color-primary-light: #e85ba8;
+  --color-primary-lighter: #f2a3c9;
 
-  --color-surface: #f4f1ea;
-  --color-surface-secondary: #e6e1d6;
-  --color-surface-tertiary: #d5d0c4;
+  --color-accent: #0b8fa0;
+  --color-accent-light: #5dcedb;
+  --color-accent-lighter: #a4e4eb;
 
-  --color-text-primary: #1f2926;
-  --color-text-secondary: #6e7770;
-  --color-text-tertiary: #a0a89f;
+  --color-surface: #fafaf8;
+  --color-surface-secondary: #f0f0ee;
+  --color-surface-tertiary: #d5d5d0;
 
-  --color-border: #d5d0c4;
-  --color-border-light: rgba(213, 208, 196, 0.5);
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555555;
+  --color-text-tertiary: #888888;
+
+  --color-border: #d5d5d0;
+  --color-border-light: rgba(213, 213, 208, 0.5);
 
   --color-status-success: #5d9277;
   --color-status-success-light: #8fb9a0;
@@ -31,9 +33,9 @@
   --color-status-info-light: #7eabda;
 
   /* Semantic Color Roles */
-  --color-heading: var(--color-primary);
+  --color-heading: var(--color-text-primary);
   --color-text: var(--color-text-primary);
-  --color-text-inverse: var(--color-surface);
+  --color-text-inverse: #ffffff;
   --color-primary-action-bg: var(--color-primary);
   --color-primary-action-bg-hover: var(--color-primary-light);
   --color-primary-action-text: var(--color-text-inverse);
@@ -118,31 +120,6 @@
 
   /* Touch Target */
   --touch-target-min: 44px;
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-surface: #1a1f1d;
-    --color-surface-secondary: #252b28;
-    --color-surface-tertiary: #333937;
-
-    --color-text-primary: #f0efeb;
-    --color-text-secondary: #c5c8c3;
-    --color-text-tertiary: #8a8d88;
-
-    --color-border: #333937;
-    --color-border-light: rgba(51, 57, 55, 0.5);
-
-    --color-heading: var(--color-text-primary);
-    --color-text: var(--color-text-primary);
-    --color-text-inverse: #f4f1ea;
-    --color-primary-action-bg: #2d5b54;
-    --color-primary-action-bg-hover: #3b6f67;
-    --color-primary-action-text: var(--color-text-inverse);
-    --color-link: #e8b86a;
-    --color-focus-ring: var(--color-accent-light);
-  }
 }
 
 /* Responsive Breakpoints as Custom Properties */

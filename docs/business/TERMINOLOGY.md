@@ -94,6 +94,8 @@ Nella V1 operativa, una vendita in fiera viene salvata come Operazione rapida: s
 
 Un nome cliente digitato puo generare suggerimenti di Party esistenti, ma non viene associato automaticamente: senza scelta esplicita resta Cliente soft.
 
+La superficie mobile usa il pulsante `+` esclusivamente per il wizard Fiera product-first. Il Backoffice e la superficie completa per correggere e completare un'Operazione.
+
 ### Prodotto
 
 Articolo, servizio creativo, offerta o composizione definita nel catalogo e potenzialmente vendibile, con nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo e tag. Sono Prodotti anche Stampa A4, Stampa A5, Commissione, Sketch, Copertina, Illustrazione e Bundle. Una vendita registra una fotografia del prodotto venduto, mentre il prodotto di catalogo puo cambiare in seguito.

@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PurchaseService } from '../../application/purchases/purchase.service';
 import { SupplierService, type SupplierInput } from '../../application/suppliers/supplier.service';
 import type { Party, SupplierType } from '../../domain/models/party';
+import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 
 @Component({
@@ -13,7 +15,9 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 })
 export class SuppliersPage implements OnInit {
   private readonly service = inject(SupplierService);
+  private readonly purchaseService = inject(PurchaseService);
   protected readonly suppliers = signal<readonly Party[]>([]);
+  protected readonly purchases = signal<readonly Purchase[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly creating = signal(false);
@@ -32,6 +36,8 @@ export class SuppliersPage implements OnInit {
     const type = this.typeFilter();
     return type === 'all' ? this.suppliers() : this.suppliers().filter((supplier) => supplier.supplierType === type);
   }
+
+  protected isSupplierUsed(supplier: Party): boolean { return this.purchases().some((purchase) => purchase.supplierId === supplier.id); }
 
   protected startCreating(): void {
     this.resetMessages();
@@ -100,7 +106,9 @@ export class SuppliersPage implements OnInit {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      this.suppliers.set(await this.service.list(this.query()));
+      const [suppliers, purchases] = await Promise.all([this.service.list(this.query()), this.purchaseService.list()]);
+      this.suppliers.set(suppliers);
+      this.purchases.set(purchases);
     } catch {
       this.errorMessage.set('Impossibile caricare i fornitori.');
     } finally {

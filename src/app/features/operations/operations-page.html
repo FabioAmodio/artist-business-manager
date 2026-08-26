@@ -1,6 +1,6 @@
 <section class="operations-page" aria-labelledby="operations-title">
   <header class="page-header">
-    <div><p class="eyebrow">Aggregate root</p><h1 id="operations-title">Operazioni</h1></div>
+    <div><h1 id="operations-title">Operazioni</h1></div>
     @if (!editingId()) { <button class="primary-button" type="button" (click)="mode() === 'fair' ? openFairWizard() : startCreating('commission')">+ Nuova operazione</button> }
   </header>
 
@@ -52,7 +52,7 @@
         </div>
       } @else {
         <form class="operation-form" (ngSubmit)="save()" #operationForm="ngForm">
-          <div class="form-heading"><div><p class="eyebrow">{{ mode() === 'fair' ? 'Wizard fiera' : 'Backoffice' }}</p><h2 id="operation-form-title">{{ editingId() ? 'Modifica operazione' : 'Nuova operazione' }}</h2></div></div>
+          <div class="form-heading"><div><h2 id="operation-form-title">{{ editingId() ? 'Modifica operazione' : 'Nuova operazione' }}</h2></div></div>
 
           @if (mode() === 'fair') {
           <div class="quick-form">
@@ -76,7 +76,7 @@
             <label>Tipo <select name="type" required [(ngModel)]="draft.type"><option value="sale">Vendita</option><option value="commission">Commissione</option><option value="sketch">Sketch</option><option value="other">Altro</option></select></label>
             <label class="wide">Titolo <input name="title" required [(ngModel)]="draft.title" /></label>
             <label>Prodotto <select name="productId" [(ngModel)]="draft.productId"><option [ngValue]="undefined">Nessun prodotto</option>@for (product of products(); track product.id) { <option [value]="product.id">{{ product.name }}</option> }</select></label>
-            <label>Lotto <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun lotto</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label>
+            <label>Collegamento <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label>
             <div class="customer-box wide">
               <label>Cliente <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }

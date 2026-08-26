@@ -193,6 +193,8 @@ La Modalita Fiera apre prima un unico elenco di Prodotti ordinato per uso recent
 
 Il cliente digitato in fiera puo restare Cliente soft. Eventuali Party esistenti vengono solo suggeriti: l'associazione a un Party richiede scelta esplicita dell'utente.
 
+La Modalita Fiera apre prima un unico elenco di Prodotti ordinato per uso recente nelle ultime 10 fiere concluse, poi un form rapido gia precompilato. Il pulsante `+` mobile apre sempre il wizard Fiera. Se una fiera corrente e attiva, l'Operazione viene associata automaticamente; il Lotto resta opzionale.
+
 ### Riga di vendita
 
 Dettaglio di una vendita per prodotto, tipo o descrizione. Attributi: riferimento prodotto, descrizione, quantita (`Nr`), prezzo o ricavo, sconto/coupon e note.

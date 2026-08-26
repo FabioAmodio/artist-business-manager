@@ -28,7 +28,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'lots',
-		data: { title: 'Lotti' },
+		data: { title: 'Collegamenti' },
 		loadComponent: () => import('./features/lots/lots-page').then((m) => m.LotsPage),
 	},
 	{

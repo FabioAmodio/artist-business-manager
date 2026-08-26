@@ -3,5 +3,17 @@
   <a routerLink="/events">◷<span>Eventi</span></a>
   <button class="fab" type="button" (click)="openQuickAction()" aria-label="Nuova operazione fiera">+</button>
   <a routerLink="/catalog">□<span>Prodotti</span></a>
-  <a routerLink="/settings">•••<span>Altro</span></a>
+  <button class="more-trigger" type="button" (click)="toggleMoreMenu()" aria-label="Mostra altre voci di menu" aria-haspopup="menu" [attr.aria-expanded]="moreMenuOpen()">•••<span>Altro</span></button>
 </nav>
+
+@if (moreMenuOpen()) {
+  <div class="mobile-more-backdrop" (click)="closeMoreMenu()"></div>
+  <section class="mobile-more-menu" role="menu" aria-label="Altre voci di menu">
+    <header><strong>Altre voci</strong><button type="button" (click)="closeMoreMenu()" aria-label="Chiudi menu">×</button></header>
+    <nav>
+      @for (item of secondaryItems; track item.path) {
+        <a [routerLink]="item.path" (click)="closeMoreMenu()" role="menuitem"><span>{{ item.icon }}</span>{{ item.label }}</a>
+      }
+    </nav>
+  </section>
+}

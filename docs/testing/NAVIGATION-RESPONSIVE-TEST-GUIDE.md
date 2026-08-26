@@ -67,7 +67,6 @@ Ripeti il Test 1.1 per ogni rotta:
 | Clienti | `/clients` | Test con lista |
 | Fornitori | `/suppliers` | Test con lista |
 | Acquisti | `/purchases` | Test con lista |
-| Lotti | `/lots` | Test con lista |
 | Eventi | `/events` | Test calendario |
 | Vendite | `/sales` | Test storico |
 | Prodotti | `/catalog` | Test con lista |

@@ -4,7 +4,7 @@
 
 Questo documento fotografa lo stato reale dell'implementazione rispetto alla documentazione di dominio e architettura. Distingue tra funzionalita implementate, parzialmente implementate e solo documentate.
 
-Ultimo aggiornamento: 2026-08-25.
+Ultimo aggiornamento: 2026-08-26.
 
 ## Priorita di implementazione
 
@@ -19,11 +19,11 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | Offline First base | Parziale | IndexedDB/Dexie attivo, ma solo alcune collection reali |
 | Storage Provider | Parziale | `IStorageProvider` e `IndexedDbProvider`, ma supporto collection esplicito e limitato |
 | Sync cloud | Solo documentata | `DisabledSyncProvider`, nessun sync engine reale |
-| Fair / Eventi | Implementata V1 | CRUD, persistenza, validazioni, List First, FairSeries/FairEdition |
+| Fair / Eventi | Implementata V1 | CRUD, persistenza, validazioni, List First, FairSeries/FairEdition, Ricavi/Bilancio e indicatori copertura costi |
 | Party / Clienti / Fornitori | Implementata V1 | CRUD anagrafico, ricerca, filtro, persistenza; Fornitori come ruolo Party |
 | Acquisti | Implementata V1 | CRUD acquisti destinati alla vendita, ricerca, fornitore opzionale, persistenza |
 | Prodotti | Implementata V1 | CRUD prodotti di catalogo, ricerca, prezzo suggerito, tag placeholder, stato attivo |
-| Lotti | Implementata V1 | CRUD lotti, ricerca, Product 1:N, acquisto origine opzionale, alias |
+| Lotti | Implementata V1 | CRUD lotti, ricerca, Product 1:N, acquisto origine opzionale, alias; pagina non primaria |
 | Dashboard | Parziale | Pagina reale ma dati quasi tutti placeholder/in-memory |
 | Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
 | Operation | Implementata V1 | Lista, wizard fiera rapido, backoffice, persistenza IndexedDB |
@@ -41,7 +41,7 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | `/clients` | `ClientsPage` | Implementata V1 | Gestione Party: Persona/Organizzazione, ricerca, filtro, dialog |
 | `/suppliers` | `SuppliersPage` | Implementata V1 | Gestione Party con ruolo Fornitore: categoria, ricerca, dialog |
 | `/purchases` | `PurchasesPage` | Implementata V1 | Acquisti prodotti destinati alla vendita: fornitore, data, descrizione, importo, note |
-| `/lots` | `LotsPage` | Implementata V1 | Lotti: prodotto, acquisto origine, alias, note |
+| `/lots` | `LotsPage` | Implementata V1 | Pagina tecnica mantenuta; gestione contestuale da Prodotti/Acquisti |
 | `/events` | `FairsPage` | Implementata V1 | Gestione FairSeries/FairEdition con dati economici aggregati V1 |
 | `/settings` | `SettingsPage` | Parziale | Trasparenza AI e preferenze non persistite |
 | `/works` | `OperationsPage` | Implementata V1 | Backoffice/registrazione Operazioni con profilo Work/Sale |
@@ -61,7 +61,7 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | `SupplierService` | Implementato V1 | CRUD Party con ruolo Fornitore, validazione nome, soft delete | Nessuna relazione Acquisti/Spese/Pagamenti |
 | `PurchaseService` | Implementato V1 | CRUD Acquisti, validazione data/descrizione/importo, soft delete | Nessun magazzino, prodotti/pagamenti solo collegamenti preparatori |
 | `ProductService` | Implementato V1 | CRUD Prodotti, validazione nome/prezzo, normalizzazione tag, soft delete | Nessun workflow commissioni/sketch, vendite, magazzino o composizione bundle |
-| `LotService` | Implementato V1 | CRUD Lotti, validazione nome/prodotto, normalizzazione alias, soft delete | Nessuna assegnazione vendita, costo, giacenza o movimento magazzino |
+| `LotService` | Implementato V1 | CRUD Collegamenti/Lotti, validazione nome/prodotto, normalizzazione alias, soft delete | Nessuna assegnazione vendita, costo, giacenza o movimento magazzino |
 | `OperationService` | Implementato V1 | CRUD Operazioni, prodotto/lotto/cliente soft/fiera, soft delete | Nessun incasso, nessun workflow avanzato di vendita o commissione |
 | `FairContextService` | Parziale | Stato fiera attiva e AI settings in memoria | Non persistito, dati demo/in-memory, non usa repository |
 | `AppStateService` | Parziale | Online/offline, database ready, backup timestamp in memoria | Nessuna gestione quota, sync status, errori persistenti |

@@ -178,13 +178,17 @@ Operazione, prodotto, descrizione, importo, cliente assente/soft/registrato, fie
 
 ### Catalogo rapido fiera
 
-La Modalita Fiera mostra nella selezione iniziale un unico elenco con tutti i prodotti attivi del catalogo. I prodotti piu usati nelle ultime 10 fiere concluse in assoluto sono ordinati piu in alto, senza creare gruppi separati. Non usa le ultime 10 partecipazioni alla stessa fiera, ne statistiche per citta o organizzatore.
+La Modalita Fiera mostra nella selezione iniziale un unico elenco con tutti i prodotti attivi del catalogo. I prodotti piu usati nelle ultime 10 fiere concluse in assoluto sono ordinati piu in alto, senza creare gruppi separati. Non usa le ultime 10 partecipazioni alla stessa fiera, ne statistiche per citta o organizzatore. Il pulsante `+` mobile apre sempre questo wizard e non il Backoffice.
 
 ### Vincoli fiera
 
 Il wizard rapido non richiede Lotto e non obbliga alla creazione di un Party. Il cliente puo essere assente, soft o selezionato tra quelli esistenti. La completezza dei dati viene recuperata successivamente in Backoffice.
 
 Quando l'artista digita un nome cliente, l'app puo mostrare Party esistenti simili e l'opzione di continuare con Cliente soft. Non deve mai associare automaticamente un Party basandosi solo sul nome digitato.
+
+### Protezione dei record referenziati
+
+Il comando `Elimina` e disabilitato quando il record e usato da altri dati: Clienti da Operazioni, Fornitori da Acquisti, Prodotti da Operazioni/Acquisti/Collegamenti, Acquisti da Collegamenti, Collegamenti da Operazioni e Fiere da Operazioni. Il record resta modificabile; l'utente vede un controllo attenuato con spiegazione.
 
 ## 6.1 Gestione prodotti di catalogo
 
@@ -237,8 +241,8 @@ Distinguere cio che viene venduto da un raggruppamento operativo leggero, prepar
 
 ### Flusso
 1. Aprire la lista Lotti.
-2. Cercare per nome lotto, prodotto, acquisto origine, alias o note.
-3. Creare un lotto con nome, prodotto associato, acquisto origine opzionale, alias e note.
+2. Cercare per nome collegamento, prodotto, acquisto origine, alias o note.
+3. Creare un collegamento con nome, prodotto associato, acquisto origine opzionale, alias e note.
 4. Usare nomi aderenti al workflow reale, ad esempio `Stampe casalinghe`, `Tipografia marzo 2026` o `Tipografia settembre 2026`.
 5. Salvare senza creare movimenti di magazzino, vendite o report.
 

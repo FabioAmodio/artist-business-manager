@@ -64,6 +64,11 @@ export class ResponsiveNavComponent implements OnInit {
   private calculateVisibleItems(): void {
     // Use a timeout to ensure DOM is updated before measuring
     setTimeout(() => {
+      if (window.innerWidth > 699) {
+        this.visibleCount.set(this.navigationItems.length);
+        this.moreMenuOpen.set(false);
+        return;
+      }
       if (!this.navContainer) return;
 
       const container = this.navContainer.nativeElement as HTMLElement;

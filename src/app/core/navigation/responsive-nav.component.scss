@@ -188,3 +188,8 @@
     max-height: 70vh;
   }
 }
+
+@media (min-width: 700px) {
+  .nav-more-button,
+  .nav-more-menu { display: none; }
+}

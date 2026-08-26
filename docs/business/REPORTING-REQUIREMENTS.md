@@ -122,6 +122,8 @@ Il margine deve dichiarare se considera solo spese direttamente associate oppure
 
 I report vendite dovranno considerare che la Modalita Fiera salva Operazioni rapide e potenzialmente incomplete. I totali devono distinguere dati completi, dati mancanti e record da completare in Backoffice.
 
+Per le Fiere, i Ricavi sono la somma delle Operazioni di tipo vendita associate a `fairEditionId` piu il Rimborso. Il Bilancio e `Ricavi - Costi`. La copertura operativa dei costi segue l'ordine Stand, Viaggio, Hotel, Altri costi: ogni voce consuma il risultato disponibile prima della successiva.
+
 Deve rispondere almeno a queste domande:
 
 - Quali prodotti vendo di piu per quantita?

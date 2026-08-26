@@ -52,6 +52,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .full-width { grid-column: 1 / -1; }
 .wide { grid-column: span 2; }
 .operation-form app-form-actions { background: linear-gradient(to top, var(--color-surface) 78%, transparent); bottom: -1.5rem; margin-top: 1rem; padding: .75rem 0 0; position: sticky; }
-@media (max-width: 1180px) { .operation-row { grid-template-columns: minmax(16rem, 1fr) minmax(20rem, 1.5fr) auto; } .badges { grid-column: 1 / -2; } }
+@media (max-width: 1180px) { .operation-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .badges { grid-column: 1 / -2; } .operation-row > * { min-width: 0; } .context-grid span { overflow-wrap: anywhere; } }
+@media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } }
 @media (max-width: 799px) { .toolbar, .operation-row, .form-grid { grid-template-columns: 1fr; } .badges { grid-column: auto; } .wide { grid-column: auto; } }
 @media (max-width: 699px) { .page-header, .operation-row { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } .operation-dialog { max-width: calc(100vw - 2rem); padding: 1.25rem; } .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .row-actions { justify-content: flex-end; } }

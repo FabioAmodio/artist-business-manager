@@ -1,7 +1,6 @@
 <section class="purchases-page" aria-labelledby="purchases-title">
   <header class="page-header">
     <div>
-      <p class="eyebrow">Catalogo</p>
       <h1 id="purchases-title">Acquisti</h1>
     </div>
     @if (!editingId()) {
@@ -15,8 +14,6 @@
   <div class="toolbar">
     <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Descrizione, fornitore, note" /></label>
   </div>
-
-  <p class="purchase-note">Registra acquisti destinati alla vendita senza creare ancora magazzino: prodotti e lotti saranno collegabili in una fase successiva.</p>
 
   <div class="list-heading"><h2>Elenco acquisti</h2><span>{{ visiblePurchases().length }} registrati</span></div>
   @if (loading()) {
@@ -35,11 +32,10 @@
             <span><strong>Fornitore</strong>{{ supplierName(purchase.supplierId) }}</span>
             <span><strong>Importo totale</strong>{{ purchase.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</span>
             <span><strong>Note</strong>{{ purchase.notes || 'n.d.' }}</span>
+            <span><strong>Bilancio</strong><em class="purchase-balance" [class.negative]="purchaseBalance(purchase) < 0">{{ purchaseBalance(purchase) | currency:'EUR':'symbol':'1.2-2' }}</em></span>
+            <button class="linked-info" type="button" (click)="openPurchaseLots(purchase)"><strong>Prodotti collegati</strong><span>{{ purchaseLots(purchase.id).length ? purchaseLots(purchase.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
-          <div class="relation-badges" aria-label="Relazioni future">
-            <span>Prodotti</span><span>Lotti</span><span>Costi</span>
-          </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(purchase)">Modifica</button><button class="danger-button" type="button" (click)="remove(purchase)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(purchase)">Modifica</button><button class="danger-button" type="button" [disabled]="isPurchaseUsed(purchase)" [title]="isPurchaseUsed(purchase) ? 'Acquisto usato da prodotti collegati' : 'Elimina acquisto'" (click)="remove(purchase)">Elimina</button></div>
         </article>
       }
     </div>
@@ -49,7 +45,7 @@
     <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
     <section class="purchase-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-form-title">
       <form class="purchase-form" (ngSubmit)="save()" #purchaseForm="ngForm">
-        <div class="form-heading"><div><p class="eyebrow">Acquisto</p><h2 id="purchase-form-title">{{ editingId() ? 'Modifica acquisto' : 'Nuovo acquisto' }}</h2></div></div>
+        <div class="form-heading"><div><h2 id="purchase-form-title">{{ editingId() ? 'Modifica acquisto' : 'Nuovo acquisto' }}</h2></div></div>
         <div class="form-grid">
           <label>Fornitore
             <select name="supplierId" [(ngModel)]="draft.supplierId">
@@ -62,8 +58,52 @@
           <label>Importo totale <input name="totalAmount" type="number" min="0" step="0.01" required [(ngModel)]="draft.totalAmount" /></label>
           <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
         </div>
+        @if (editingId()) {
+          <section class="linked-lots" aria-labelledby="purchase-linked-lots-title">
+            <div class="linked-lots-heading"><h3 id="purchase-linked-lots-title">Prodotti collegati</h3><button class="text-button" type="button" (click)="startCreatingLot(purchases().find(purchase => purchase.id === editingId())!)">+ Aggiungi</button></div>
+            @if (editingPurchaseLots().length) {
+              <div class="linked-lot-list">
+                @for (lot of editingPurchaseLots(); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button" type="button" (click)="startEditingLot(lot)">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }
+              </div>
+            } @else { <p class="linked-lots-empty">Nessun prodotto collegato.</p> }
+          </section>
+        }
         <app-form-actions [disabled]="purchaseForm.invalid === true" [saving]="saving()" saveLabel="Salva acquisto" (cancel)="cancelForm()"></app-form-actions>
       </form>
+    </section>
+  }
+
+  @if (lotDialogOpen()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelLotForm()"></div>
+    <section class="purchase-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-lot-form-title">
+      <form class="purchase-form" (ngSubmit)="saveLot()" #purchaseLotForm="ngForm">
+        <div class="form-heading"><div><h2 id="purchase-lot-form-title">{{ lotEditingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2><p class="context-lock">Acquisto origine: {{ purchaseLabel(lotPurchaseId()) }}</p></div></div>
+        <div class="form-grid">
+          <label>Prodotto
+            <select name="lotProductId" required [(ngModel)]="lotDraft.productId" [disabled]="purchases().find(purchase => purchase.id === lotPurchaseId())?.productId !== undefined">
+              <option value="">Seleziona prodotto</option>
+              @for (product of products(); track product.id) { <option [value]="product.id">{{ product.name }}</option> }
+            </select>
+          </label>
+          <label class="wide">Nome collegamento <input name="lotName" required [(ngModel)]="lotDraft.name" /></label>
+          <label class="full-width">Alias <input name="lotAliases" [(ngModel)]="lotAliasText" /></label>
+          <label class="full-width">Note <textarea name="lotNotes" rows="4" [(ngModel)]="lotDraft.notes"></textarea></label>
+        </div>
+        <div class="row-actions"><button class="primary-button" type="submit" [disabled]="purchaseLotForm.invalid || saving()">Salva collegamento</button><button class="text-button" type="button" (click)="cancelLotForm()">Annulla</button></div>
+      </form>
+    </section>
+  }
+
+  @if (lotListDialogOpen()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="closeLotList()"></div>
+    <section class="purchase-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-lots-title">
+      <div class="purchase-form">
+        <div class="form-heading"><div><h2 id="purchase-lots-title">Prodotti collegati</h2><p class="context-lock">Acquisto origine: {{ purchaseLabel(lotPurchaseId()) }}</p></div><button class="text-button" type="button" (click)="startCreatingLot(purchases().find(purchase => purchase.id === lotPurchaseId())!)">+ Aggiungi</button></div>
+        @if (purchaseLots(lotPurchaseId()!).length) {
+          <div class="linked-lot-list">@for (lot of purchaseLots(lotPurchaseId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button" type="button" (click)="startEditingLot(lot); closeLotList()">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }</div>
+        } @else { <p class="linked-lots-empty">Nessun prodotto collegato.</p> }
+        <div class="row-actions"><button class="text-button" type="button" (click)="closeLotList()">Chiudi</button></div>
+      </div>
     </section>
   }
 </section>

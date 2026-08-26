@@ -1,7 +1,6 @@
 <section class="clients-page" aria-labelledby="clients-title">
   <header class="page-header">
     <div>
-      <p class="eyebrow">Anagrafica</p>
       <h1 id="clients-title">Clienti</h1>
     </div>
     @if (!editingId()) {
@@ -23,8 +22,6 @@
     </label>
   </div>
 
-  <p class="soft-customer-note">Cliente soft: nelle future Operazioni sara possibile salvare un nome libero senza creare subito una scheda cliente.</p>
-
   <div class="list-heading"><h2>Elenco clienti</h2><span>{{ visibleClients().length }} registrati</span></div>
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
@@ -44,10 +41,7 @@
             <span><strong>Sito</strong>{{ client.website || 'n.d.' }}</span>
             <span><strong>Social</strong>{{ client.social || 'n.d.' }}</span>
           </div>
-          <div class="relation-badges" aria-label="Relazioni future">
-            <span>Work</span><span>Vendite</span><span>Eventi</span><span>Pagamenti</span>
-          </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(client)">Modifica</button><button class="danger-button" type="button" (click)="remove(client)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(client)">Modifica</button><button class="danger-button" type="button" [disabled]="isClientUsed(client)" [title]="isClientUsed(client) ? 'Cliente usato in un\'operazione' : 'Elimina cliente'" (click)="remove(client)">Elimina</button></div>
         </article>
       }
     </div>
@@ -57,7 +51,7 @@
     <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
     <section class="client-dialog" role="dialog" aria-modal="true" aria-labelledby="client-form-title">
       <form class="client-form" (ngSubmit)="save()" #clientForm="ngForm">
-        <div class="form-heading"><div><p class="eyebrow">Anagrafica</p><h2 id="client-form-title">{{ editingId() ? 'Modifica cliente' : 'Nuovo cliente' }}</h2></div></div>
+        <div class="form-heading"><div><h2 id="client-form-title">{{ editingId() ? 'Modifica cliente' : 'Nuovo cliente' }}</h2></div></div>
         <div class="form-grid">
           <label class="wide">Nome <input name="displayName" required [(ngModel)]="draft.displayName" /></label>
           <label>Tipo

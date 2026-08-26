@@ -31,6 +31,8 @@
 
 .mobile-bar button { border: 0; font-family: inherit; }
 
+.mobile-bar .more-trigger { background: transparent; }
+
 .mobile-bar span {
   font: 600 .65rem var(--font-sans);
 }
@@ -46,6 +48,15 @@
   min-width: 3.5rem;
   width: 3.5rem;
 }
+
+.mobile-more-backdrop { background: rgba(31, 41, 38, .35); inset: 0; position: fixed; z-index: calc(var(--z-fixed) - 1); }
+.mobile-more-menu { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base) var(--radius-base) 0 0; bottom: 4.5rem; box-shadow: var(--shadow-xl); left: 0; max-height: calc(100vh - 7rem); overflow-y: auto; position: fixed; right: 0; z-index: var(--z-fixed); }
+.mobile-more-menu header { align-items: center; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; padding: 1rem 1.25rem; }
+.mobile-more-menu header button { background: transparent; color: var(--color-text-primary); cursor: pointer; font-size: 1.5rem; padding: 0 .25rem; }
+.mobile-more-menu nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .5rem; }
+.mobile-more-menu a { align-items: center; border: 1px solid transparent; border-radius: var(--radius-base); color: var(--color-text-primary); display: flex; gap: .65rem; min-height: 3rem; padding: .65rem .75rem; text-decoration: none; }
+.mobile-more-menu a:hover, .mobile-more-menu a:focus-visible { background: var(--color-surface-secondary); border-color: var(--color-border); }
+.mobile-more-menu a span { font-size: 1.2rem; width: 1.5rem; }
 
 @media (max-width: 699px) {
   :host { display: block; }

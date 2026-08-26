@@ -1,7 +1,6 @@
 <section class="fairs-page" aria-labelledby="fairs-title">
   <header class="page-header">
     <div>
-      <p class="eyebrow">Eventi</p>
       <h1 id="fairs-title">Fiere</h1>
     </div>
     @if (!editingId()) {
@@ -40,19 +39,18 @@
             @if (fair.locationNotes) {<small>{{ fair.locationNotes }}</small>} @if (fair.notes) {<small>{{ fair.notes }}</small>}
           </div>
               <div class="fair-money" aria-label="Riepilogo economico">
-                <span><strong>Ricavi</strong><em>n.d.</em></span>
+                <span><strong>Ricavi</strong><em>{{ formatMoney(fairRevenue(fair)) }}</em></span>
+                <span><strong>Rimborso</strong><em>{{ formatMoney(fair.reimbursement) }}</em></span>
                 <span><strong>Costi</strong><em>{{ formatMoney(totalCosts(fair)) }}</em></span>
                 <span><strong>Bilancio</strong><em>{{ formatMoney(fairBalance(fair)) }}</em></span>
               </div>
           <div class="fair-indicators" aria-label="Indicatori fiera">
-                <span class="indicator" [class.indicator-success]="eventStatusKind(fair) === 'success'" [class.indicator-warning]="eventStatusKind(fair) === 'warning'" [class.indicator-neutral]="eventStatusKind(fair) === 'neutral'">{{ eventStatusLabel(fair) }}</span>
-                <span class="indicator" [class.indicator-success]="budgetKind(fair) === 'success'" [class.indicator-warning]="budgetKind(fair) === 'warning'" [class.indicator-neutral]="budgetKind(fair) === 'neutral'">{{ budgetLabel(fair) }}</span>
-                <span class="indicator" [class.indicator-success]="fair.hotelPaid" [class.indicator-warning]="!fair.hotelPaid">{{ hotelLabel(fair) }}</span>
-                <span class="indicator" [class.indicator-success]="fair.travelPaid" [class.indicator-warning]="!fair.travelPaid">{{ travelLabel(fair) }}</span>
-                <span class="indicator" [class.indicator-success]="fair.standPaid" [class.indicator-warning]="!fair.standPaid">{{ standLabel(fair) }}</span>
-                <span class="indicator" [class.indicator-success]="fair.reimbursement" [class.indicator-neutral]="!fair.reimbursement">{{ reimbursementLabel(fair) }}</span>
+                    <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'stand')" [class.indicator-error]="!isCostCovered(fair, 'stand')">{{ coverageLabel(fair, 'stand') }}</span>
+                    <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'travel')" [class.indicator-error]="!isCostCovered(fair, 'travel')">{{ coverageLabel(fair, 'travel') }}</span>
+                    <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')">{{ coverageLabel(fair, 'hotel') }}</span>
+                    @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')">{{ coverageLabel(fair, 'other') }}</span> }
           </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(fair)">Modifica</button><button class="danger-button" type="button" (click)="remove(fair)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(fair)">Modifica</button><button class="danger-button" type="button" [disabled]="isFairUsed(fair)" [title]="isFairUsed(fair) ? 'Fiera usata in operazioni' : 'Elimina fiera'" (click)="remove(fair)">Elimina</button></div>
         </article>
       }
     </div>
@@ -64,7 +62,6 @@
       <form class="fair-form" (ngSubmit)="save()" #fairForm="ngForm">
         <div class="form-heading">
           <div>
-            <p class="eyebrow">Partecipazione</p>
             <h2 id="fair-form-title">{{ editingId() ? 'Modifica fiera' : 'Nuova fiera' }}</h2>
           </div>
         </div>
