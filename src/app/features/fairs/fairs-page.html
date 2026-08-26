@@ -28,7 +28,7 @@
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!fairs().length) {
-    <div class="empty-state"><h3>Nessuna fiera registrata</h3><button class="primary-button" type="button" (click)="startCreating()">Crea la prima fiera</button></div>
+    <div class="empty-state"><h3>Nessuna fiera registrata</h3></div>
   } @else {
     <div class="fair-list">
       @for (fair of fairs(); track fair.id) {
@@ -93,11 +93,6 @@
               <label>Costo hotel <input name="hotelCost" type="number" min="0" step="0.01" [(ngModel)]="draft.hotelCost" /></label>
               <label>Costo viaggio <input name="travelCost" type="number" min="0" step="0.01" [(ngModel)]="draft.travelCost" /></label>
               <label>Altri costi <input name="otherCosts" type="number" min="0" step="0.01" [(ngModel)]="draft.otherCosts" /></label>
-            </div>
-            <div class="payment-flags">
-              <label><input name="standPaid" type="checkbox" [(ngModel)]="draft.standPaid" /> Stand pagato</label>
-              <label><input name="travelPaid" type="checkbox" [(ngModel)]="draft.travelPaid" /> Viaggio pagato</label>
-              <label><input name="hotelPaid" type="checkbox" [(ngModel)]="draft.hotelPaid" /> Hotel pagato</label>
             </div>
           </section>
         </div>

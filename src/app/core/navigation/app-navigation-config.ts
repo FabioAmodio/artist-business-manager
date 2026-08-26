@@ -38,6 +38,16 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '＋',
   },
   {
+    path: '/payment-methods',
+    label: 'Pagamenti',
+    icon: '▤',
+  },
+  {
+    path: '/services',
+    label: 'Servizi',
+    icon: '✦',
+  },
+  {
     path: '/events',
     label: 'Eventi',
     icon: '📅',
@@ -51,11 +61,6 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     path: '/catalog',
     label: 'Prodotti',
     icon: '📦',
-  },
-  {
-    path: '/finance',
-    label: 'Finanza',
-    icon: '💳',
   },
   {
     path: '/deadlines',

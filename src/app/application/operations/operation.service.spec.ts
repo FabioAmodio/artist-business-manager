@@ -23,7 +23,7 @@ describe('OperationService', () => {
     TestBed.configureTestingModule({ providers: [OperationService, { provide: OperationRepository, useValue: repository }] });
     const service = TestBed.inject(OperationService);
 
-    const created = await service.create({ type: 'commission', title: 'Ritratto', description: '', productId: 'product-1', customerName: 'Cliente fiera', workStatus: 'draft', needsReview: false });
+    const created = await service.create({ type: 'work', title: 'Ritratto', description: '', productId: 'product-1', customerName: 'Cliente fiera', workStatus: 'requested', needsReview: false });
     const updated = await service.update(created.id, { ...created, title: 'Ritratto A4' });
 
     expect(updated.id).toBe(created.id);
@@ -38,8 +38,8 @@ describe('OperationService', () => {
     TestBed.configureTestingModule({ providers: [OperationService, { provide: OperationRepository, useValue: repository }] });
     const service = TestBed.inject(OperationService);
 
-    await expect(service.create({ type: 'sale', title: ' ', saleStatus: 'draft', needsReview: false })).rejects.toThrow();
-    const created = await service.create({ type: 'sale', title: 'Artbook', saleStatus: 'draft', needsReview: false });
+    await expect(service.create({ type: 'sale', title: ' ', needsReview: false })).rejects.toThrow();
+    const created = await service.create({ type: 'sale', title: 'Artbook', needsReview: false });
     await service.delete(created.id);
 
     expect(repository.operations.get(created.id)?.deletedAt).toBeDefined();

@@ -98,7 +98,15 @@ La superficie mobile usa il pulsante `+` esclusivamente per il wizard Fiera prod
 
 ### Prodotto
 
-Articolo, servizio creativo, offerta o composizione definita nel catalogo e potenzialmente vendibile, con nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo e tag. Sono Prodotti anche Stampa A4, Stampa A5, Commissione, Sketch, Copertina, Illustrazione e Bundle. Una vendita registra una fotografia del prodotto venduto, mentre il prodotto di catalogo puo cambiare in seguito.
+Articolo fisico o composizione definita nel catalogo e potenzialmente vendibile, con nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo e tag. Esempi: Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale e Bundle.
+
+### Servizio
+
+Offerta creativa non fisica con Codice e Descrizione. Commission e Sketch sono Servizi di sistema non modificabili. La vendita di un Servizio genera anche una Lavorazione sulla stessa Operation.
+
+### Pagamento
+
+Incasso collegato a una Operation, con importo, data e Modalita di pagamento. I pagamenti possono essere assenti, parziali o multipli; non sono un campo singolo della Vendita.
 
 ### Categorie configurabili future
 

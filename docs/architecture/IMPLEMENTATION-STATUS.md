@@ -24,20 +24,21 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | Acquisti | Implementata V1 | CRUD acquisti destinati alla vendita, ricerca, fornitore opzionale, persistenza |
 | Prodotti | Implementata V1 | CRUD prodotti di catalogo, ricerca, prezzo suggerito, tag placeholder, stato attivo |
 | Lotti | Implementata V1 | CRUD lotti, ricerca, Product 1:N, acquisto origine opzionale, alias; pagina non primaria |
-| Dashboard | Parziale | Pagina reale ma dati quasi tutti placeholder/in-memory |
+| Dashboard | Parziale | Pagina reale; rileva e mostra la Fiera persistita in corso, KPI generali ancora placeholder |
 | Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
-| Operation | Implementata V1 | Lista, wizard fiera rapido, backoffice, persistenza IndexedDB |
+| Operation / Payment | Implementata V1 | Vendite, Lavorazioni, wizard fiera, pagamenti 1:N, persistenza IndexedDB |
 | Work / Sale | Solo documentate | Confini e lifecycle documentati |
 | Catalogo / Product / Bundle | Parziale | Product implementato V1; Bundle come prodotto, composizione avanzata non implementata |
-| Finance / Pagamenti / Incassi | Solo documentata | Nessuna UI o repository reale |
-| Scadenze | Solo documentata | Nessuna UI o repository reale |
+| Finance | Solo documentata | Nessun report finanziario completo |
+| Pagamenti | Implementata V1 | Righe Payment 1:N su Operation, anagrafica modalita |
+| Scadenze | Implementata V1 | Vista read-only delle lavorazioni aperte ordinate per consegna |
 | Import storico Excel | Solo documentata | Post-MVP/MVP+1 |
 
 ## Schermate presenti
 
 | Route | Schermata | Stato | Note |
 |---|---|---|---|
-| `/dashboard` | `DashboardPage` | Parziale | Usa `FairContextService` in memoria; KPI generali placeholder |
+| `/dashboard` | `DashboardPage` | Parziale | Mostra la Fiera persistita in corso; KPI generali placeholder |
 | `/clients` | `ClientsPage` | Implementata V1 | Gestione Party: Persona/Organizzazione, ricerca, filtro, dialog |
 | `/suppliers` | `SuppliersPage` | Implementata V1 | Gestione Party con ruolo Fornitore: categoria, ricerca, dialog |
 | `/purchases` | `PurchasesPage` | Implementata V1 | Acquisti prodotti destinati alla vendita: fornitore, data, descrizione, importo, note |
@@ -48,7 +49,7 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | `/sales` | `OperationsPage` | Implementata V1 | Wizard fiera e lista Operazioni |
 | `/catalog` | `ProductsPage` | Implementata V1 | Prodotti di catalogo: nome, prezzo suggerito, stato, tag, dialog |
 | `/finance` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
-| `/deadlines` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
+| `/deadlines` | `DeadlinesPage` | Implementata V1 | Lavorazioni richieste/in corso, scadenze e modifica record |
 | `/404` | `NotFoundPage` | Implementata | Pagina errore |
 | `/error` | `ErrorPage` | Implementata | Pagina errore generica |
 
@@ -62,7 +63,8 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | `PurchaseService` | Implementato V1 | CRUD Acquisti, validazione data/descrizione/importo, soft delete | Nessun magazzino, prodotti/pagamenti solo collegamenti preparatori |
 | `ProductService` | Implementato V1 | CRUD Prodotti, validazione nome/prezzo, normalizzazione tag, soft delete | Nessun workflow commissioni/sketch, vendite, magazzino o composizione bundle |
 | `LotService` | Implementato V1 | CRUD Collegamenti/Lotti, validazione nome/prodotto, normalizzazione alias, soft delete | Nessuna assegnazione vendita, costo, giacenza o movimento magazzino |
-| `OperationService` | Implementato V1 | CRUD Operazioni, prodotto/lotto/cliente soft/fiera, soft delete | Nessun incasso, nessun workflow avanzato di vendita o commissione |
+| `OperationService` | Implementato V1 | CRUD Operazioni, offerta/cliente soft/fiera, soft delete | Nessun workflow avanzato di vendita o commissione |
+| `PaymentService` | Implementato V1 | Pagamenti 1:N: importo, data, modalita, soft delete | Nessun report finanziario completo |
 | `FairContextService` | Parziale | Stato fiera attiva e AI settings in memoria | Non persistito, dati demo/in-memory, non usa repository |
 | `AppStateService` | Parziale | Online/offline, database ready, backup timestamp in memoria | Nessuna gestione quota, sync status, errori persistenti |
 | `AppNavigationService` | Implementato base | Navigazione applicativa | Nessuna policy avanzata |
@@ -90,7 +92,7 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 ### IndexedDB / Dexie
 
 Database: `AppDatabase`  
-Versione schema: `11`
+Versione schema: `18`
 
 Collection reali:
 
@@ -100,8 +102,11 @@ Collection reali:
 - `lots`;
 - `parties`;
 - `operations`;
+- `paymentMethods`;
+- `payments`;
 - `products`;
 - `purchases`.
+- `services`.
 
 ### Migrazioni
 
@@ -114,6 +119,12 @@ Collection reali:
 - Versione 9: aggiunta `lots` per distinguere Product e raggruppamenti operativi.
 - Versione 10: rimozione indice `lotId` da `purchases`; la relazione Acquisto -> Lotti vive su `Lot.purchaseId`.
 - Versione 11: semplificazione `lots`, rimuovendo campi e indici inventariali dalla V1.
+- Versione 12: aggiunta modalita di pagamento e default di sistema.
+- Versione 13: aggiunta Servizi e conversione storica Commission/Sketch.
+- Versione 14: semplificazione stato lavorazione.
+- Versione 15: rimozione stato economico.
+- Versione 16-17: introduzione Payment 1:N e rimozione dei campi singoli pagamento/stato vendita da Operation.
+- Versione 18: aggiunta data consegna alle lavorazioni.
 
 ### Storage Provider
 

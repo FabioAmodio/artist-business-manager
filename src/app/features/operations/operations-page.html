@@ -1,36 +1,37 @@
 <section class="operations-page" aria-labelledby="operations-title">
   <header class="page-header">
-    <div><h1 id="operations-title">Operazioni</h1></div>
-    @if (!editingId()) { <button class="primary-button" type="button" (click)="mode() === 'fair' ? openFairWizard() : startCreating('commission')">+ Nuova operazione</button> }
+    <div><h1 id="operations-title">{{ salesOnly ? 'Vendite' : worksOnly ? 'Lavori' : 'Operazioni' }}</h1></div>
+    @if (!editingId()) { <button class="primary-button" type="button" (click)="startNewOperation()">{{ salesOnly ? '+ Nuova vendita' : worksOnly ? '+ Nuova lavorazione' : '+ Nuova operazione' }}</button> }
   </header>
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="mode-switch" role="tablist" aria-label="Modalita registrazione">
-    <button type="button" [class.active]="mode() === 'fair'" (click)="setMode('fair')">Modalita fiera</button>
-    <button type="button" [class.active]="mode() === 'backoffice'" (click)="setMode('backoffice')">Backoffice</button>
-  </div>
-
   <div class="toolbar">
     <label>Ricerca <input type="search" name="query" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Titolo o descrizione" /></label>
-    <label>Tipo
+    @if (!salesOnly && !worksOnly) { <label>Tipo
       <select name="typeFilter" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
-        <option value="all">Tutte</option><option value="sale">Vendite</option><option value="commission">Commissioni</option><option value="sketch">Sketch</option><option value="other">Altro</option>
+        <option value="all">Tutte</option><option value="sale">Vendite</option><option value="work">Lavorazioni</option>
       </select>
-    </label>
+    </label> }
   </div>
 
-  <div class="list-heading"><h2>Elenco operazioni</h2><span>{{ operations().length }} registrate</span></div>
+  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><span>{{ operations().length }} registrate</span></div>
   @if (loading()) { <p class="empty-state">Caricamento...</p> }
-  @else if (!operations().length) { <div class="empty-state"><h3>Nessuna operazione registrata</h3><button class="primary-button" type="button" (click)="startCreating()">Crea la prima operazione</button></div> }
+  @else if (!operations().length) { <div class="empty-state"><h3>{{ salesOnly ? 'Nessuna vendita registrata' : worksOnly ? 'Nessuna lavorazione registrata' : 'Nessuna operazione registrata' }}</h3></div> }
   @else {
     <div class="operation-list">
       @for (operation of operations(); track operation.id) {
-        <article class="operation-row">
+        <article class="operation-row" [class.works-row]="worksOnly">
           <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.description || 'Nessuna descrizione' }}</p></div>
-          <div class="context-grid"><span><strong>Prodotto</strong>{{ productName(operation.productId) }}</span><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span></div>
-          <div class="badges"><span [class.active]="hasWork(operation)">Work</span><span [class.active]="hasSale(operation)">Sale</span><span>{{ operation.economicStatus || 'Economia n.d.' }}</span></div>
+          <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } @if (operation.type === 'sale') { <span><strong>Pagato</strong>{{ paymentTotal(operation.id).toFixed(2) }} €</span> }</div>
+          @if (salesOnly) {
+            <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" (click)="openWork(operation)">Lavorazione</button> }</div>
+          } @else if (worksOnly && operation.workStatus) {
+            <div class="badges work-badges"><span>{{ workStatusLabel(operation.workStatus) }}</span></div>
+          } @else if (!worksOnly) {
+            <div class="badges"><span [class.active]="hasWork(operation)">Work</span><span [class.active]="hasSale(operation)">Sale</span></div>
+          }
           <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(operation)">Modifica</button><button class="danger-button" type="button" (click)="remove(operation)">Elimina</button></div>
         </article>
       }
@@ -42,24 +43,25 @@
     <section class="operation-dialog" role="dialog" aria-modal="true" aria-labelledby="operation-form-title">
       @if (selectingFairProduct()) {
         <div class="operation-form product-selection-step">
-          <div class="form-heading"><div><h2 id="operation-form-title">Nuova operazione</h2></div></div>
+          <div class="form-heading"><div><h2 id="operation-form-title">{{ salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione' }}</h2></div></div>
           <section class="product-picker" aria-label="Selezione prodotto">
             <div class="product-grid">
-              @for (product of fairProductChoices(); track product.id) { <button type="button" (click)="selectQuickProduct(product)">{{ product.name }}</button> }
+              @for (offer of offerChoices(); track offer.key) { <button type="button" (click)="selectOffer(offer.key)">{{ offer.label }}</button> }
             </div>
           </section>
           <button class="cancel-button" type="button" (click)="cancelForm()">× Annulla</button>
         </div>
       } @else {
         <form class="operation-form" (ngSubmit)="save()" #operationForm="ngForm">
-          <div class="form-heading"><div><h2 id="operation-form-title">{{ editingId() ? 'Modifica operazione' : 'Nuova operazione' }}</h2></div></div>
+          <div class="form-heading"><div><h2 id="operation-form-title">{{ editingId() ? (salesOnly ? 'Modifica vendita' : worksOnly ? 'Modifica lavorazione' : 'Modifica operazione') : (salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione') }}</h2></div></div>
 
           @if (mode() === 'fair') {
           <div class="quick-form">
-            <div class="selected-product"><strong>Prodotto</strong><span>{{ productName(draft.productId) }}</span><button type="button" class="text-button" (click)="clearSelectedProduct()">Cambia</button></div>
-            <label>Prodotto <select name="productId" required [(ngModel)]="draft.productId"><option [ngValue]="undefined">Seleziona prodotto</option>@for (product of products(); track product.id) { <option [value]="product.id">{{ product.name }}</option> }</select></label>
+            <button class="selected-product" type="button" (click)="clearSelectedProduct()"><strong>Prodotto/Servizio</strong><span>{{ draft.serviceId ? serviceName(draft.serviceId) : productName(draft.productId) }}</span></button>
             <label>Descrizione <input name="description" [(ngModel)]="draft.description" /></label>
-            <label>Importo <input name="amount" type="number" min="0" step="0.01" [(ngModel)]="draft.amount" /></label>
+            <label>Importo <input name="amount" type="number" min="0" step="0.01" [ngModel]="draft.amount" (ngModelChange)="updateFairAmount($event)" /></label>
+            <div class="fair-payment"><strong>Pagamento</strong><label>Importo <input name="fairPaymentAmount" type="number" min="0" [max]="draft.amount ?? 0" step="0.01" [ngModel]="paymentDraft.amount" (ngModelChange)="updateFairPaymentAmount($event)" /></label><label>Modalita <select name="fairPaymentMethod" [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label></div>
+            @if (draft.serviceId) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
             <div class="customer-box">
               <label>Cliente opzionale <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }
@@ -73,11 +75,11 @@
           </div>
           } @else {
           <div class="form-grid">
-            <label>Tipo <select name="type" required [(ngModel)]="draft.type"><option value="sale">Vendita</option><option value="commission">Commissione</option><option value="sketch">Sketch</option><option value="other">Altro</option></select></label>
-            <label class="wide">Titolo <input name="title" required [(ngModel)]="draft.title" /></label>
-            <label>Prodotto <select name="productId" [(ngModel)]="draft.productId"><option [ngValue]="undefined">Nessun prodotto</option>@for (product of products(); track product.id) { <option [value]="product.id">{{ product.name }}</option> }</select></label>
-            <label>Collegamento <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label>
-            <div class="customer-box wide">
+            @if (!salesOnly && !worksOnly) { <label>Tipo <select name="type" required [(ngModel)]="draft.type"><option value="sale">Vendita</option><option value="work">Lavorazione</option></select></label> }
+            @if (!salesOnly && !worksOnly) { <label class="wide">Titolo <input name="title" required [(ngModel)]="draft.title" /></label> }
+            @if (draft.type === 'sale' || worksOnly) { <label>{{ worksOnly ? 'Servizio' : 'Prodotto/Servizio' }} <select name="offer" required [ngModel]="offerSelection()" (ngModelChange)="changeOffer($event)"><option value="">{{ worksOnly ? 'Seleziona servizio' : 'Seleziona prodotto o servizio' }}</option>@for (offer of offerChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }</select></label> }
+            @if (!draft.serviceId) { <label>Collegamento <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label> }
+            <div class="customer-box full-width">
               <label>Cliente <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }
               @if (customerSuggestions().length) {
@@ -87,14 +89,19 @@
                 </div>
               }
             </div>
-            <label>Fiera <select name="fairEditionId" [(ngModel)]="draft.fairEditionId"><option [ngValue]="undefined">Nessuna fiera</option>@for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }</select></label>
             <label>Importo <input name="amount" type="number" min="0" step="0.01" [(ngModel)]="draft.amount" /></label>
-            <label>Stato Work <select name="workStatus" [(ngModel)]="draft.workStatus"><option [ngValue]="undefined">Non applicabile</option><option value="draft">Draft</option><option value="requested">Requested</option><option value="accepted">Accepted</option><option value="in-progress">In Progress</option><option value="ready">Ready</option><option value="delivered">Delivered</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
-            <label>Stato Sale <select name="saleStatus" [(ngModel)]="draft.saleStatus"><option [ngValue]="undefined">Non applicabile</option><option value="draft">Draft</option><option value="pending-payment">Pending Payment</option><option value="partially-paid">Partially Paid</option><option value="paid">Paid</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
-            <label>Stato economico <select name="economicStatus" [(ngModel)]="draft.economicStatus"><option [ngValue]="undefined">Non indicato</option><option value="preventivato">Preventivato</option><option value="concordato">Concordato</option><option value="acconto-ricevuto">Acconto ricevuto</option><option value="parzialmente-pagato">Parzialmente pagato</option><option value="pagato">Pagato</option><option value="insoluto">Insoluto</option><option value="annullato">Annullato</option></select></label>
             <label class="full-width">Descrizione <textarea name="description" rows="3" [(ngModel)]="draft.description"></textarea></label>
+            <label class="full-width">Fiera <select name="fairEditionId" [(ngModel)]="draft.fairEditionId"><option [ngValue]="undefined">Nessuna fiera</option>@for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }</select></label>
+            @if (worksOnly) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
+            @if (worksOnly) { <label>Stato lavorazione <select name="workStatus" [(ngModel)]="draft.workStatus"><option value="requested">Richiesta</option><option value="in-progress">In corso</option><option value="completed">Terminata</option><option value="delivered">Consegnata/Spedita</option><option value="cancelled">Cancellata</option></select></label> }
             <label class="full-width">Note <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea></label>
           </div>
+          }
+          @if (mode() !== 'fair') { <section class="payments-section">
+            <div class="payments-heading"><h3>Pagamenti</h3>@if (editingId()) { <span>{{ paymentTotal(editingId()).toFixed(2) }} € registrati</span> }</div>
+            @if (editingId() && operationPayments(editingId()).length) { <div class="payment-list">@for (payment of operationPayments(editingId()); track payment.id) { <div><span>{{ payment.paymentDate }}</span><span>{{ paymentMethodName(payment.paymentMethodId) }}</span><strong>{{ payment.amount.toFixed(2) }} €</strong><button class="danger-button" type="button" (click)="removePayment(payment)">Elimina</button></div> }</div> }
+            @if (!isEditingFullyPaid()) { <div class="payment-form"><label>Importo <input name="paymentAmount" type="number" min="0.01" step="0.01" [(ngModel)]="paymentDraft.amount" /></label><label>Data <input name="paymentDate" type="date" [(ngModel)]="paymentDraft.paymentDate" /></label><label>Modalita <select name="paymentMethod" [(ngModel)]="paymentDraft.paymentMethodId"><option value="">Nessuna</option>@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label>@if (editingId()) { <button class="text-button" type="button" [disabled]="!hasPaymentDraft()" (click)="addPayment()">+ Aggiungi pagamento</button> }</div> }
+          </section>
           }
           <app-form-actions [disabled]="operationForm.invalid === true" [saving]="saving()" saveLabel="Salva operazione" (cancel)="cancelForm()"></app-form-actions>
         </form>

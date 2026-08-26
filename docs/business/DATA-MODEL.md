@@ -159,13 +159,17 @@ Opera narrativa organizzata in serie, volume, episodio e tavole. Attributi: tito
 
 ### Prodotto
 
-Concetto centrale del catalogo: articolo, servizio, offerta creativa o composizione vendibile. Sono Prodotti sia oggetti fisici sia offerte creative: Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale, Commissione, Sketch, Copertina, Illustrazione e Bundle.
+Concetto centrale del catalogo: articolo fisico o composizione vendibile. Sono Prodotti Stampa A4, Stampa A5, Artbook, Fumetto, Calamita, Originale e Bundle.
 
 Attributi V1: identita, nome, prezzo suggerito, descrizione opzionale, stato attivo/non attivo, tag come placeholder, date di creazione e aggiornamento. Attributi futuri: variante, SKU, soglia, specializzazioni e configurazioni di categoria/tag.
 
 Nel foglio Excel storico `Tipo` puo indicare direttamente il prodotto venduto o acquistato, non una categoria stabile. Per la V1 le voci come Stampa A4, Stampa A5, Sketch, Commissione, Originale, Artbook, Fumetto, Calamita, Copertina, Illustrazione e Bundle devono quindi essere create come Prodotti distinti, non selezionate da una tendina Categoria.
 
-Commissione e Sketch non sono anagrafiche operative separate dal catalogo: sono Prodotti. Una Operation puo usare un Prodotto chiamato Commissione o Sketch e aggiungere workflow, cliente, stato e pagamenti, ma il catalogo resta la fonte della definizione commerciale ripetibile.
+### Servizio
+
+Offerta creativa distinta dal Prodotto fisico. Attributi V1: codice, descrizione, flag tecnico di sistema e date di audit. I servizi predefiniti non modificabili sono `COMMISSION` / Commission e `SKETCH` / Sketch.
+
+Una vendita seleziona un Prodotto oppure un Servizio, mai entrambi. La vendita di un Servizio crea anche la componente Lavorazione sulla stessa Operation, con stato iniziale Richiesta e data consegna.
 
 ### Lotto
 
@@ -187,9 +191,9 @@ L'Acquisto rappresenta il fatto osservabile nel foglio storico `Prodotti`: una s
 
 ### Vendita
 
-Transazione commerciale in cui prodotti vengono ceduti a fronte di un prezzo. Nella V1 viene registrata come Operazione, con Prodotto, descrizione, importo, cliente opzionale, fiera/evento, lotto opzionale per backoffice e note. Le righe Excel sono il livello osservabile piu vicino, ma durante una fiera il salvataggio rapido prevale sulla completezza.
+Transazione commerciale in cui un Prodotto o un Servizio viene ceduto a fronte di un importo. Nella V1 viene registrata come Operation, con offerta, descrizione, importo totale concordato, cliente opzionale, fiera/evento, lotto opzionale per il solo Prodotto e note.
 
-La Modalita Fiera apre prima un unico elenco di Prodotti ordinato per uso recente nelle ultime 10 fiere concluse, poi un form rapido gia precompilato. Puo salvare una Operazione con solo Prodotto, descrizione, importo e cliente opzionale. Se una fiera corrente e attiva viene collegata automaticamente. Il Lotto non e richiesto al salvataggio rapido.
+La Modalita Fiera apre prima un unico elenco ordinato di Prodotti e Servizi, poi un form rapido. Se una fiera corrente e attiva viene collegata automaticamente. Il pagamento rapido e una sola riga facoltativa con Contanti e importo vendita come default; il Lotto non e richiesto.
 
 Il cliente digitato in fiera puo restare Cliente soft. Eventuali Party esistenti vengono solo suggeriti: l'associazione a un Party richiede scelta esplicita dell'utente.
 
@@ -215,9 +219,9 @@ Movimento economico di direzione positiva per l'artista, previsto o effettivo, c
 
 Movimento economico di direzione negativa, previsto o effettivo, come costo di fiera, acquisto, spesa o commissione bancaria.
 
-### Incasso
+### Pagamento
 
-Ricezione effettiva di denaro collegata a vendita, compenso, acconto, saldo o rimborso. Attributi: importo, valuta, data, metodo, origine, causale, tipo di rata, stato e riferimento esterno.
+Riga di incasso collegata a una Operation. Attributi V1: importo positivo, data e Modalita di pagamento. Una Operation puo avere zero, uno o piu Pagamenti: nessun pagamento, acconto e saldo, o pagamento completo. L'importo della Operation e il totale concordato; l'incassato e la somma dei Pagamenti.
 
 ### Spesa
 

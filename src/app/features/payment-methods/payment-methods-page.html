@@ -1,0 +1,20 @@
+<section class="payment-methods-page" aria-labelledby="payment-methods-title">
+  <header class="page-header"><h1 id="payment-methods-title">Modalita di pagamento</h1><button class="primary-button" type="button" (click)="startCreating()">+ Nuova modalita</button></header>
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+  <div class="list-heading"><h2>Elenco modalita</h2><span>{{ paymentMethods().length }} disponibili</span></div>
+  @if (loading()) { <p class="empty-state">Caricamento...</p> }
+  @else {
+    <div class="payment-method-list">
+      @for (paymentMethod of paymentMethods(); track paymentMethod.id) {
+        <article class="payment-method-row"><h3>{{ paymentMethod.name }}</h3><div class="row-actions"><button class="text-button" type="button" (click)="startEditing(paymentMethod)">Modifica</button><button class="danger-button" type="button" [disabled]="paymentMethod.system || isPaymentMethodUsed(paymentMethod)" [title]="paymentMethod.system ? 'Modalita di sistema non eliminabile' : (isPaymentMethodUsed(paymentMethod) ? 'Modalita usata in una vendita' : 'Elimina modalita')" (click)="remove(paymentMethod)">Elimina</button></div></article>
+      }
+    </div>
+  }
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <section class="payment-method-dialog" role="dialog" aria-modal="true" aria-labelledby="payment-method-form-title">
+      <form class="payment-method-form" (ngSubmit)="save()" #paymentMethodForm="ngForm"><h2 id="payment-method-form-title">{{ editingId() ? 'Modifica modalita' : 'Nuova modalita' }}</h2><label>Nome <input name="name" required [(ngModel)]="draft.name" /></label><app-form-actions [disabled]="paymentMethodForm.invalid === true" [saving]="saving()" saveLabel="Salva modalita" (cancel)="cancelForm()"></app-form-actions></form>
+    </section>
+  }
+</section>

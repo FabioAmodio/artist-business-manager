@@ -27,13 +27,23 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/purchases/purchases-page').then((m) => m.PurchasesPage),
 	},
 	{
+		path: 'payment-methods',
+		data: { title: 'Modalita di pagamento' },
+		loadComponent: () => import('./features/payment-methods/payment-methods-page').then((m) => m.PaymentMethodsPage),
+	},
+	{
+		path: 'services',
+		data: { title: 'Servizi' },
+		loadComponent: () => import('./features/services/services-page').then((m) => m.ServicesPage),
+	},
+	{
 		path: 'lots',
 		data: { title: 'Collegamenti' },
 		loadComponent: () => import('./features/lots/lots-page').then((m) => m.LotsPage),
 	},
 	{
 		path: 'works',
-		data: { title: 'Lavori' },
+		data: { title: 'Lavori', worksOnly: true },
 		loadComponent: () => import('./features/operations/operations-page').then((m) => m.OperationsPage),
 	},
 	{
@@ -43,7 +53,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'sales',
-		data: { title: 'Vendite' },
+		data: { title: 'Vendite', salesOnly: true },
 		loadComponent: () => import('./features/operations/operations-page').then((m) => m.OperationsPage),
 	},
 	{
@@ -59,7 +69,7 @@ export const routes: Routes = [
 	{
 		path: 'deadlines',
 		data: { title: 'Scadenze' },
-		loadComponent: () => import('./features/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+		loadComponent: () => import('./features/deadlines/deadlines-page').then((m) => m.DeadlinesPage),
 	},
 	{
 		path: 'settings',

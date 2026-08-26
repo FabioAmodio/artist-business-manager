@@ -1,16 +1,6 @@
 import type { EntityId, IsoDateTime } from '../shared/types';
 
-export type OperationType =
-  | 'sale'
-  | 'commission'
-  | 'sketch'
-  | 'other'
-  | 'immediate-sale'
-  | 'reservation'
-  | 'commission-with-deposit'
-  | 'fair-delivery-commission'
-  | 'shipment-commission'
-  | 'future';
+export type OperationType = 'sale' | 'work';
 
 export interface Operation {
   readonly id: EntityId;
@@ -20,13 +10,13 @@ export interface Operation {
   readonly partyId?: EntityId;
   readonly fairEditionId?: EntityId;
   readonly productId?: EntityId;
+  readonly serviceId?: EntityId;
   readonly lotId?: EntityId;
   readonly customerName?: string;
   readonly amount?: number;
   readonly notes?: string;
-  readonly workStatus?: 'draft' | 'requested' | 'accepted' | 'in-progress' | 'ready' | 'delivered' | 'completed' | 'cancelled';
-  readonly saleStatus?: 'draft' | 'pending-payment' | 'partially-paid' | 'paid' | 'refunded' | 'cancelled';
-  readonly economicStatus?: 'preventivato' | 'concordato' | 'acconto-ricevuto' | 'parzialmente-pagato' | 'pagato' | 'insoluto' | 'annullato';
+  readonly workStatus?: 'requested' | 'in-progress' | 'completed' | 'delivered' | 'cancelled';
+  readonly deliveryDate?: string;
   readonly needsReview?: boolean;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;

@@ -42,6 +42,10 @@ export class ResponsiveNavComponent implements OnInit {
     return this.visibleCount() < this.navigationItems.length;
   });
 
+  hiddenItems: Signal<NavigationItem[]> = computed(() => {
+    return this.navigationItems.slice(this.visibleCount());
+  });
+
   @ViewChild('navContainer') navContainer!: ElementRef;
 
   constructor(private router: Router) {}
@@ -64,29 +68,21 @@ export class ResponsiveNavComponent implements OnInit {
   private calculateVisibleItems(): void {
     // Use a timeout to ensure DOM is updated before measuring
     setTimeout(() => {
-      if (window.innerWidth > 699) {
-        this.visibleCount.set(this.navigationItems.length);
-        this.moreMenuOpen.set(false);
-        return;
-      }
       if (!this.navContainer) return;
 
       const container = this.navContainer.nativeElement as HTMLElement;
       if (!container) return;
 
-      const containerWidth = container.offsetWidth;
       const itemHeight = 56; // ~height of a nav item based on CSS
-      const availableHeight = window.innerHeight * 0.6; // Rough estimate
+      const availableHeight = container.parentElement?.clientHeight || window.innerHeight * 0.6;
 
       // Calculate how many items can fit
       // This is based on sidebar width and item height
       // For sidebar layout (vertical), we don't need to hide items based on width
       // But we can hide based on viewport height if needed
       // For now, show all items if there's enough space
-      const maxItems = Math.max(
-        3,
-        Math.floor(availableHeight / itemHeight),
-      );
+      const moreButtonHeight = 64;
+      const maxItems = Math.max(3, Math.floor((availableHeight - moreButtonHeight) / itemHeight));
       this.visibleCount.set(
         Math.min(
           maxItems,

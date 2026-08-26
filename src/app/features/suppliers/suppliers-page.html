@@ -29,7 +29,7 @@
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleSuppliers().length) {
-    <div class="empty-state"><h3>Nessun fornitore registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo fornitore</button></div>
+    <div class="empty-state"><h3>Nessun fornitore registrato</h3></div>
   } @else {
     <div class="supplier-list">
       @for (supplier of visibleSuppliers(); track supplier.id) {

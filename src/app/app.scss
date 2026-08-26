@@ -234,6 +234,8 @@
 }
 
 @media (min-width: 700px) {
+  .sidebar { overflow: visible; }
+
   :host ::ng-deep .responsive-nav-wrapper { min-height: 0; }
   :host ::ng-deep .sidebar-nav { min-height: 0; overflow-y: auto; }
 }

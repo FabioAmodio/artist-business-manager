@@ -19,7 +19,7 @@
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visiblePurchases().length) {
-    <div class="empty-state"><h3>Nessun acquisto registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo acquisto</button></div>
+    <div class="empty-state"><h3>Nessun acquisto registrato</h3></div>
   } @else {
     <div class="purchase-list">
       @for (purchase of visiblePurchases(); track purchase.id) {

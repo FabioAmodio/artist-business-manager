@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { OperationRepository } from '../../core/repositories/operation.repository';
 import type { Operation, OperationType } from '../../domain/models/operation';
 
-export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'productId' | 'lotId' | 'customerName' | 'amount' | 'notes' | 'workStatus' | 'saleStatus' | 'economicStatus' | 'needsReview'>;
+export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'productId' | 'serviceId' | 'lotId' | 'customerName' | 'amount' | 'notes' | 'workStatus' | 'deliveryDate' | 'needsReview'>;
 
 @Injectable({ providedIn: 'root' })
 export class OperationService {
@@ -40,5 +40,6 @@ export class OperationService {
 
   private validate(input: OperationInput): void {
     if (!input.title.trim()) throw new Error('Il titolo dell\'operazione e obbligatorio.');
+    if (input.productId && input.serviceId) throw new Error('Un\'operazione puo riferire un prodotto oppure un servizio, non entrambi.');
   }
 }

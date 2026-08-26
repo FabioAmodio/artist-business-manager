@@ -11,6 +11,8 @@ export type FairSeriesFilter = EntityFilter;
 export type LotFilter = EntityFilter & { readonly productId?: EntityId; readonly purchaseId?: EntityId };
 export type ProductFilter = EntityFilter & { readonly active?: boolean };
 export type PurchaseFilter = EntityFilter & { readonly supplierId?: EntityId };
+export type PaymentMethodFilter = EntityFilter;
+export type ServiceFilter = EntityFilter;
 
 export interface OperationTransition {
   readonly status: string;

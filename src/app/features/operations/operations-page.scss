@@ -13,9 +13,6 @@ h3 { font-size: 1.2rem; }
 .feedback { padding: .75rem 1rem; }
 .error { background: color-mix(in srgb, var(--color-status-error) 12%, transparent); color: var(--color-status-error); }
 .success { background: color-mix(in srgb, var(--color-status-success) 12%, transparent); color: var(--color-status-success); }
-.mode-switch { display: inline-flex; gap: .25rem; margin: 1rem 0 0; }
-.mode-switch button { background: transparent; border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-secondary); cursor: pointer; font: 600 .9rem var(--font-sans); padding: .65rem .9rem; }
-.mode-switch .active { background: var(--color-primary-action-bg); border-color: var(--color-primary-action-bg); color: var(--color-primary-action-text); }
 .suggestions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .suggestions button, .product-grid button { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; font: 600 .9rem var(--font-sans); min-height: 2.75rem; padding: .5rem .8rem; }
 .cancel-button { background: transparent; border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; font: 600 .9rem var(--font-sans); padding: .8rem 1rem; width: 100%; }
@@ -28,14 +25,24 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .list-heading { border-bottom: 1px solid var(--color-border); padding-bottom: .75rem; }
 .list-heading span, .operation-row p { color: var(--color-text-secondary); }
 .empty-state { border: 1px solid var(--color-border); margin: 2rem 0; padding: 1.25rem; }
-.operation-list { display: grid; gap: .75rem; }
-.operation-row { align-items: start; background: color-mix(in srgb, var(--color-surface-secondary) 36%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius-base); display: grid; gap: .9rem; grid-template-columns: minmax(16rem, 1.2fr) minmax(24rem, 1.8fr) minmax(16rem, 1fr) auto; padding: .85rem; }
+.operation-list { display: grid; gap: .75rem; max-height: calc(100vh - 18rem); overflow-y: auto; padding-right: .25rem; }
+.operation-row { align-items: start; background: color-mix(in srgb, var(--color-surface-secondary) 36%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius-base); display: grid; gap: .9rem; grid-template-columns: minmax(12rem, .9fr) minmax(34rem, 2.1fr) 6.75rem auto; padding: .85rem; }
+.operation-row > * { min-width: 0; }
+.works-row { grid-template-columns: minmax(10rem, .75fr) minmax(0, 2.25fr) minmax(7rem, max-content) auto; }
 .operation-row p { margin: .35rem 0 0; }
 .context-grid { display: grid; gap: .4rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.operation-row:has(.sales-badges) .context-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.works-row .context-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .context-grid span { border-top: 2px solid var(--color-border); color: var(--color-text-secondary); display: grid; font-size: var(--font-size-xs); gap: .15rem; padding-top: .35rem; }
 .context-grid strong { color: var(--color-text-primary); font-size: var(--font-size-xs); }
 .badges { display: grid; gap: .35rem; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
-.badges span { border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); font-size: var(--font-size-xs); padding: .15rem .65rem; white-space: nowrap; }
+.badges button { background: transparent; cursor: pointer; font: inherit; }
+.badges button:hover, .badges button:focus-visible { background: color-mix(in srgb, var(--color-status-success) 10%, transparent); outline: none; }
+.sales-badges { grid-template-columns: min-content; min-width: 6.75rem; }
+.work-badges { grid-template-columns: min-content; min-width: 7rem; }
+.work-badges span { width: max-content; }
+.sales-badges span, .sales-badges button { width: max-content; }
+.badges span, .badges button { border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); font-size: var(--font-size-xs); padding: .15rem .65rem; white-space: nowrap; }
 .badges .active { border-color: var(--color-status-success); color: var(--color-status-success); }
 .row-actions { display: flex; gap: .25rem; }
 .dialog-backdrop { background: rgba(31, 41, 38, .35); bottom: 0; left: 0; position: fixed; right: 0; top: 0; z-index: var(--z-modal-backdrop); }
@@ -45,14 +52,17 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .product-picker { display: grid; gap: 1rem; margin: 1rem 0; }
 .product-picker h3 { font-size: 1rem; }
 .product-grid { display: grid; gap: .55rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
-.selected-product { align-items: center; background: color-mix(in srgb, var(--color-surface-secondary) 48%, transparent); border: 1px solid var(--color-border); display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; padding: .75rem; }
+.selected-product { align-items: center; background: color-mix(in srgb, var(--color-surface-secondary) 48%, transparent); border: 1px solid var(--color-border); color: var(--color-text-primary); cursor: pointer; display: flex; flex-wrap: wrap; font: inherit; gap: .5rem; justify-content: space-between; padding: .75rem; text-align: left; }
+.selected-product:hover, .selected-product:focus-visible { border-color: var(--color-accent); outline: none; }
 .selected-product span { color: var(--color-text-primary); font-weight: 700; }
 .quick-form { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin: 1.5rem 0; }
+.fair-payment { border-top: 1px solid var(--color-border); display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: .75rem; }.fair-payment strong { grid-column: 1 / -1; }.fair-payment label { font-size: var(--font-size-sm); }
 .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1.5rem 0; }
+.payments-section { border-top: 1px solid var(--color-border); display: grid; gap: .75rem; margin: 1rem 0; padding-top: 1rem; }.payments-heading { align-items: center; display: flex; justify-content: space-between; }.payments-heading h3 { font-size: 1.1rem; }.payments-heading span { color: var(--color-text-secondary); font-size: var(--font-size-sm); }.payment-list { display: grid; gap: .4rem; }.payment-list > div { align-items: center; border: 1px solid var(--color-border); display: grid; gap: .75rem; grid-template-columns: 8rem 1fr auto auto; padding: .5rem .7rem; }.payment-form { align-items: end; display: grid; gap: .75rem; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }.payment-form .text-button { white-space: nowrap; }
 .full-width { grid-column: 1 / -1; }
 .wide { grid-column: span 2; }
 .operation-form app-form-actions { background: linear-gradient(to top, var(--color-surface) 78%, transparent); bottom: -1.5rem; margin-top: 1rem; padding: .75rem 0 0; position: sticky; }
 @media (max-width: 1180px) { .operation-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .badges { grid-column: 1 / -2; } .operation-row > * { min-width: 0; } .context-grid span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } }
-@media (max-width: 799px) { .toolbar, .operation-row, .form-grid { grid-template-columns: 1fr; } .badges { grid-column: auto; } .wide { grid-column: auto; } }
+@media (max-width: 799px) { .toolbar, .operation-row, .form-grid, .payment-form, .fair-payment { grid-template-columns: 1fr; } .fair-payment strong { grid-column: auto; } .payment-list > div { grid-template-columns: 1fr; } .badges { grid-column: auto; } .wide { grid-column: auto; } }
 @media (max-width: 699px) { .page-header, .operation-row { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } .operation-dialog { max-width: calc(100vw - 2rem); padding: 1.25rem; } .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .row-actions { justify-content: flex-end; } }

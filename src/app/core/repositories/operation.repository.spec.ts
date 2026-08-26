@@ -19,7 +19,7 @@ class FakeStorageProvider implements IStorageProvider {
 
 function operation(input: Partial<Operation>): Operation {
   const now = '2025-01-01T00:00:00.000Z';
-  return { id: crypto.randomUUID(), type: 'commission', title: 'Operation', createdAt: now, updatedAt: now, ...input };
+  return { id: crypto.randomUUID(), type: 'work', title: 'Operation', createdAt: now, updatedAt: now, ...input };
 }
 
 describe('OperationRepository', () => {
@@ -28,10 +28,10 @@ describe('OperationRepository', () => {
     TestBed.configureTestingModule({ providers: [OperationRepository, { provide: STORAGE_PROVIDER, useValue: storage }] });
     const repository = TestBed.inject(OperationRepository);
     await repository.save(operation({ title: 'Poster', type: 'sale', updatedAt: '2025-01-02T00:00:00.000Z' }));
-    await repository.save(operation({ title: 'Ritratto digitale', type: 'commission', updatedAt: '2025-01-03T00:00:00.000Z' }));
-    await repository.save(operation({ title: 'Ritratto eliminato', type: 'commission', updatedAt: '2025-01-04T00:00:00.000Z', deletedAt: '2025-01-05T00:00:00.000Z' }));
+    await repository.save(operation({ title: 'Ritratto digitale', type: 'work', updatedAt: '2025-01-03T00:00:00.000Z' }));
+    await repository.save(operation({ title: 'Ritratto eliminato', type: 'work', updatedAt: '2025-01-04T00:00:00.000Z', deletedAt: '2025-01-05T00:00:00.000Z' }));
 
-    const result = await repository.list({ type: 'commission', text: 'ritratto' });
+    const result = await repository.list({ type: 'work', text: 'ritratto' });
 
     expect(result.map((item) => item.title)).toEqual(['Ritratto digitale']);
   });

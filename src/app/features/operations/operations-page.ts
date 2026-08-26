@@ -1,17 +1,29 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OperationService, type OperationInput } from '../../application/operations/operation.service';
+import { PaymentMethodService } from '../../application/payment-methods/payment-method.service';
+import { PaymentService } from '../../application/payments/payment.service';
 import { ClientService } from '../../application/clients/client.service';
 import { FairService } from '../../application/fairs/fair.service';
 import { LotService } from '../../application/lots/lot.service';
 import { ProductService } from '../../application/products/product.service';
+import { ServiceService } from '../../application/services/service.service';
 import type { Lot } from '../../domain/models/lot';
 import type { Operation, OperationType } from '../../domain/models/operation';
+import type { PaymentMethod } from '../../domain/models/payment-method';
+import type { Payment } from '../../domain/models/payment';
 import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
+import type { Service } from '../../domain/models/service';
 import type { Fair } from '../../domain/models/fair';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+
+interface PaymentDraft {
+  amount?: number;
+  paymentDate: string;
+  paymentMethodId: string;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,29 +34,42 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 })
 export class OperationsPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly service = inject(OperationService);
+  private readonly paymentMethodService = inject(PaymentMethodService);
+  private readonly paymentService = inject(PaymentService);
   private readonly clientService = inject(ClientService);
   private readonly fairService = inject(FairService);
   private readonly lotService = inject(LotService);
   private readonly productService = inject(ProductService);
+  private readonly serviceService = inject(ServiceService);
 
   protected readonly operations = signal<readonly Operation[]>([]);
+  protected readonly salesOnly = this.route.snapshot.data['salesOnly'] === true;
+  protected readonly worksOnly = this.route.snapshot.data['worksOnly'] === true;
+  protected readonly paymentMethods = signal<readonly PaymentMethod[]>([]);
+  protected readonly payments = signal<readonly Payment[]>([]);
   protected readonly parties = signal<readonly Party[]>([]);
   protected readonly fairs = signal<readonly Fair[]>([]);
   protected readonly lots = signal<readonly Lot[]>([]);
   protected readonly products = signal<readonly Product[]>([]);
+  protected readonly services = signal<readonly Service[]>([]);
+  protected readonly offerSelection = signal('');
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly creating = signal(false);
   protected readonly editingId = signal<string | null>(null);
-  protected readonly mode = signal<'fair' | 'backoffice'>('fair');
+  protected readonly mode = signal<'fair' | 'backoffice'>('backoffice');
   protected readonly query = signal('');
   protected readonly typeFilter = signal<OperationType | 'all'>('all');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: OperationInput = this.emptyDraft();
+  protected paymentDraft: PaymentDraft = this.emptyPaymentDraft();
+  private fairPaymentManuallyEdited = false;
   protected readonly customerMode = signal<'none' | 'soft' | 'existing'>('none');
   private pendingCreateTrigger: string | null = null;
+  private pendingOpenId: string | null = null;
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
@@ -53,20 +78,36 @@ export class OperationsPage implements OnInit {
       this.pendingCreateTrigger = trigger;
       if (!this.loading()) this.openTriggeredOperation();
     });
-    void this.loadAll().then(() => { if (this.pendingCreateTrigger) this.openTriggeredOperation(); });
+    this.route.queryParamMap.subscribe((params) => {
+      const openId = params.get('open');
+      if (!openId || openId === this.pendingOpenId) return;
+      this.pendingOpenId = openId;
+      if (!this.loading()) this.openRequestedWork();
+    });
+    void this.loadAll().then(() => { if (this.pendingCreateTrigger) this.openTriggeredOperation(); if (this.pendingOpenId) this.openRequestedWork(); });
   }
 
   protected async applyFilters(): Promise<void> { await this.loadOperations(); }
-  protected typeLabel(type: OperationType): string { return ({ sale: 'Vendita', commission: 'Commissione', sketch: 'Sketch', other: 'Altro' } as Record<string, string>)[type] ?? type; }
+  protected typeLabel(type: OperationType): string { return type === 'sale' ? 'Vendita' : 'Lavorazione'; }
   protected customerLabel(operation: Operation): string { return operation.partyId ? this.partyName(operation.partyId) : (operation.customerName || 'Cliente non indicato'); }
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }
   protected fairName(id?: string): string { const fair = this.fairs().find((item) => item.id === id); return fair ? `${fair.name} · ${fair.edition || fair.year}` : 'Fiera non indicata'; }
+  protected formatDate(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT').format(new Date(`${value}T00:00:00`)) : 'Non indicata'; }
   protected productName(id?: string): string { return this.products().find((product) => product.id === id)?.name ?? 'Prodotto non indicato'; }
+  protected serviceName(id?: string): string { return this.services().find((service) => service.id === id)?.description ?? 'Servizio non indicato'; }
+  protected offerName(operation: Operation): string { return operation.serviceId ? this.serviceName(operation.serviceId) : this.productName(operation.productId); }
+  protected paymentMethodName(id?: string): string { return this.paymentMethods().find((paymentMethod) => paymentMethod.id === id)?.name ?? 'Non indicata'; }
+  protected operationPayments(operationId: string | null): readonly Payment[] { return operationId ? this.payments().filter((payment) => payment.operationId === operationId) : []; }
+  protected paymentTotal(operationId: string | null): number { return this.operationPayments(operationId).reduce((total, payment) => total + payment.amount, 0); }
+  protected isEditingFullyPaid(): boolean { return Boolean(this.editingId()) && (this.draft.amount ?? 0) > 0 && this.paymentTotal(this.editingId()) >= (this.draft.amount ?? 0); }
+  protected workStatusLabel(status?: Operation['workStatus']): string {
+    return ({ requested: 'Richiesta', 'in-progress': 'In corso', completed: 'Terminata', delivered: 'Consegnata/Spedita', cancelled: 'Cancellata' } as Record<string, string>)[status ?? ''] ?? 'Non indicata';
+  }
   protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
-  protected hasWork(operation: Operation): boolean { return operation.type === 'commission' || operation.type === 'sketch' || Boolean(operation.workStatus); }
-  protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || Boolean(operation.saleStatus) || typeof operation.amount === 'number'; }
+  protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
+  protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || typeof operation.amount === 'number'; }
   protected activeFair(): Fair | null { const today = new Date().toISOString().slice(0, 10); return this.fairs().find((fair) => fair.startDate <= today && today <= fair.endDate) ?? null; }
-  protected fairProductChoices(): readonly Product[] {
+  protected offerChoices(): ReadonlyArray<{ readonly key: string; readonly label: string }> {
     const concludedFairIds = this.fairs()
       .filter((fair) => fair.endDate < new Date().toISOString().slice(0, 10))
       .sort((first, second) => second.endDate.localeCompare(first.endDate))
@@ -74,21 +115,48 @@ export class OperationsPage implements OnInit {
       .map((fair) => fair.id);
     const usage = new Map<string, number>();
     for (const operation of this.operations()) {
-      if (operation.productId && operation.fairEditionId && concludedFairIds.includes(operation.fairEditionId)) usage.set(operation.productId, (usage.get(operation.productId) ?? 0) + 1);
+      if (!operation.fairEditionId || !concludedFairIds.includes(operation.fairEditionId)) continue;
+      const key = operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : undefined;
+      if (key) usage.set(key, (usage.get(key) ?? 0) + 1);
     }
-    return this.products()
-      .filter((product) => product.active)
-      .sort((first, second) => (usage.get(second.id) ?? 0) - (usage.get(first.id) ?? 0) || first.name.localeCompare(second.name));
+    return [
+      ...this.products().filter((product) => product.active).map((product) => ({ key: `product:${product.id}`, label: product.name })),
+      ...this.services().map((service) => ({ key: `service:${service.id}`, label: service.description })),
+    ].sort((first, second) => (usage.get(second.key) ?? 0) - (usage.get(first.key) ?? 0) || first.label.localeCompare(second.label));
   }
 
-  protected setMode(mode: 'fair' | 'backoffice'): void { this.mode.set(mode); this.cancelForm(); }
-  protected openFairWizard(): void { this.startCreating('sale'); }
-  protected selectingFairProduct(): boolean { return this.mode() === 'fair' && this.creating() && !this.draft.productId; }
-  protected selectQuickProduct(product: Product): void {
-    if (!this.creating()) this.startCreating('sale');
-    this.draft = { ...this.draft, productId: product.id, title: product.name, amount: product.suggestedPrice };
+  protected openFairWizard(): void { this.mode.set('fair'); this.startCreating('sale'); }
+  protected openWork(operation: Operation): void { void this.router.navigate(['/works'], { queryParams: { open: operation.id } }); }
+  protected startNewOperation(): void {
+    if (this.salesOnly && (window.innerWidth < 700 || this.activeFair())) {
+      this.openFairWizard();
+      return;
+    }
+    this.mode.set('backoffice');
+    this.startCreating(this.salesOnly ? 'sale' : 'work');
   }
-  protected clearSelectedProduct(): void { this.draft = { ...this.draft, productId: undefined, title: '', amount: undefined }; }
+  protected selectingFairProduct(): boolean { return this.mode() === 'fair' && this.creating() && !this.draft.productId && !this.draft.serviceId; }
+  protected selectOffer(key: string): void {
+    if (!this.creating()) this.startCreating('sale');
+    this.offerSelection.set(key);
+    const [kind, id] = key.split(':');
+    if (kind === 'service') {
+      const service = this.services().find((item) => item.id === id);
+      this.draft = { ...this.draft, productId: undefined, serviceId: id, lotId: undefined, title: service?.description ?? '', workStatus: 'requested', deliveryDate: this.draft.deliveryDate ?? this.today() };
+      if (this.mode() === 'fair') this.paymentDraft = { ...this.paymentDraft, paymentMethodId: this.defaultPaymentMethodId() };
+      return;
+    }
+    const product = this.products().find((item) => item.id === id);
+    this.draft = { ...this.draft, productId: id, serviceId: undefined, title: product?.name ?? '', amount: product?.suggestedPrice, workStatus: this.worksOnly ? (this.draft.workStatus ?? 'requested') : undefined, deliveryDate: this.worksOnly ? (this.draft.deliveryDate ?? this.today()) : undefined };
+    if (this.mode() === 'fair') this.paymentDraft = { ...this.paymentDraft, amount: product?.suggestedPrice, paymentMethodId: this.defaultPaymentMethodId() };
+  }
+  protected changeOffer(key: string): void { this.selectOffer(key); }
+  protected clearSelectedProduct(): void { this.offerSelection.set(''); this.draft = { ...this.draft, productId: undefined, serviceId: undefined, title: '', amount: undefined, workStatus: undefined }; }
+  protected updateFairAmount(amount: number | null): void {
+    this.draft = { ...this.draft, amount: amount ?? undefined };
+    if (!this.fairPaymentManuallyEdited) this.paymentDraft = { ...this.paymentDraft, amount: amount ?? undefined, paymentMethodId: this.defaultPaymentMethodId() };
+  }
+  protected updateFairPaymentAmount(amount: number | null): void { this.fairPaymentManuallyEdited = true; this.paymentDraft = { ...this.paymentDraft, amount: amount ?? undefined }; }
   protected updateCustomerName(value: string): void {
     this.draft = { ...this.draft, customerName: value, partyId: undefined };
     this.customerMode.set(value.trim() ? 'soft' : 'none');
@@ -111,14 +179,20 @@ export class OperationsPage implements OnInit {
   protected startCreating(type: OperationType = 'sale'): void {
     this.resetMessages();
     this.customerMode.set('none');
-    this.draft = this.emptyDraft(type);
+    this.draft = this.emptyDraft(this.salesOnly ? 'sale' : this.worksOnly ? 'work' : type);
+    this.paymentDraft = this.emptyPaymentDraft();
+    this.fairPaymentManuallyEdited = false;
+    this.offerSelection.set('');
     this.editingId.set(null);
     this.creating.set(true);
   }
   protected startEditing(operation: Operation): void {
     this.resetMessages();
     this.customerMode.set(operation.partyId ? 'existing' : (operation.customerName ? 'soft' : 'none'));
-    this.draft = { ...this.emptyDraft(operation.type), ...operation };
+    this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, type: this.salesOnly ? 'sale' : operation.type };
+    this.paymentDraft = this.emptyPaymentDraft();
+    this.fairPaymentManuallyEdited = false;
+    this.offerSelection.set(operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : '');
     this.editingId.set(operation.id);
     this.creating.set(false);
     this.mode.set('backoffice');
@@ -129,8 +203,17 @@ export class OperationsPage implements OnInit {
     this.saving.set(true); this.resetMessages();
     const input = this.prepareInput();
     try {
-      if (this.editingId()) await this.service.update(this.editingId()!, input);
-      else await this.service.create(input);
+      const fairPaymentAmount = this.paymentDraft.amount ?? 0;
+      if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > (input.amount ?? 0)) {
+        throw new Error('Il pagamento non puo superare l\'importo della vendita.');
+      }
+      const operation = this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
+      if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > 0) {
+        await this.paymentService.create({ operationId: operation.id, amount: fairPaymentAmount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId || this.defaultPaymentMethodId() });
+      } else if (this.mode() !== 'fair' && this.hasPaymentDraft()) {
+        await this.paymentService.create({ operationId: operation.id, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
+      }
+      this.payments.set(await this.paymentService.list());
       this.cancelForm(); this.successMessage.set('Operazione salvata localmente.'); await this.loadOperations();
     } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare l\'operazione.'); }
     finally { this.saving.set(false); }
@@ -143,30 +226,63 @@ export class OperationsPage implements OnInit {
     catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare l\'operazione.'); }
   }
 
+  protected async addPayment(): Promise<void> {
+    if (!this.editingId() || !this.hasPaymentDraft()) return;
+    this.saving.set(true); this.resetMessages();
+    try {
+      await this.paymentService.create({ operationId: this.editingId()!, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
+      this.paymentDraft = this.emptyPaymentDraft();
+      this.payments.set(await this.paymentService.list());
+    } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile aggiungere il pagamento.'); }
+    finally { this.saving.set(false); }
+  }
+
+  protected async removePayment(payment: Payment): Promise<void> {
+    if (!window.confirm(`Eliminare il pagamento di ${payment.amount.toFixed(2)} €?`)) return;
+    await this.paymentService.delete(payment.id);
+    this.payments.set(await this.paymentService.list());
+  }
+
   private async loadAll(): Promise<void> {
     this.loading.set(true);
     try {
-      const [operations, parties, fairs, lots, products] = await Promise.all([this.service.list(), this.clientService.list(), this.fairService.list(), this.lotService.list(), this.productService.list()]);
-      this.operations.set(operations); this.parties.set(parties); this.fairs.set(fairs); this.lots.set(lots); this.products.set(products);
+      const [operations, parties, fairs, lots, paymentMethods, payments, products, services] = await Promise.all([this.service.list(this.salesOnly ? 'sale' : 'all'), this.clientService.list(), this.fairService.list(), this.lotService.list(), this.paymentMethodService.list(), this.paymentService.list(), this.productService.list(), this.serviceService.list()]);
+      this.operations.set(this.filterOperations(operations)); this.parties.set(parties); this.fairs.set(fairs); this.lots.set(lots); this.paymentMethods.set(paymentMethods); this.payments.set(payments); this.products.set(products); this.services.set(services);
     } catch { this.errorMessage.set('Impossibile caricare le operazioni.'); }
     finally { this.loading.set(false); }
   }
 
-  private async loadOperations(): Promise<void> { this.loading.set(true); try { this.operations.set(await this.service.list(this.typeFilter(), this.query())); } finally { this.loading.set(false); } }
+  private async loadOperations(): Promise<void> { this.loading.set(true); try { this.operations.set(this.filterOperations(await this.service.list(this.salesOnly ? 'sale' : 'all', this.query()))); } finally { this.loading.set(false); } }
   private resetMessages(): void { this.errorMessage.set(''); this.successMessage.set(''); }
   private openTriggeredOperation(): void {
-    this.mode.set('fair');
     this.openFairWizard();
+  }
+  private openRequestedWork(): void {
+    const operation = this.operations().find((item) => item.id === this.pendingOpenId);
+    if (operation) this.startEditing(operation);
   }
   private prepareInput(): OperationInput {
     const product = this.products().find((item) => item.id === this.draft.productId);
-    const title = this.draft.title.trim() || product?.name || this.draft.description?.trim() || 'Operazione fiera';
+    const service = this.services().find((item) => item.id === this.draft.serviceId);
+    const title = this.draft.title.trim() || product?.name || service?.description || this.draft.description?.trim() || 'Operazione fiera';
     const fairEditionId = this.mode() === 'fair' ? (this.activeFair()?.id ?? this.draft.fairEditionId) : this.draft.fairEditionId;
     const partyId = this.customerMode() === 'existing' ? this.draft.partyId : undefined;
     const customerName = this.customerMode() === 'soft' ? this.draft.customerName?.trim() : undefined;
-    return { ...this.draft, title, fairEditionId, partyId, customerName, lotId: this.mode() === 'fair' ? undefined : this.draft.lotId, type: this.draft.type || 'sale', saleStatus: this.draft.saleStatus ?? 'draft', needsReview: this.draft.needsReview ?? false };
+    const type = this.salesOnly ? 'sale' : (this.draft.type || 'work');
+    return { ...this.draft, title, fairEditionId, partyId, customerName, lotId: this.mode() === 'fair' ? undefined : this.draft.lotId, type, workStatus: this.draft.serviceId ? (this.draft.workStatus ?? 'requested') : this.draft.workStatus, needsReview: this.draft.needsReview ?? false };
   }
-  private emptyDraft(type: OperationType = 'commission'): OperationInput {
-    return { type, title: '', description: '', partyId: undefined, fairEditionId: this.mode() === 'fair' ? this.activeFair()?.id : undefined, productId: undefined, lotId: undefined, customerName: '', amount: undefined, notes: '', workStatus: type === 'sale' ? undefined : 'draft', saleStatus: type === 'sale' ? 'draft' : undefined, economicStatus: undefined, needsReview: false };
+  private emptyDraft(type: OperationType = 'work'): OperationInput {
+    return { type, title: '', description: '', partyId: undefined, fairEditionId: type === 'sale' ? this.activeFair()?.id : undefined, productId: undefined, serviceId: undefined, lotId: undefined, customerName: '', amount: undefined, notes: '', workStatus: type === 'work' ? 'requested' : undefined, deliveryDate: type === 'work' ? this.today() : undefined, needsReview: false };
   }
+
+  private filterOperations(operations: readonly Operation[]): readonly Operation[] {
+    if (this.worksOnly) return operations.filter((operation) => Boolean(operation.workStatus));
+    if (this.salesOnly) return operations.filter((operation) => operation.type === 'sale');
+    return operations;
+  }
+
+  protected hasPaymentDraft(): boolean { return typeof this.paymentDraft.amount === 'number' || Boolean(this.paymentDraft.paymentMethodId); }
+  private emptyPaymentDraft(): PaymentDraft { return { amount: undefined, paymentDate: new Date().toISOString().slice(0, 10), paymentMethodId: '' }; }
+  private today(): string { return new Date().toISOString().slice(0, 10); }
+  private defaultPaymentMethodId(): string { return this.paymentMethods().find((paymentMethod) => paymentMethod.id === 'system-payment-method-contanti')?.id ?? 'system-payment-method-contanti'; }
 }

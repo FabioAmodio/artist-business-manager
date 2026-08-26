@@ -178,11 +178,11 @@ Operazione, prodotto, descrizione, importo, cliente assente/soft/registrato, fie
 
 ### Catalogo rapido fiera
 
-La Modalita Fiera mostra nella selezione iniziale un unico elenco con tutti i prodotti attivi del catalogo. I prodotti piu usati nelle ultime 10 fiere concluse in assoluto sono ordinati piu in alto, senza creare gruppi separati. Non usa le ultime 10 partecipazioni alla stessa fiera, ne statistiche per citta o organizzatore. Il pulsante `+` mobile apre sempre questo wizard e non il Backoffice.
+La Modalita Fiera mostra nella selezione iniziale un unico elenco con Prodotti e Servizi attivi. Le offerte piu usate nelle ultime 10 fiere concluse in assoluto sono ordinate piu in alto, senza gruppi separati. Il pulsante `+` mobile e `+ Nuova vendita` su mobile aprono sempre questo wizard.
 
 ### Vincoli fiera
 
-Il wizard rapido non richiede Lotto e non obbliga alla creazione di un Party. Il cliente puo essere assente, soft o selezionato tra quelli esistenti. La completezza dei dati viene recuperata successivamente in Backoffice.
+Il wizard rapido non richiede Lotto e non obbliga alla creazione di un Party. Il cliente puo essere assente, soft o selezionato tra quelli esistenti. La fiera in corso e proposta automaticamente anche se il campo non e visibile. Il pagamento rapido e una sola riga facoltativa: importo uguale alla vendita e Contanti come default, oppure zero per non registrare alcun incasso.
 
 Quando l'artista digita un nome cliente, l'app puo mostrare Party esistenti simili e l'opzione di continuare con Cliente soft. Non deve mai associare automaticamente un Party basandosi solo sul nome digitato.
 
@@ -206,7 +206,7 @@ Mantenere un catalogo rapido e coerente di prodotti fisici, offerte creative e b
 5. Salvare localmente senza obbligare l'artista a definire categorie, varianti, lotti, magazzino o vendite.
 
 ### Vincoli V1
-Commissione, Sketch e Bundle sono Prodotti. La loro presenza in catalogo non avvia workflow commissioni, non crea vendita e non modifica disponibilita. Durante una fiera questa scelta permette di cercare rapidamente l'offerta commerciale per nome senza scegliere una categoria intermedia.
+Bundle e un Prodotto. Commission e Sketch sono Servizi: la loro vendita crea anche una Lavorazione sulla stessa Operation, senza duplicare record. Durante una fiera la scelta dell'offerta resta diretta e senza categoria intermedia.
 
 ## 7. Registrazione acquisti destinati alla vendita
 
@@ -305,7 +305,7 @@ Incasso, data, importo e valuta; metodo e stato; causale e riferimento; compenso
 ## 10. Gestione scadenze
 
 ### Attore
-Artista, che crea e aggiorna scadenze proprie o derivate da lavori, eventi e pagamenti.
+Nella V1 Scadenze e una vista in sola lettura delle Lavorazioni Richieste o In corso, ordinate per data consegna. Non consente di creare scadenze autonome.
 
 ### Obiettivo
 Raccogliere obblighi e attivita con data limite, collegandoli all'origine e rendendo evidenti ritardi e priorita.

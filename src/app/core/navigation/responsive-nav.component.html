@@ -8,6 +8,7 @@
       class="nav-item"
       [attr.aria-label]="item.label"
       [attr.data-path]="item.path"
+      (click)="closeMoreMenu()"
     >
       <span class="nav-icon">{{ item.icon }}</span>
       <span class="nav-label">{{ item.label }}</span>
@@ -27,7 +28,7 @@
     <span class="more-label">Altro</span>
   </button>
 
-  <div *ngIf="moreMenuOpen()" class="nav-more-menu" role="menu" @.presence>
+  <div *ngIf="moreMenuOpen()" class="nav-more-menu" role="menu">
     <div class="more-menu-header">
       <span>Altre opzioni</span>
       <button class="more-menu-close" (click)="closeMoreMenu()" aria-label="Chiudi menu">
@@ -37,7 +38,7 @@
 
     <nav class="more-menu-items">
       <a
-        *ngFor="let item of navigationItems; trackBy: trackByPath"
+        *ngFor="let item of hiddenItems(); trackBy: trackByPath"
         [routerLink]="item.path"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: item.exact || false }"

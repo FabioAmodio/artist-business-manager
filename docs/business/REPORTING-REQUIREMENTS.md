@@ -132,7 +132,7 @@ Deve rispondere almeno a queste domande:
 - Quale canale genera piu vendite?
 - Qual e il valore medio di una vendita?
 - Quali varianti o SKU hanno scorte sotto soglia?
-- Quali vendite risultano non ancora incassate?
+- Quali vendite risultano non ancora incassate o parzialmente incassate, confrontando totale Operation e somma dei Pagamenti?
 - Quali prodotti hanno avuto il maggior numero di resi o rettifiche?
 - Quali sono le vendite per periodo, evento, cliente e canale?
 

@@ -3,6 +3,7 @@
     <header class="dashboard-header fair-header">
       <div>
         <h1 id="dashboard-title">{{ fair.name }}</h1>
+        @if (activeFair(); as active) { <p class="fair-in-progress">Fiera in corso: {{ active.name }}</p> }
         <p class="muted">{{ fair.location }} · {{ fair.startDate }} - {{ fair.endDate }}</p>
       </div>
       <span class="live-badge">Attiva</span>
@@ -22,6 +23,7 @@
   } @else {
     <header class="dashboard-header">
       <div><h1 id="dashboard-title">La tua attivita</h1></div>
+      @if (activeFair(); as active) { <p class="fair-in-progress">Fiera in corso: {{ active.name }}</p> }
     </header>
     <div class="kpi-grid">
       <article class="kpi"><span>Vendite del periodo</span><strong>0,00 €</strong></article>

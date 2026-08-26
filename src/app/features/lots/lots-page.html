@@ -19,7 +19,7 @@
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleLots().length) {
-    <div class="empty-state"><h3>Nessun collegamento registrato</h3><button class="primary-button" type="button" (click)="startCreating()">Crea il primo collegamento</button></div>
+    <div class="empty-state"><h3>Nessun collegamento registrato</h3></div>
   } @else {
     <div class="lot-list">
       @for (lot of visibleLots(); track lot.id) {

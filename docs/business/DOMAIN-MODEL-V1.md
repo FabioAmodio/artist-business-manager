@@ -180,11 +180,11 @@ Dettaglio di prodotto o bundle con quantita, descrizione, prezzo storico, sconto
 
 `Spesa` e costo generale collegabile a Fiera, Operazione, progetto, prodotto o attivita. La spesa e distinta dal suo pagamento.
 
-### 3.17 Movimento economico e Incasso
+### 3.17 Movimento economico e Pagamento
 
 `Movimento economico` ha direzione, importo, valuta, data, causale e origine.
 
-`Incasso` e denaro effettivamente ricevuto, collegato a una Operazione: importo, valuta, data, metodo, acconto/rata/saldo, stato e riferimento esterno.
+`Payment` e denaro effettivamente ricevuto, collegato a una Operation: importo positivo, data e Modalita di pagamento. La relazione e `Operation 1 : 0..* Payment`: una commissione puo non avere incassi, avere un acconto e un saldo, oppure un solo pagamento completo. Il totale incassato e derivato dalla somma delle righe Payment; non esiste piu un singolo metodo di pagamento o stato vendita nell'Operation.
 
 Storni e rimborsi sono movimenti inversi collegati all'origine; non cancellano il movimento originale.
 
