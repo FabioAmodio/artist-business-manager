@@ -28,6 +28,7 @@ export interface IStorageProvider {
   list<T>(collection: string, filter?: StorageFilter): Promise<readonly T[]>;
   put<T>(collection: string, value: T): Promise<void>;
   deleteLogical(collection: string, id: EntityId, metadata?: DeleteMetadata): Promise<void>;
+  deletePermanent(collection: string, id: EntityId): Promise<void>;
   transaction<T>(collections: readonly string[], work: () => Promise<T>): Promise<T>;
   health(): Promise<StorageHealth>;
 }

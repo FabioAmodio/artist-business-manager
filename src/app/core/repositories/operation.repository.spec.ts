@@ -13,6 +13,7 @@ class FakeStorageProvider implements IStorageProvider {
   async list<T>(_collection: string, _filter?: StorageFilter): Promise<readonly T[]> { return [...this.items.values()] as unknown as readonly T[]; }
   async put<T>(collection: string, value: T): Promise<void> { if (collection === 'operations') this.items.set((value as Operation).id, value as Operation); }
   async deleteLogical(collection: string, id: string): Promise<void> { const item = this.items.get(id); if (collection === 'operations' && item) this.items.set(id, { ...item, deletedAt: '2025-01-01T00:00:00.000Z' }); }
+  async deletePermanent(_collection: string, id: string): Promise<void> { this.items.delete(id); }
   async transaction<T>(_collections: readonly string[], action: () => Promise<T>): Promise<T> { return action(); }
   async health(): Promise<StorageHealth> { return { available: true, provider: 'fake', databaseName: 'fake', schemaVersion: 1, migrationVersion: 1, checkedAt: '2025-01-01T00:00:00.000Z' }; }
 }

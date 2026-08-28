@@ -1,0 +1,29 @@
+<section class="trash-page" aria-labelledby="trash-title">
+  <header class="page-header">
+    <div><h1 id="trash-title">Cestino</h1><p>Elementi cancellati</p></div>
+    <div class="page-actions">
+      <button class="secondary-button" type="button" [disabled]="!entries().length || busy()" (click)="toggleAll()">{{ allSelected() ? 'Deseleziona tutto' : 'Seleziona tutto' }}</button>
+      <button class="secondary-button" type="button" [disabled]="!selectedIds().size || busy()" (click)="restoreSelected()">Ripristina selezionati</button>
+      <button class="danger-button" type="button" [disabled]="!selectedIds().size || busy()" (click)="deleteSelected()">Elimina selezionati</button>
+    </div>
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+  <div class="list-heading"><h2>Elenco elementi</h2><span>{{ entries().length }} presenti</span></div>
+
+  @if (loading()) { <p class="empty-state">Caricamento...</p> }
+  @else if (!entries().length) { <div class="empty-state"><h3>Il cestino e vuoto</h3></div> }
+  @else {
+    <div class="trash-list">
+      @for (entry of entries(); track entry.collection + ':' + entry.id) {
+        <article class="trash-row" [class.selected]="isSelected(entry)">
+          <label class="selection"><input type="checkbox" [checked]="isSelected(entry)" (change)="toggle(entry)" /><span class="sr-only">Seleziona {{ entry.label }}</span></label>
+          <div><h3>{{ entry.label }}</h3><p>{{ entry.type }}</p></div>
+          <div class="deleted-date"><strong>Cancellato il</strong><span>{{ entry.deletedAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+          <div class="row-actions"><button class="text-button" type="button" [disabled]="busy()" (click)="restore(entry)">Ripristina</button><button class="danger-button" type="button" [disabled]="busy()" (click)="deletePermanent(entry)">Elimina definitivamente</button></div>
+        </article>
+      }
+    </div>
+  }
+</section>

@@ -52,6 +52,10 @@ export class IndexedDbProvider implements IStorageProvider {
     }
   }
 
+  async deletePermanent(collection: string, id: EntityId): Promise<void> {
+    if (this.database && this.isSupportedCollection(collection)) await this.database.table(collection).delete(id);
+  }
+
   async transaction<T>(_collections: readonly string[], work: () => Promise<T>): Promise<T> {
     return work();
   }

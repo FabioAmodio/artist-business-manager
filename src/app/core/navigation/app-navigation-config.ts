@@ -67,4 +67,9 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     label: 'Impostazioni',
     icon: '⚙',
   },
+  {
+    path: '/trash',
+    label: 'Cestino',
+    icon: '🗑',
+  },
 ];
