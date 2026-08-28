@@ -8,10 +8,12 @@ import type {
   StorageFilter,
   StorageHealth,
 } from './storage-provider';
+import { SyncStatusService } from '../synchronization/sync-status.service';
 
 @Injectable()
 export class IndexedDbProvider implements IStorageProvider {
   private readonly environment = inject(APP_ENVIRONMENT);
+  private readonly syncStatus = inject(SyncStatusService);
   private readonly databaseName = `${this.environment.storagePrefix}-${this.environment.applicationName}`;
   private database: AppDatabase | null = null;
 
@@ -37,7 +39,10 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   async put<T>(_collection: string, _value: T): Promise<void> {
-    if (this.database && this.isSupportedCollection(_collection)) await this.database.table(_collection).put(_value);
+    if (this.database && this.isSupportedCollection(_collection)) {
+      await this.database.table(_collection).put(_value);
+      if (_collection !== 'appSettings') this.syncStatus.notifyLocalChange();
+    }
   }
 
   async deleteLogical(_collection: string, _id: EntityId, _metadata?: DeleteMetadata): Promise<void> {
@@ -49,6 +54,7 @@ export class IndexedDbProvider implements IStorageProvider {
         ...value,
         deletedAt: _metadata?.deletedAt ?? new Date().toISOString(),
       });
+      if (_collection !== 'appSettings') this.syncStatus.notifyLocalChange();
     }
   }
 

@@ -1,7 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import { APP_ENVIRONMENT, STORAGE_PROVIDER } from '../../core/configuration/environment.tokens';
 import type { IStorageProvider } from '../../core/storage/storage-provider';
 import type { PersistedDataset, PersistenceSettings } from '../../core/persistence/persistence.models';
+import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
@@ -18,6 +19,7 @@ interface GoogleApi { accounts: { oauth2: { initTokenClient: (config: { client_i
 export class PersistenceService {
   private readonly environment = inject(APP_ENVIRONMENT);
   private readonly storage = inject<IStorageProvider>(STORAGE_PROVIDER);
+  private readonly syncStatus = inject(SyncStatusService);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly status = signal('');
   readonly driveFolders = signal<readonly DriveFolder[]>([]);
@@ -28,6 +30,16 @@ export class PersistenceService {
   private driveAccessToken: string | undefined;
   private driveAccessTokenExpiresAt = 0;
   private driveClientId = '';
+  private initialized = false;
+  private syncTimer: ReturnType<typeof setTimeout> | undefined;
+
+  constructor() {
+    effect(() => {
+      this.syncStatus.changeVersion();
+      if (this.initialized && this.source() !== 'none') this.scheduleAutomaticSync();
+    });
+    if (typeof window !== 'undefined') window.addEventListener('online', () => this.scheduleAutomaticSync());
+  }
 
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
@@ -35,6 +47,8 @@ export class PersistenceService {
     this.directoryHandle = settings?.directoryHandle;
     this.driveClientId = settings?.driveClientId ?? this.environment.googleDriveClientId ?? '';
     this.driveFolderId = settings?.driveFolderId;
+    this.initialized = true;
+    this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
     if (this.source() === 'google-drive' && this.driveFolderId && this.driveClientId) {
       void this.restoreDriveSession();
     }
@@ -44,6 +58,7 @@ export class PersistenceService {
     try {
       await this.authorizeDrive(false);
       this.driveNeedsAuthentication.set(false);
+      await this.synchronize();
     } catch {
       this.driveNeedsAuthentication.set(true);
       this.status.set('Ricollega Google Drive per sincronizzare.');
@@ -98,6 +113,17 @@ export class PersistenceService {
   }
 
   async synchronize(): Promise<void> {
+    this.syncStatus.setStatus('syncing');
+    try {
+      await this.synchronizeInternal();
+      this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
+    } catch (error) {
+      this.syncStatus.setStatus('error');
+      throw error;
+    }
+  }
+
+  private async synchronizeInternal(): Promise<void> {
     const local = await this.readLocalDataset();
     const remote = this.source() === 'file-system'
       ? await this.readDirectoryDataset()
@@ -105,10 +131,18 @@ export class PersistenceService {
     if (this.source() === 'file-system' && !this.directoryHandle) throw new Error('La cartella persistente non e disponibile. Selezionala nuovamente.');
     if (this.source() === 'google-drive' && !this.getDriveFolderId()) throw new Error('Seleziona prima una cartella Drive.');
     const merged = remote ? this.merge(local, remote) : local;
-    await this.writeLocalDataset(merged);
+    await this.syncStatus.suppress(() => this.writeLocalDataset(merged));
     if (this.source() === 'file-system') await this.writeDirectoryDataset(merged);
     if (this.source() === 'google-drive') await this.writeDriveDataset(merged);
     this.status.set(remote ? 'Dati locali e persistenti allineati.' : 'Dati locali copiati nella cartella persistente.');
+  }
+
+  private scheduleAutomaticSync(): void {
+    if (this.syncTimer) clearTimeout(this.syncTimer);
+    this.syncTimer = setTimeout(() => {
+      this.syncTimer = undefined;
+      void this.synchronize().catch(() => undefined);
+    }, 750);
   }
 
   async exportLocal(): Promise<void> {

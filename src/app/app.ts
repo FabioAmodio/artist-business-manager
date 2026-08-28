@@ -3,6 +3,7 @@ import { RouterLink, RouterOutlet, ActivatedRoute, Router } from '@angular/route
 import { ResponsiveNavComponent } from './core/navigation/responsive-nav.component';
 import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.component';
 import { AppStateService } from './core/state/app-state.service';
+import { SyncStatusService } from './core/synchronization/sync-status.service';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
@@ -12,6 +13,7 @@ import { AppStateService } from './core/state/app-state.service';
 })
 export class App {
   protected readonly appState = inject(AppStateService);
+  protected readonly syncStatus = inject(SyncStatusService);
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,

@@ -189,6 +189,11 @@
   margin-left: auto;
 }
 
+.sync-status {
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--spacing-3);
+}
+
 @media (max-width: 699px) {
   .shell-body { flex-direction: column; }
 

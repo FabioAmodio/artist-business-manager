@@ -21,6 +21,7 @@
       <div class="footer-status" aria-live="polite">
         <span class="status-dot" [class.online]="appState.isOnline()"></span>
         <span class="status-text">{{ appState.isOnline() ? 'Connesso' : 'Non connesso' }}</span>
+        <span class="sync-status">{{ syncStatus.status() === 'pending' ? 'Da sincronizzare' : syncStatus.status() === 'syncing' ? 'Sincronizzazione in corso' : syncStatus.status() === 'synced' ? 'Allineato' : syncStatus.status() === 'error' ? 'Errore sincronizzazione' : 'Solo locale' }}</span>
       </div>
     </div>
   </footer>
