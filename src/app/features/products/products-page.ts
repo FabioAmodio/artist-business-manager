@@ -53,6 +53,9 @@ export class ProductsPage implements OnInit {
     return this.operations().some((operation) => operation.productId === product.id) || this.purchases().some((purchase) => purchase.productId === product.id) || this.productLots(product.id).length > 0;
   }
   protected editingProductLots(): readonly Lot[] { return this.editingId() ? this.productLots(this.editingId()!) : []; }
+  protected isDefaultLot(lot: Lot): boolean {
+    return this.products().find((product) => product.id === lot.productId)?.defaultLotId === lot.id;
+  }
 
   protected visibleProducts(): readonly Product[] {
     const active = this.activeFilter();
@@ -162,7 +165,19 @@ export class ProductsPage implements OnInit {
   protected async removeLot(lot: Lot): Promise<void> {
     if (!window.confirm(`Eliminare logicamente "${lot.name}"?`)) return;
     await this.lotService.delete(lot.id);
+    if (this.isDefaultLot(lot)) await this.service.setDefaultLot(lot.productId, undefined);
     this.lots.set(await this.lotService.list());
+    this.products.set(await this.service.list(this.query()));
+  }
+
+  protected async toggleDefaultLot(lot: Lot): Promise<void> {
+    this.resetMessages();
+    try {
+      await this.service.setDefaultLot(lot.productId, this.isDefaultLot(lot) ? undefined : lot.id);
+      this.products.set(await this.service.list(this.query()));
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile aggiornare il collegamento predefinito.');
+    }
   }
 
   private async load(): Promise<void> {

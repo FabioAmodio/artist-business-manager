@@ -39,6 +39,15 @@ export class ProductService {
     return this.repository.softDelete(id);
   }
 
+  /** Aggiorna solo il collegamento predefinito, senza toccare gli altri campi del prodotto. */
+  async setDefaultLot(productId: string, lotId?: string): Promise<Product> {
+    const existing = await this.repository.getById(productId);
+    if (!existing) throw new Error('Prodotto non trovato.');
+    const product: Product = { ...existing, defaultLotId: lotId, updatedAt: new Date().toISOString() };
+    await this.repository.save(product);
+    return product;
+  }
+
   private validate(input: ProductInput): void {
     if (!input.name.trim()) throw new Error('Il nome e obbligatorio.');
     if (input.suggestedPrice !== undefined && (!Number.isFinite(input.suggestedPrice) || input.suggestedPrice < 0)) throw new Error('Il prezzo suggerito deve essere positivo o zero.');

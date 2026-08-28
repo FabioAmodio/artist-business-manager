@@ -64,7 +64,7 @@
             <div class="linked-lots-heading"><h3 id="product-linked-lots-title">Acquisti collegati</h3><button class="text-button" type="button" (click)="startCreatingLot(products().find(product => product.id === editingId())!)">+ Aggiungi</button></div>
             @if (editingProductLots().length) {
               <div class="linked-lot-list">
-                @for (lot of editingProductLots(); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button" type="button" (click)="startEditingLot(lot)">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }
+                @for (lot of editingProductLots(); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><label class="default-toggle"><input type="checkbox" [checked]="isDefaultLot(lot)" (change)="toggleDefaultLot(lot)" /> Predefinito</label><button class="text-button" type="button" (click)="startEditingLot(lot)">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }
               </div>
             } @else { <p class="linked-lots-empty">Nessun acquisto collegato.</p> }
           </section>
@@ -95,7 +95,7 @@
       <div class="product-form">
         <div class="form-heading"><div><h2 id="product-lots-title">Acquisti collegati</h2><p class="context-lock">Prodotto: {{ products().find(product => product.id === lotProductId())?.name }}</p></div><button class="text-button" type="button" (click)="startCreatingLot(products().find(product => product.id === lotProductId())!)">+ Aggiungi</button></div>
         @if (productLots(lotProductId()!).length) {
-          <div class="linked-lot-list">@for (lot of productLots(lotProductId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button" type="button" (click)="startEditingLot(lot); closeLotList()">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }</div>
+          <div class="linked-lot-list">@for (lot of productLots(lotProductId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><label class="default-toggle"><input type="checkbox" [checked]="isDefaultLot(lot)" (change)="toggleDefaultLot(lot)" /> Predefinito</label><button class="text-button" type="button" (click)="startEditingLot(lot); closeLotList()">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }</div>
         } @else { <p class="linked-lots-empty">Nessun acquisto collegato.</p> }
         <div class="row-actions"><button class="text-button" type="button" (click)="closeLotList()">Chiudi</button></div>
       </div>
