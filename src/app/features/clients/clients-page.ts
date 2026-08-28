@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ClientService, type ClientInput } from '../../application/clients/client.service';
 import { OperationService } from '../../application/operations/operation.service';
 import type { Operation } from '../../domain/models/operation';
@@ -14,6 +15,8 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
   styleUrl: './clients-page.scss',
 })
 export class ClientsPage implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly service = inject(ClientService);
   private readonly operationService = inject(OperationService);
   protected readonly clients = signal<readonly Party[]>([]);
@@ -27,8 +30,18 @@ export class ClientsPage implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: ClientInput = this.emptyDraft();
+  private returnOperationId: string | null = null;
+  private returnPath = '/sales';
 
-  ngOnInit(): void { void this.load(); }
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      if (params.get('create') !== 'quick') return;
+      this.returnOperationId = params.get('returnOperationId');
+      this.returnPath = params.get('returnPath') || '/sales';
+      this.startCreating(params.get('name') || '');
+    });
+    void this.load();
+  }
 
   protected async applyFilters(): Promise<void> { await this.load(); }
 
@@ -39,9 +52,9 @@ export class ClientsPage implements OnInit {
 
   protected isClientUsed(client: Party): boolean { return this.operations().some((operation) => operation.partyId === client.id); }
 
-  protected startCreating(): void {
+  protected startCreating(displayName = ''): void {
     this.resetMessages();
-    this.draft = this.emptyDraft();
+    this.draft = { ...this.emptyDraft(), displayName };
     this.editingId.set(null);
     this.creating.set(true);
   }
@@ -70,8 +83,12 @@ export class ClientsPage implements OnInit {
     this.saving.set(true);
     this.resetMessages();
     try {
-      if (this.editingId()) await this.service.update(this.editingId()!, this.draft);
-      else await this.service.create(this.draft);
+      const client = this.editingId() ? await this.service.update(this.editingId()!, this.draft) : await this.service.create(this.draft);
+      if (this.returnOperationId) {
+        await this.assignClientToOperationTree(this.returnOperationId, client.id, client.displayName);
+        await this.router.navigate([this.returnPath], { queryParams: { open: this.returnOperationId } });
+        return;
+      }
       this.cancelForm();
       this.successMessage.set('Cliente salvato localmente.');
       await this.load();
@@ -118,5 +135,31 @@ export class ClientsPage implements OnInit {
 
   private emptyDraft(): ClientInput {
     return { type: 'person', displayName: '', email: '', phone: '', website: '', social: '', notes: '' };
+  }
+
+  private async assignClientToOperationTree(operationId: string, clientId: string, customerName: string): Promise<void> {
+    const operations = await this.operationService.list('all');
+    const targetIds = new Set([operationId, ...operations.filter((operation) => operation.parentOperationId === operationId).map((operation) => operation.id)]);
+    for (const operation of operations.filter((item) => targetIds.has(item.id))) {
+      await this.operationService.update(operation.id, {
+        type: operation.type,
+        title: operation.title,
+        description: operation.description,
+        partyId: clientId,
+        fairEditionId: operation.fairEditionId,
+        productId: operation.productId,
+        serviceId: operation.serviceId,
+        bundleId: operation.bundleId,
+        parentOperationId: operation.parentOperationId,
+        lotId: operation.lotId,
+        customerName,
+        amount: operation.amount,
+        quantity: operation.quantity,
+        notes: operation.notes,
+        workStatus: operation.workStatus,
+        deliveryDate: operation.deliveryDate,
+        needsReview: operation.needsReview,
+      });
+    }
   }
 }

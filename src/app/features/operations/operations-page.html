@@ -65,6 +65,7 @@
             @if (draft.serviceId) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
             <div class="customer-box">
               <label>Cliente opzionale <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
+              @if (editingId() && canRegisterQuickCustomer()) { <button class="text-button" type="button" (click)="registerQuickCustomer()">+ Inserisci in anagrafica</button> }
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }
               @if (customerSuggestions().length) {
                 <div class="suggestions" aria-label="Suggerimenti clienti">
@@ -82,6 +83,7 @@
             @if (!draft.serviceId) { <label>Collegamento <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label> }
             <div class="customer-box full-width">
               <label>Cliente <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
+              @if (editingId() && canRegisterQuickCustomer()) { <button class="text-button" type="button" (click)="registerQuickCustomer()">+ Inserisci in anagrafica</button> }
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }
               @if (customerSuggestions().length) {
                 <div class="suggestions" aria-label="Suggerimenti clienti">

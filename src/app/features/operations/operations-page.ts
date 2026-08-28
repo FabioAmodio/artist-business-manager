@@ -221,6 +221,11 @@ export class OperationsPage implements OnInit {
     this.draft = { ...this.draft, partyId: undefined };
     this.customerMode.set(this.draft.customerName?.trim() ? 'soft' : 'none');
   }
+  protected canRegisterQuickCustomer(): boolean { return !this.draft.partyId && Boolean(this.draft.customerName?.trim()); }
+  protected registerQuickCustomer(): void {
+    if (!this.editingId() || !this.canRegisterQuickCustomer()) return;
+    void this.router.navigate(['/clients'], { queryParams: { create: 'quick', name: this.draft.customerName, returnOperationId: this.editingId(), returnPath: this.salesOnly ? '/sales' : '/operations' } });
+  }
   protected startCreating(type: OperationType = 'sale'): void {
     this.resetMessages();
     this.customerMode.set('none');
