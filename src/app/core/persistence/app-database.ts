@@ -11,7 +11,7 @@ import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 20;
+export const DATABASE_VERSION = 21;
 
 interface LegacyFair {
   readonly id: string;
@@ -50,6 +50,7 @@ export class AppDatabase extends Dexie {
   readonly products!: Table<Product, string>;
   readonly purchases!: Table<Purchase, string>;
   readonly services!: Table<Service, string>;
+  readonly appSettings!: Table<{ id: string; source: string; directoryHandle?: FileSystemDirectoryHandle; updatedAt: string }, string>;
 
   constructor(databaseName = DATABASE_NAME) {
     super(databaseName);
@@ -219,6 +220,7 @@ export class AppDatabase extends Dexie {
       products: 'id, name, active, updatedAt, deletedAt',
       purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
       services: 'id, code, description, system, updatedAt, deletedAt',
+      appSettings: 'id, updatedAt',
     }).upgrade(async (transaction) => {
       const operations = await transaction.table('operations').toArray() as Operation[];
       await transaction.table('operations').bulkPut(operations.map((operation) => operation.workStatus && !operation.deliveryDate ? { ...operation, deliveryDate: operation.createdAt.slice(0, 10) } : operation));

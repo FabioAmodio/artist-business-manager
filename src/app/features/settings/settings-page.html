@@ -6,4 +6,22 @@
     <label><input type="checkbox" [checked]="settings().allowCloudProcessing" (change)="toggleCloud($event)" /> Consenti elaborazione su servizi cloud</label>
   </fieldset>
   <p class="status">Stato consenso: <strong>{{ settings().consentGiven ? 'concesso' : 'non concesso' }}</strong></p>
+
+  <fieldset>
+    <legend>Persistenza dati</legend>
+    <label>Sorgente dati
+      <select [ngModel]="persistence.source()" (ngModelChange)="selectPersistenceSource($event)">
+        <option value="none">Nessuna</option>
+        <option value="file-system">File System</option>
+      </select>
+    </label>
+    <p class="status">{{ persistence.source() === 'file-system' ? 'File System configurato' : 'Solo database locale' }}</p>
+    <div class="settings-actions">
+      <button type="button" (click)="selectPersistenceSource('file-system')">Seleziona cartella</button>
+      <button type="button" [disabled]="persistence.source() !== 'file-system'" (click)="synchronizePersistence()">Sincronizza</button>
+      <label class="file-action">Importa file <input type="file" accept="application/json" (change)="importFile($event)" /></label>
+      <button type="button" (click)="exportFile()">Esporta file</button>
+    </div>
+    @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
+  </fieldset>
 </section>

@@ -7,3 +7,6 @@ fieldset { border: 1px solid var(--color-border); padding: 1.25rem; display: gri
 legend { color: var(--color-heading); font-weight: 700; padding: 0 .5rem; }
 label { color: var(--color-text-primary); display: flex; gap: .75rem; align-items: center; }
 input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem; }
+.settings-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.settings-actions button, .file-action { border: 1px solid var(--color-border); border-radius: var(--radius-base); background: var(--color-surface-secondary); color: var(--color-text-primary); cursor: pointer; padding: .65rem .85rem; }
+.file-action input { max-width: 12rem; }

@@ -72,6 +72,6 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   private isSupportedCollection(collection: string): boolean {
-    return collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services';
+    return collection === 'appSettings' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services';
   }
 }
