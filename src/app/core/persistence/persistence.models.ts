@@ -1,9 +1,11 @@
-export type PersistenceSource = 'none' | 'file-system';
+export type PersistenceSource = 'none' | 'file-system' | 'google-drive';
 
 export interface PersistenceSettings {
   readonly id: 'current';
   readonly source: PersistenceSource;
   readonly directoryHandle?: FileSystemDirectoryHandle;
+  readonly driveFolderId?: string;
+  readonly driveClientId?: string;
   readonly updatedAt: string;
 }
 

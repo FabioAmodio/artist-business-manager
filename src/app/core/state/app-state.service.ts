@@ -13,6 +13,7 @@ export class AppStateService {
   private readonly isOnlineSubject = new BehaviorSubject<boolean>(
     typeof navigator !== 'undefined' && navigator.onLine,
   );
+  readonly isOnline = signal(this.isOnlineSubject.value);
   public readonly isOnline$ = this.isOnlineSubject.asObservable();
 
   private readonly isDatabaseReadySubject = new BehaviorSubject<boolean>(false);
@@ -29,6 +30,7 @@ export class AppStateService {
 
   private onlineStateChanged(isOnline: boolean): void {
     this.isOnlineSubject.next(isOnline);
+    this.isOnline.set(isOnline);
   }
 
   notifyDatabaseReady(): void {

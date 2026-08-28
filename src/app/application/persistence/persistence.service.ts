@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { STORAGE_PROVIDER } from '../../core/configuration/environment.tokens';
+import { APP_ENVIRONMENT, STORAGE_PROVIDER } from '../../core/configuration/environment.tokens';
 import type { IStorageProvider } from '../../core/storage/storage-provider';
 import type { PersistedDataset, PersistenceSettings } from '../../core/persistence/persistence.models';
 
@@ -7,18 +7,47 @@ const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
 const DATA_FILE_NAME = 'artist-business-manager-data.json';
 const DATA_COLLECTIONS = ['bundles', 'fairs', 'fairSeries', 'fairEditions', 'lots', 'operations', 'paymentMethods', 'payments', 'parties', 'products', 'purchases', 'services'];
+const DRIVE_FILE_MIME = 'application/json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
+
+export interface DriveFolder { readonly id: string; readonly name: string; }
+interface GoogleTokenClient { requestAccessToken: (options?: { prompt?: string }) => void; }
+interface GoogleApi { accounts: { oauth2: { initTokenClient: (config: { client_id: string; scope: string; callback: (response: { access_token?: string; expires_in?: number; error?: string }) => void }) => GoogleTokenClient } } }
 
 @Injectable({ providedIn: 'root' })
 export class PersistenceService {
+  private readonly environment = inject(APP_ENVIRONMENT);
   private readonly storage = inject<IStorageProvider>(STORAGE_PROVIDER);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly status = signal('');
+  readonly driveFolders = signal<readonly DriveFolder[]>([]);
+  readonly driveFolderPath = signal<readonly DriveFolder[]>([]);
+  readonly driveConfigured = Boolean(this.environment.googleDriveClientId?.trim());
+  readonly driveNeedsAuthentication = signal(false);
   private directoryHandle: FileSystemDirectoryHandle | undefined;
+  private driveAccessToken: string | undefined;
+  private driveAccessTokenExpiresAt = 0;
+  private driveClientId = '';
 
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
     this.source.set(settings?.source ?? 'none');
     this.directoryHandle = settings?.directoryHandle;
+    this.driveClientId = settings?.driveClientId ?? this.environment.googleDriveClientId ?? '';
+    this.driveFolderId = settings?.driveFolderId;
+    if (this.source() === 'google-drive' && this.driveFolderId && this.driveClientId) {
+      void this.restoreDriveSession();
+    }
+  }
+
+  private async restoreDriveSession(): Promise<void> {
+    try {
+      await this.authorizeDrive(false);
+      this.driveNeedsAuthentication.set(false);
+    } catch {
+      this.driveNeedsAuthentication.set(true);
+      this.status.set('Ricollega Google Drive per sincronizzare.');
+    }
   }
 
   async chooseFileSystem(): Promise<void> {
@@ -29,6 +58,39 @@ export class PersistenceService {
     await this.synchronize();
   }
 
+  async connectDrive(): Promise<void> {
+    this.driveClientId = this.environment.googleDriveClientId?.trim() ?? '';
+    if (!this.driveClientId) throw new Error('Inserisci il Google OAuth Client ID.');
+    await this.authorizeDrive(true);
+    this.driveNeedsAuthentication.set(false);
+    this.driveFolders.set(await this.listDriveFolders('root'));
+    await this.saveSettings('google-drive', undefined, undefined, this.driveClientId);
+    this.status.set('Account Google collegato. Seleziona una cartella.');
+  }
+
+  async selectDriveFolder(folderId: string): Promise<void> {
+    if (!folderId) throw new Error('Seleziona una cartella Drive.');
+    await this.saveSettings('google-drive', undefined, folderId, this.driveClientId);
+    await this.synchronize();
+  }
+
+  async browseDriveFolder(folder: DriveFolder): Promise<void> {
+    this.driveFolderPath.update((path) => [...path, folder]);
+    this.driveFolders.set(await this.listDriveFolders(folder.id));
+  }
+
+  async browseDriveRoot(): Promise<void> {
+    this.driveFolderPath.set([]);
+    this.driveFolders.set(await this.listDriveFolders('root'));
+  }
+
+  async browseDrivePath(folder: DriveFolder): Promise<void> {
+    const path = this.driveFolderPath();
+    const index = path.findIndex((item) => item.id === folder.id);
+    this.driveFolderPath.set(index < 0 ? [] : path.slice(0, index + 1));
+    this.driveFolders.set(await this.listDriveFolders(folder.id));
+  }
+
   async disable(): Promise<void> {
     this.directoryHandle = undefined;
     await this.saveSettings('none');
@@ -36,13 +98,16 @@ export class PersistenceService {
   }
 
   async synchronize(): Promise<void> {
-    if (this.source() !== 'file-system') throw new Error('Configura prima una sorgente File System.');
-    if (!this.directoryHandle) throw new Error('La cartella persistente non e disponibile. Selezionala nuovamente.');
     const local = await this.readLocalDataset();
-    const remote = await this.readDirectoryDataset();
+    const remote = this.source() === 'file-system'
+      ? await this.readDirectoryDataset()
+      : this.source() === 'google-drive' ? await this.readDriveDataset() : null;
+    if (this.source() === 'file-system' && !this.directoryHandle) throw new Error('La cartella persistente non e disponibile. Selezionala nuovamente.');
+    if (this.source() === 'google-drive' && !this.getDriveFolderId()) throw new Error('Seleziona prima una cartella Drive.');
     const merged = remote ? this.merge(local, remote) : local;
     await this.writeLocalDataset(merged);
-    await this.writeDirectoryDataset(merged);
+    if (this.source() === 'file-system') await this.writeDirectoryDataset(merged);
+    if (this.source() === 'google-drive') await this.writeDriveDataset(merged);
     this.status.set(remote ? 'Dati locali e persistenti allineati.' : 'Dati locali copiati nella cartella persistente.');
   }
 
@@ -70,6 +135,66 @@ export class PersistenceService {
     if (this.source() === 'file-system' && this.directoryHandle) await this.writeDirectoryDataset(await this.readLocalDataset());
     this.status.set('Dati importati e allineati.');
   }
+
+  private async authorizeDrive(interactive = false): Promise<void> {
+    await this.loadGoogleIdentityServices();
+    const google = (window as Window & { google?: GoogleApi }).google;
+    await new Promise<void>((resolve, reject) => {
+      const client = google!.accounts.oauth2.initTokenClient({ client_id: this.driveClientId, scope: DRIVE_SCOPE, callback: (response) => response.error || !response.access_token ? reject(new Error('Autenticazione Google non riuscita.')) : (this.driveAccessToken = response.access_token, this.driveAccessTokenExpiresAt = Date.now() + (response.expires_in ?? 3600) * 1000, resolve()) });
+      client.requestAccessToken({ prompt: interactive ? 'consent' : 'none' });
+    });
+  }
+
+  private async listDriveFolders(parentId: string): Promise<readonly DriveFolder[]> {
+    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' })}`);
+    const data = await response.json() as { files?: DriveFolder[] };
+    return data.files ?? [];
+  }
+
+  private async readDriveDataset(): Promise<PersistedDataset | null> {
+    const folderId = this.getDriveFolderId();
+    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${folderId}' in parents and name = '${DATA_FILE_NAME}' and trashed = false`, fields: 'files(id,modifiedTime)', orderBy: 'modifiedTime desc', pageSize: '1' })}`);
+    const data = await response.json() as { files?: Array<{ id: string }> };
+    if (!data.files?.length) return null;
+    return this.parseDataset(await (await this.driveFetch(`https://www.googleapis.com/drive/v3/files/${data.files[0].id}?alt=media`)).text());
+  }
+
+  private async writeDriveDataset(dataset: PersistedDataset): Promise<void> {
+    const folderId = this.getDriveFolderId();
+    const search = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${folderId}' in parents and name = '${DATA_FILE_NAME}' and trashed = false`, fields: 'files(id)', pageSize: '1' })}`);
+    const files = await search.json() as { files?: Array<{ id: string }> };
+    const metadata = JSON.stringify(files.files?.[0]
+      ? { name: DATA_FILE_NAME, mimeType: DRIVE_FILE_MIME }
+      : { name: DATA_FILE_NAME, mimeType: DRIVE_FILE_MIME, parents: [folderId] });
+    const body = JSON.stringify(dataset);
+    const url = files.files?.[0] ? `https://www.googleapis.com/upload/drive/v3/files/${files.files[0].id}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const boundary = `abm-${Date.now()}`;
+    const payload = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${DRIVE_FILE_MIME}\r\n\r\n${body}\r\n--${boundary}--`;
+    await this.driveFetch(url, { method: files.files?.[0] ? 'PATCH' : 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: payload });
+  }
+
+  private async driveFetch(input: string, init: RequestInit = {}): Promise<Response> {
+    if (!this.driveAccessToken || Date.now() >= this.driveAccessTokenExpiresAt - 60_000) await this.authorizeDrive(false);
+    const response = await fetch(input, { ...init, headers: { Authorization: `Bearer ${this.driveAccessToken}`, ...(init.headers ?? {}) } });
+    if (!response.ok) {
+      let detail = '';
+      try {
+        const error = await response.json() as { error?: { message?: string; errors?: Array<{ reason?: string }> } };
+        detail = error.error?.message ?? error.error?.errors?.[0]?.reason ?? '';
+      } catch { detail = ''; }
+      throw new Error(`Google Drive ha restituito ${response.status}${detail ? `: ${detail}` : '.'}`);
+    }
+    return response;
+  }
+
+  private async loadGoogleIdentityServices(): Promise<void> {
+    if ((window as Window & { google?: GoogleApi }).google) return;
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script'); script.src = 'https://accounts.google.com/gsi/client'; script.onload = () => resolve(); script.onerror = () => reject(new Error('Impossibile caricare l\'autenticazione Google.')); document.head.appendChild(script);
+    });
+  }
+
+  private getDriveFolderId(): string | undefined { return this.driveFolderId; }
 
   private async readLocalDataset(): Promise<PersistedDataset> {
     const collections: Record<string, readonly Record<string, unknown>[]> = {};
@@ -117,8 +242,11 @@ export class PersistenceService {
     return parsed as PersistedDataset;
   }
 
-  private async saveSettings(source: PersistenceSettings['source'], directoryHandle?: FileSystemDirectoryHandle): Promise<void> {
-    await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source, directoryHandle, updatedAt: new Date().toISOString() });
+  private driveFolderId: string | undefined;
+
+  private async saveSettings(source: PersistenceSettings['source'], directoryHandle?: FileSystemDirectoryHandle, driveFolderId?: string, driveClientId?: string): Promise<void> {
+    this.driveFolderId = driveFolderId ?? (source === 'google-drive' ? this.driveFolderId : undefined);
+    await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source, directoryHandle, driveFolderId: this.driveFolderId, driveClientId: driveClientId ?? this.driveClientId, updatedAt: new Date().toISOString() });
     this.source.set(source);
   }
 }

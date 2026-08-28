@@ -1,7 +1,8 @@
-import { Component, effect } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { RouterLink, RouterOutlet, ActivatedRoute, Router } from '@angular/router';
 import { ResponsiveNavComponent } from './core/navigation/responsive-nav.component';
 import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.component';
+import { AppStateService } from './core/state/app-state.service';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
@@ -10,6 +11,7 @@ import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.co
   templateUrl: './app.html',
 })
 export class App {
+  protected readonly appState = inject(AppStateService);
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,

@@ -9,10 +9,6 @@
   <div class="shell-body">
     <aside class="sidebar" aria-label="Navigazione principale">
       <app-responsive-nav></app-responsive-nav>
-      <div class="sidebar-footer">
-        <span class="status-dot"></span>
-        <span class="status-text">Offline first</span>
-      </div>
     </aside>
 
     <main class="main-content">
@@ -22,7 +18,10 @@
 
   <footer class="footer" aria-label="Footer applicativo">
     <div class="footer-content">
-      <p class="footer-text">Artist Business Manager — Versione Locale</p>
+      <div class="footer-status" aria-live="polite">
+        <span class="status-dot" [class.online]="appState.isOnline()"></span>
+        <span class="status-text">{{ appState.isOnline() ? 'Connesso' : 'Non connesso' }}</span>
+      </div>
     </div>
   </footer>
   <app-mobile-action-bar></app-mobile-action-bar>

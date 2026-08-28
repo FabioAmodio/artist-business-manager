@@ -7,4 +7,5 @@ export const environment: AppEnvironment = {
   logLevel: 'warn',
   syncEnabled: false,
   version: '0.0.0',
+  googleDriveClientId: '194726361871-r9bacqitdheihqql0ndgat7qo1it66gu.apps.googleusercontent.com',
 };

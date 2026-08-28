@@ -10,3 +10,10 @@ input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem
 .settings-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .settings-actions button, .file-action { border: 1px solid var(--color-border); border-radius: var(--radius-base); background: var(--color-surface-secondary); color: var(--color-text-primary); cursor: pointer; padding: .65rem .85rem; }
 .file-action input { max-width: 12rem; }
+.settings-actions .status { flex-basis: 100%; margin: 0; }
+.drive-browser { border: 1px solid var(--color-border); display: grid; flex-basis: 100%; gap: .75rem; padding: .75rem; }
+.drive-breadcrumbs, .drive-folders { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem; }
+.drive-breadcrumbs button, .drive-folders button { background: transparent; border: 0; color: var(--color-link); cursor: pointer; padding: .35rem; }
+.drive-folders { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.drive-folders button:first-child { text-align: left; }
+.drive-folders .folder-select { border: 1px solid var(--color-border); color: var(--color-text-primary); }

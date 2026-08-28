@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { FairContextService } from '../../core/event/fair-context.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
+import type { PersistenceSource } from '../../core/persistence/persistence.models';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,11 +18,37 @@ export class SettingsPage implements OnInit {
 
   ngOnInit(): void { void this.persistence.initialize(); }
 
-  protected async selectPersistenceSource(source: 'none' | 'file-system'): Promise<void> {
+  protected async selectPersistenceSource(source: PersistenceSource): Promise<void> {
     try {
       if (source === 'none') await this.persistence.disable();
-      else await this.persistence.chooseFileSystem();
+      else if (source === 'file-system') await this.persistence.chooseFileSystem();
+      else this.persistence.status.set('Inserisci il Client ID e collega Google Drive.');
     } catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile configurare la persistenza.'); }
+  }
+
+  protected async connectDrive(): Promise<void> {
+    try { await this.persistence.connectDrive(); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile collegare Google Drive.'); }
+  }
+
+  protected async selectDriveFolder(folderId: string): Promise<void> {
+    try { await this.persistence.selectDriveFolder(folderId); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile selezionare la cartella Drive.'); }
+  }
+
+  protected async browseDriveFolder(folder: { id: string; name: string }): Promise<void> {
+    try { await this.persistence.browseDriveFolder(folder); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile aprire la cartella Drive.'); }
+  }
+
+  protected async browseDriveRoot(): Promise<void> {
+    try { await this.persistence.browseDriveRoot(); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile aprire Drive.'); }
+  }
+
+  protected async browseDrivePath(folder: { id: string; name: string }): Promise<void> {
+    try { await this.persistence.browseDrivePath(folder); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile aprire la cartella Drive.'); }
   }
 
   protected async synchronizePersistence(): Promise<void> {

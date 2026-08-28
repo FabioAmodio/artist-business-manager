@@ -13,12 +13,23 @@
       <select [ngModel]="persistence.source()" (ngModelChange)="selectPersistenceSource($event)">
         <option value="none">Nessuna</option>
         <option value="file-system">File System</option>
+        <option value="google-drive">Google Drive</option>
       </select>
     </label>
     <p class="status">{{ persistence.source() === 'file-system' ? 'File System configurato' : 'Solo database locale' }}</p>
     <div class="settings-actions">
       <button type="button" (click)="selectPersistenceSource('file-system')">Seleziona cartella</button>
-      <button type="button" [disabled]="persistence.source() !== 'file-system'" (click)="synchronizePersistence()">Sincronizza</button>
+      <button type="button" [disabled]="!persistence.driveConfigured" (click)="connectDrive()">Collega Google Drive</button>
+      @if (!persistence.driveConfigured) { <p class="status">Google Drive non configurato: manca il Client ID OAuth nell'environment dell'applicazione.</p> }
+        @if (persistence.driveNeedsAuthentication()) { <button type="button" (click)="connectDrive()">Riautentica Google Drive</button> }
+      @if (persistence.driveFolders().length || persistence.driveFolderPath().length) {
+        <div class="drive-browser" aria-label="Navigazione cartelle Drive">
+          <div class="drive-breadcrumbs"><button type="button" (click)="browseDriveRoot()">Drive</button>@for (folder of persistence.driveFolderPath(); track folder.id) { <span>/</span><button type="button" (click)="browseDrivePath(folder)">{{ folder.name }}</button> }</div>
+          <div class="drive-folders">@for (folder of persistence.driveFolders(); track folder.id) { <button type="button" (click)="browseDriveFolder(folder)">📁 {{ folder.name }}</button><button class="folder-select" type="button" (click)="selectDriveFolder(folder.id)">Usa</button> }</div>
+          @if (!persistence.driveFolders().length) { <p class="status">Nessuna sottocartella in questa posizione.</p> }
+        </div>
+      }
+      <button type="button" [disabled]="persistence.source() === 'none'" (click)="synchronizePersistence()">Sincronizza</button>
       <label class="file-action">Importa file <input type="file" accept="application/json" (change)="importFile($event)" /></label>
       <button type="button" (click)="exportFile()">Esporta file</button>
     </div>

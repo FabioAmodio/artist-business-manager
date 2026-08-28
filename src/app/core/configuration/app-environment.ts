@@ -6,4 +6,5 @@ export interface AppEnvironment {
   readonly syncEnabled: boolean;
   readonly version: string;
   readonly futureEndpoint?: string;
+  readonly googleDriveClientId?: string;
 }

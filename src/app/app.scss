@@ -140,6 +140,10 @@
   flex-shrink: 0;
 }
 
+.status-dot.online {
+  background-color: var(--color-status-success);
+}
+
 .status-text {
   white-space: nowrap;
   overflow: hidden;
@@ -176,6 +180,13 @@
 .footer-info {
   margin: 0;
   padding: 0;
+}
+
+.footer-status {
+  align-items: center;
+  display: flex;
+  gap: var(--spacing-3);
+  margin-left: auto;
 }
 
 @media (max-width: 699px) {
