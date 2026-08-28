@@ -1,6 +1,6 @@
 import type { EntityId, IsoDateTime } from '../shared/types';
 
-export type OperationType = 'sale' | 'work';
+export type OperationType = 'sale' | 'work' | 'bundle';
 
 export interface Operation {
   readonly id: EntityId;
@@ -11,9 +11,12 @@ export interface Operation {
   readonly fairEditionId?: EntityId;
   readonly productId?: EntityId;
   readonly serviceId?: EntityId;
+  readonly bundleId?: EntityId;
+  readonly parentOperationId?: EntityId;
   readonly lotId?: EntityId;
   readonly customerName?: string;
   readonly amount?: number;
+  readonly quantity?: number;
   readonly notes?: string;
   readonly workStatus?: 'requested' | 'in-progress' | 'completed' | 'delivered' | 'cancelled';
   readonly deliveryDate?: string;

@@ -1,0 +1,171 @@
+<section class="catalog-page" aria-labelledby="catalog-title">
+  <header class="page-header">
+    <div>
+      <h1 id="catalog-title">Catalogo</h1>
+    </div>
+    <div class="page-actions">
+      <button class="primary-button" type="button" (click)="openCreate('product')">+ Nuovo prodotto</button>
+      <button class="primary-button" type="button" (click)="openCreate('service')">+ Nuovo servizio</button>
+      <button class="primary-button" type="button" (click)="openCreate('bundle')">+ Nuovo pacchetto</button>
+    </div>
+  </header>
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="list-heading"><h2>Elementi catalogo</h2><span>{{ products().length + services().length + bundles().length }} registrati</span></div>
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else {
+    <div class="catalog-list">
+      @for (product of products(); track product.id) {
+        <article class="catalog-item">
+          <div class="item-header">
+            <span class="kind-badge">Prodotto</span>
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description || 'Nessuna descrizione' }}</p>
+          </div>
+          <div class="context-grid">
+            <span><strong>Prezzo</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span><strong>Stato</strong>{{ product.active ? 'Attivo' : 'Non attivo' }}</span>
+            <button class="linked-info" type="button" (click)="openProductManagement(product)"><strong>Acquisti collegati</strong><span>{{ productLots(product.id).length ? productLots(product.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
+          </div>
+          <div class="row-actions">
+            <button class="secondary-button" type="button" (click)="startEditingProduct(product)">Modifica</button>
+            <button class="danger-button" type="button" (click)="removeProduct(product)">Elimina</button>
+          </div>
+        </article>
+      }
+
+      @for (service of services(); track service.id) {
+        <article class="catalog-item">
+          <div class="item-header">
+            <span class="kind-badge service">Servizio</span>
+            <h3>{{ service.description }}</h3>
+            <p>{{ service.code }}</p>
+          </div>
+          <div class="context-grid"><span><strong>Stato</strong>Disponibile</span></div>
+          <div class="row-actions">
+            <button class="secondary-button" type="button" (click)="startEditingService(service)">Modifica</button>
+            <button class="danger-button" type="button" (click)="removeService(service)">Elimina</button>
+          </div>
+        </article>
+      }
+
+      @for (bundle of bundles(); track bundle.id) {
+        <article class="catalog-item bundle">
+          <div class="item-header">
+            <span class="kind-badge bundle">Pacchetto</span>
+            <h3>{{ bundle.name }}</h3>
+            <p>{{ bundle.description || 'Nessuna descrizione' }}</p>
+          </div>
+          <div class="context-grid">
+            <span><strong>Prezzo</strong>{{ bundle.bundlePrice != null ? (bundle.bundlePrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span><strong>Componenti</strong>{{ bundle.items.length }}</span>
+          </div>
+          <div class="row-actions">
+            <button class="secondary-button" type="button" (click)="startEditingBundle(bundle)">Modifica</button>
+            <button class="danger-button" type="button" (click)="removeBundle(bundle)">Elimina</button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (createMode()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="clearCreateMode()"></div>
+    <section class="catalog-dialog" role="dialog" aria-modal="true" aria-labelledby="catalog-create-title">
+      @if (createMode() === 'product') {
+        <form class="catalog-form" (ngSubmit)="saveProduct()" #productForm="ngForm">
+          <h2 id="catalog-create-title">{{ editingId() ? 'Modifica prodotto' : 'Nuovo prodotto' }}</h2>
+          <div class="form-grid">
+            <label class="wide">Nome <input name="name" required [(ngModel)]="productDraft.name" /></label>
+            <label>Prezzo suggerito <input name="suggestedPrice" type="number" min="0" step="0.01" [(ngModel)]="productDraft.suggestedPrice" /></label>
+            <label class="checkbox-label"><input name="active" type="checkbox" [(ngModel)]="productDraft.active" /> Attivo</label>
+            <label class="full-width">Tag <input name="tags" [(ngModel)]="productTagText" placeholder="fiera, novita" /></label>
+            <label class="full-width">Descrizione <textarea name="description" rows="4" [(ngModel)]="productDraft.description"></textarea></label>
+          </div>
+          @if (editingId()) {
+            <section class="linked-lots" aria-labelledby="catalog-product-linked-lots-title">
+              <div class="linked-lots-heading"><h3 id="catalog-product-linked-lots-title">Acquisti collegati</h3><button class="text-button" type="button" (click)="startCreatingLot(products().find(product => product.id === editingId())!)">+ Aggiungi</button></div>
+              @if (productLots(editingId()!).length) {
+                <div class="linked-lot-list">
+                  @for (lot of productLots(editingId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><label class="default-toggle"><input type="checkbox" [checked]="isDefaultLot(lot)" (change)="toggleDefaultLot(lot)" /> Predefinito</label><button class="text-button" type="button" (click)="startEditingLot(lot)">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }
+                </div>
+              } @else { <p class="linked-lots-empty">Nessun acquisto collegato.</p> }
+            </section>
+          }
+          <div class="row-actions"><button class="primary-button" type="submit" [disabled]="productForm.invalid || saving()">{{ editingId() ? 'Aggiorna prodotto' : 'Salva prodotto' }}</button><button class="text-button" type="button" (click)="clearCreateMode()">Annulla</button></div>
+        </form>
+      }
+
+      @if (createMode() === 'service') {
+        <form class="catalog-form" (ngSubmit)="saveService()" #serviceForm="ngForm">
+          <h2 id="catalog-create-title">{{ editingId() ? 'Modifica servizio' : 'Nuovo servizio' }}</h2>
+          <div class="form-grid">
+            <label>Codice <input name="code" required [(ngModel)]="serviceDraft.code" /></label>
+            <label class="wide">Descrizione <input name="description" required [(ngModel)]="serviceDraft.description" /></label>
+          </div>
+          <div class="row-actions"><button class="primary-button" type="submit" [disabled]="serviceForm.invalid || saving()">{{ editingId() ? 'Aggiorna servizio' : 'Salva servizio' }}</button><button class="text-button" type="button" (click)="clearCreateMode()">Annulla</button></div>
+        </form>
+      }
+
+      @if (createMode() === 'bundle') {
+        <form class="catalog-form" (ngSubmit)="saveBundle()" #bundleForm="ngForm">
+          <h2 id="catalog-create-title">{{ editingId() ? 'Modifica pacchetto' : 'Nuovo pacchetto' }}</h2>
+          <div class="form-grid">
+            <label class="wide">Nome <input name="bundleName" required [(ngModel)]="bundleDraft.name" /></label>
+            <label>Prezzo pacchetto <input name="bundlePrice" type="number" min="0" step="0.01" [(ngModel)]="bundleDraft.bundlePrice" /></label>
+            <label class="checkbox-label"><input name="bundleActive" type="checkbox" [(ngModel)]="bundleDraft.active" /> Attivo</label>
+            <label class="full-width">Descrizione <textarea name="bundleDescription" rows="3" [(ngModel)]="bundleDraft.description"></textarea></label>
+          </div>
+
+          <div class="bundle-items">
+            <div class="bundle-items-header"><h3>Componenti</h3><button class="text-button" type="button" (click)="addBundleItem()">+ Aggiungi componente</button></div>
+            @for (item of bundleItems(); track item.id) {
+              <div class="bundle-item-row">
+                <label>Tipo
+                  <select name="kind-{{ item.id }}" [(ngModel)]="item.catalogKind">
+                    <option value="product">Prodotto</option>
+                    <option value="service">Servizio</option>
+                  </select>
+                </label>
+                <label>Elemento
+                  <select name="entry-{{ item.id }}" [(ngModel)]="item.catalogId">
+                    @if (item.catalogKind === 'product') {
+                      @for (product of products(); track product.id) { <option [value]="product.id">{{ product.name }}</option> }
+                    } @else {
+                      @for (service of services(); track service.id) { <option [value]="service.id">{{ service.description }}</option> }
+                    }
+                  </select>
+                </label>
+                <label>Quantita <input name="qty-{{ item.id }}" type="number" min="1" step="1" [(ngModel)]="item.quantity" /></label>
+                <label>Importo <input name="amount-{{ item.id }}" type="number" min="0" step="0.01" [(ngModel)]="item.amount" /></label>
+                <label>Percentuale <input name="pct-{{ item.id }}" type="number" [value]="item.amount !== undefined && bundleAmountTotal() > 0 ? (item.amount / bundleAmountTotal() * 100 | number:'1.0-2') : (item.percentage ?? '')" readonly /></label>
+                <button class="danger-button" type="button" (click)="removeBundleItem(item.id)">Elimina</button>
+              </div>
+            }
+          </div>
+
+          <div class="row-actions"><button class="primary-button" type="submit" [disabled]="bundleForm.invalid || saving()">{{ editingId() ? 'Aggiorna pacchetto' : 'Salva pacchetto' }}</button><button class="text-button" type="button" (click)="clearCreateMode()">Annulla</button></div>
+        </form>
+      }
+    </section>
+  }
+
+  @if (lotDialogOpen()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelLotForm()"></div>
+    <section class="catalog-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="catalog-lot-form-title">
+      <form class="catalog-form" (ngSubmit)="saveLot()" #catalogLotForm="ngForm">
+        <h2 id="catalog-lot-form-title">{{ lotEditingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2>
+        <p class="context-lock">Prodotto: {{ products().find(product => product.id === lotProductId())?.name }}</p>
+        <div class="form-grid">
+          <label class="full-width">Nome collegamento <input name="lotName" required [(ngModel)]="lotDraft.name" /></label>
+          <label class="full-width">Alias <input name="lotAliases" [(ngModel)]="lotAliasText" /></label>
+          <label class="full-width">Note <textarea name="lotNotes" rows="4" [(ngModel)]="lotDraft.notes"></textarea></label>
+        </div>
+        <div class="row-actions"><button class="primary-button" type="submit" [disabled]="catalogLotForm.invalid || saving()">Salva collegamento</button><button class="text-button" type="button" (click)="cancelLotForm()">Annulla</button></div>
+      </form>
+    </section>
+  }
+</section>

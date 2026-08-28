@@ -16,14 +16,14 @@
     </label> }
   </div>
 
-  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><span>{{ operations().length }} registrate</span></div>
+  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><span>{{ visibleOperations().length }} registrate</span></div>
   @if (loading()) { <p class="empty-state">Caricamento...</p> }
-  @else if (!operations().length) { <div class="empty-state"><h3>{{ salesOnly ? 'Nessuna vendita registrata' : worksOnly ? 'Nessuna lavorazione registrata' : 'Nessuna operazione registrata' }}</h3></div> }
+  @else if (!visibleOperations().length) { <div class="empty-state"><h3>{{ salesOnly ? 'Nessuna vendita registrata' : worksOnly ? 'Nessuna lavorazione registrata' : 'Nessuna operazione registrata' }}</h3></div> }
   @else {
     <div class="operation-list">
-      @for (operation of operations(); track operation.id) {
+      @for (operation of visibleOperations(); track operation.id) {
         <article class="operation-row" [class.works-row]="worksOnly">
-          <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.description || 'Nessuna descrizione' }}</p></div>
+          <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p></div>
           <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } @if (operation.type === 'sale') { <span><strong>Pagato</strong>{{ paymentTotal(operation.id).toFixed(2) }} €</span> }</div>
           @if (salesOnly) {
             <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" (click)="openWork(operation)">Lavorazione</button> }</div>
@@ -57,9 +57,10 @@
 
           @if (mode() === 'fair') {
           <div class="quick-form">
-            <button class="selected-product" type="button" (click)="clearSelectedProduct()"><strong>Prodotto/Servizio</strong><span>{{ draft.serviceId ? serviceName(draft.serviceId) : productName(draft.productId) }}</span></button>
+            <button class="selected-product" type="button" (click)="clearSelectedProduct()"><strong>Elemento</strong><span>{{ draft.bundleId ? bundleName(draft.bundleId) : draft.serviceId ? serviceName(draft.serviceId) : productName(draft.productId) }}</span></button>
             <label>Descrizione <input name="description" [(ngModel)]="draft.description" /></label>
-            <label>Importo <input name="amount" type="number" min="0" step="0.01" [ngModel]="draft.amount" (ngModelChange)="updateFairAmount($event)" /></label>
+            <label>Quantita <input name="quantity" type="number" min="1" step="1" required [(ngModel)]="draft.quantity" /></label>
+            <label>Importo totale <input name="amount" type="number" min="0" step="0.01" [ngModel]="draft.amount" (ngModelChange)="updateFairAmount($event)" /></label>
             <div class="fair-payment"><strong>Pagamento</strong><label>Importo <input name="fairPaymentAmount" type="number" min="0" [max]="draft.amount ?? 0" step="0.01" [ngModel]="paymentDraft.amount" (ngModelChange)="updateFairPaymentAmount($event)" /></label><label>Modalita <select name="fairPaymentMethod" [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label></div>
             @if (draft.serviceId) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
             <div class="customer-box">
@@ -77,7 +78,7 @@
           <div class="form-grid">
             @if (!salesOnly && !worksOnly) { <label>Tipo <select name="type" required [(ngModel)]="draft.type"><option value="sale">Vendita</option><option value="work">Lavorazione</option></select></label> }
             @if (!salesOnly && !worksOnly) { <label class="wide">Titolo <input name="title" required [(ngModel)]="draft.title" /></label> }
-            @if (draft.type === 'sale' || worksOnly) { <label>{{ worksOnly ? 'Servizio' : 'Prodotto/Servizio' }} <select name="offer" required [ngModel]="offerSelection()" (ngModelChange)="changeOffer($event)"><option value="">{{ worksOnly ? 'Seleziona servizio' : 'Seleziona prodotto o servizio' }}</option>@for (offer of offerChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }</select></label> }
+            @if (draft.type === 'sale' || worksOnly) { <label>{{ worksOnly ? 'Servizio' : 'Elemento' }} <select name="offer" required [ngModel]="offerSelection()" (ngModelChange)="changeOffer($event)"><option value="">{{ worksOnly ? 'Seleziona servizio' : 'Seleziona elemento' }}</option>@for (offer of offerChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }</select></label> }
             @if (!draft.serviceId) { <label>Collegamento <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label> }
             <div class="customer-box full-width">
               <label>Cliente <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
@@ -89,13 +90,19 @@
                 </div>
               }
             </div>
-            <label>Importo <input name="amount" type="number" min="0" step="0.01" [(ngModel)]="draft.amount" /></label>
+            <label>Quantita <input name="quantity" type="number" min="1" step="1" required [(ngModel)]="draft.quantity" /></label>
+            <label>Importo totale <input name="amount" type="number" min="0" step="0.01" [(ngModel)]="draft.amount" /></label>
             <label class="full-width">Descrizione <textarea name="description" rows="3" [(ngModel)]="draft.description"></textarea></label>
             <label class="full-width">Fiera <select name="fairEditionId" [(ngModel)]="draft.fairEditionId"><option [ngValue]="undefined">Nessuna fiera</option>@for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }</select></label>
             @if (worksOnly) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
             @if (worksOnly) { <label>Stato lavorazione <select name="workStatus" [(ngModel)]="draft.workStatus"><option value="requested">Richiesta</option><option value="in-progress">In corso</option><option value="completed">Terminata</option><option value="delivered">Consegnata/Spedita</option><option value="cancelled">Cancellata</option></select></label> }
             <label class="full-width">Note <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea></label>
           </div>
+          }
+          @if (draft.bundleId && bundleDetails().length) {
+            <section class="bundle-details"><div class="payments-heading"><h3>Dettagli vendita</h3><span>{{ bundleDetailTotal().toFixed(2) }} € / {{ (draft.amount ?? 0).toFixed(2) }} €</span></div>
+              @for (detail of bundleDetails(); track detail.id) { <div class="bundle-detail-row"><span>{{ detail.title }} · {{ detail.quantity }} unita</span><label>Importo <input name="detail-amount-{{ detail.id }}" type="number" min="0" step="0.01" [ngModel]="detail.amount" (ngModelChange)="updateBundleDetailAmount(detail.id, $event)" /></label><label>Collegamento <select name="detail-lot-{{ detail.id }}" [(ngModel)]="detail.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }}</option> }</select></label></div> }
+            </section>
           }
           @if (mode() !== 'fair') { <section class="payments-section">
             <div class="payments-heading"><h3>Pagamenti</h3>@if (editingId()) { <span>{{ paymentTotal(editingId()).toFixed(2) }} € registrati</span> }</div>

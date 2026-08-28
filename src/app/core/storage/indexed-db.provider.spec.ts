@@ -25,4 +25,20 @@ describe('IndexedDbProvider', () => {
 
     expect(health.databaseName).toBe('ABM-TEST-Artist Business Manager');
   });
+
+  it('allows bundle records to be saved and listed', async () => {
+    const provider = TestBed.inject(IndexedDbProvider);
+    const putSpy = jasmine.createSpy('put');
+    const listSpy = jasmine.createSpy('toArray').and.resolveTo([{ id: 'bundle-1', name: 'Pacchetto' }]);
+
+    (provider as any).database = {
+      table: () => ({ put: putSpy, toArray: listSpy }),
+    };
+
+    await provider.put('bundles', { id: 'bundle-1', name: 'Pacchetto' });
+    const bundles = await provider.list('bundles');
+
+    expect(putSpy).toHaveBeenCalledWith({ id: 'bundle-1', name: 'Pacchetto' });
+    expect(bundles).toEqual([{ id: 'bundle-1', name: 'Pacchetto' }]);
+  });
 });

@@ -32,11 +32,6 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/payment-methods/payment-methods-page').then((m) => m.PaymentMethodsPage),
 	},
 	{
-		path: 'services',
-		data: { title: 'Servizi' },
-		loadComponent: () => import('./features/services/services-page').then((m) => m.ServicesPage),
-	},
-	{
 		path: 'lots',
 		data: { title: 'Collegamenti' },
 		loadComponent: () => import('./features/lots/lots-page').then((m) => m.LotsPage),
@@ -58,6 +53,11 @@ export const routes: Routes = [
 	},
 	{
 		path: 'catalog',
+		data: { title: 'Catalogo' },
+		loadComponent: () => import('./features/catalog/catalog-page').then((m) => m.CatalogPage),
+	},
+	{
+		path: 'products',
 		data: { title: 'Prodotti' },
 		loadComponent: () => import('./features/products/products-page').then((m) => m.ProductsPage),
 	},

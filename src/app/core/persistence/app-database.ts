@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import type { Bundle } from '../../domain/models/bundle';
 import type { FairEdition, FairSeries } from '../../domain/models/fair';
 import type { Lot } from '../../domain/models/lot';
 import type { Operation } from '../../domain/models/operation';
@@ -10,7 +11,7 @@ import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 18;
+export const DATABASE_VERSION = 19;
 
 interface LegacyFair {
   readonly id: string;
@@ -37,6 +38,7 @@ type LegacyOperation = Omit<Operation, 'type'> & { readonly type: string };
 type LegacyPaymentOperation = LegacyOperation & { readonly paymentMethodId?: string };
 
 export class AppDatabase extends Dexie {
+  readonly bundles!: Table<Bundle, string>;
   readonly fairs!: Table<FairEdition, string>;
   readonly fairSeries!: Table<FairSeries, string>;
   readonly fairEditions!: Table<FairEdition, string>;
@@ -52,6 +54,7 @@ export class AppDatabase extends Dexie {
   constructor(databaseName = DATABASE_NAME) {
     super(databaseName);
     this.version(11).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
@@ -141,6 +144,7 @@ export class AppDatabase extends Dexie {
       })));
     });
     this.version(15).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
@@ -156,6 +160,7 @@ export class AppDatabase extends Dexie {
       await transaction.table('operations').bulkPut(operations.map(({ economicStatus: _economicStatus, ...operation }) => operation));
     });
     this.version(16).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
@@ -185,6 +190,7 @@ export class AppDatabase extends Dexie {
       await transaction.table('operations').bulkPut(operations.map(({ paymentMethodId: _paymentMethodId, saleStatus: _saleStatus, ...operation }) => operation));
     });
     this.version(17).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
@@ -201,11 +207,12 @@ export class AppDatabase extends Dexie {
       await transaction.table('operations').bulkPut(operations.map(({ saleStatus: _saleStatus, ...operation }) => operation));
     });
     this.version(DATABASE_VERSION).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
       lots: 'id, productId, purchaseId, updatedAt, deletedAt',
-      operations: 'id, type, partyId, fairEditionId, serviceId, deliveryDate, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, deliveryDate, updatedAt, deletedAt',
       paymentMethods: 'id, name, system, updatedAt, deletedAt',
       payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
       parties: 'id, type, displayName, email, updatedAt, deletedAt',
