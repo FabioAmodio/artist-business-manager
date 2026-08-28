@@ -2,7 +2,7 @@
 
 ## Stato e classificazione
 
-La migrazione dello storico personale da Excel e una funzionalita **Post-MVP / MVP+1**. Non e necessaria per la prima versione utilizzabile sul campo e non deve ritardare la validazione offline di Fiere e Operazioni.
+La migrazione dello storico personale da Excel e una procedura amministrativa assistita. Non fa parte del normale workflow operativo e deve essere eseguita dopo verifica dell'anteprima e conferma delle regole personali.
 
 L'obiettivo iniziale non e creare un framework universale di importazione. Il primo target e lo storico personale usato durante la progettazione e validazione di Artist Business Manager, inclusi i fogli Excel gia disponibili nel progetto.
 
@@ -130,6 +130,23 @@ Queste esigenze saranno rivalutate solo dopo la validazione dell'applicazione co
 8. verificare isolamento TEST/RELEASE;
 9. eseguire migrazione personale assistita;
 10. valutare solo dopo un framework generico.
+
+## Migrazione personale eseguita
+
+Per il dataset personale sono state confermate le seguenti regole:
+
+- dal JSON di partenza restano acquisti, catalogo, lotti, fornitori, metodi di pagamento e pagamenti;
+- fiere, vendite, lavorazioni e clienti preesistenti vengono sostituiti dai dati storici Excel;
+- i clienti sono creati come valori distinti della colonna `Cliente`;
+- `Artbook` con `Vol 1` e `Vol 2` usa il pacchetto `Set Artbook`, mentre i singoli volumi usano `Artbook 1` e `Artbook 2`;
+- `A5-` non ha collegamento, `A5+` usa `Stampe Druuna e Ramba`, `A5` usa `Stampe A5`, `A4` usa `Stampa A4`;
+- le righe senza spesa nel foglio `Prodotti` sono trattate come descrizioni operative/catalogo, non come acquisti;
+- le date delle vendite sono ricavate da fiera, anno e giorno, con orario iniziale 10:00 e incremento di cinque minuti;
+- `C` e interpretato come Coupon, `B` come Bancomat, valori vuoti come pagamento completo in Contanti e `Da pagare` come nessun pagamento;
+- le commissioni diventano lavorazioni: `consegnate` se pagate, `completate` se ancora da pagare;
+- le vendite `Varie 2022` senza fiera corrispondente sono importate senza fiera e marcate `needsReview`.
+
+Il risultato verificato e `docs/business/artist-business-manager-data-full.json`, escluso dal versionamento tramite `.gitignore`.
 
 ## Criteri di completamento
 

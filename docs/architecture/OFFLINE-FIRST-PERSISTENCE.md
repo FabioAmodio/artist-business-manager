@@ -242,6 +242,20 @@ La migrazione dello storico Excel personale e Post-MVP/MVP+1 e segue [../busines
 - attivazione e aggiornamento effettivo del service worker;
 - telemetria tecnica, mantenendo privacy e funzionamento offline.
 
-## 12. Stato attuale del repository
+## 12. Implementazione corrente
 
-La codebase attuale contiene Dexie e un servizio di stato online/offline, ma lo schema Dexie e ancora vuoto e non sono presenti repository, `IStorageProvider`, outbox o `SyncEngine`. Questa specifica descrive il contratto architetturale target; l'implementazione deve procedere per incrementi verificabili senza presentare la sincronizzazione come gia disponibile.
+La codebase implementa IndexedDB/Dexie come fonte operativa locale e mantiene i repository applicativi indipendenti dal provider concreto. In Impostazioni l'utente puo scegliere nessuna sorgente, File System o Google Drive.
+
+La sincronizzazione automatica viene pianificata dopo ogni scrittura locale quando una sorgente persistente e configurata, con debounce di 750 ms. Viene ritentata al ritorno della connettivita e dopo il rinnovo OAuth. All'avvio, se Google Drive era gia configurato, l'app tenta un'autenticazione silenziosa e, se riesce, allinea il dataset in background.
+
+Il File System usa File System Access API quando disponibile. Su browser che non la supportano resta disponibile import/export JSON. Google Drive usa OAuth frontend con Client ID pubblico configurato nell'environment, token in memoria e file `artist-business-manager-data.json` nella cartella selezionata. Il client secret non e incluso nell'applicazione.
+
+Il merge corrente e record-per-record per `updatedAt`, con fallback a `createdAt`; la gestione esplicita dei conflitti, l'outbox persistente e il retry con backoff restano evoluzioni successive.
+
+## 13. Stato storico Excel
+
+Il dataset storico personale viene prodotto tramite procedura assistita separata. Il file generato e `artist-business-manager-data-full.json`, escluso dal versionamento. Il mapping include fiere, vendite, lavorazioni, clienti distinti, pagamenti, prodotti, lotti e pacchetti secondo le regole personali confermate.
+
+## 14. Stato attuale del repository
+
+La codebase contiene repository applicativi, `IStorageProvider`, IndexedDB, configurazione di persistenza, provider File System/Google Drive e sincronizzazione automatica di base. Non e ancora presente un outbox persistente completo ne una risoluzione interattiva dei conflitti multiutente.

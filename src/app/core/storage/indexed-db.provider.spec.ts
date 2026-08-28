@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { APP_ENVIRONMENT } from '../configuration/environment.tokens';
 import type { AppEnvironment } from '../configuration/app-environment';
 import { IndexedDbProvider } from './indexed-db.provider';
@@ -27,9 +28,22 @@ describe('IndexedDbProvider', () => {
   });
 
   it('allows bundle records to be saved and listed', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        IndexedDbProvider,
+        { provide: APP_ENVIRONMENT, useValue: {
+          applicationName: 'Artist Business Manager',
+          environmentName: 'test',
+          storagePrefix: 'ABM-TEST',
+          logLevel: 'debug',
+          syncEnabled: false,
+          version: '0.0.0',
+        } satisfies AppEnvironment },
+      ],
+    });
     const provider = TestBed.inject(IndexedDbProvider);
-    const putSpy = jasmine.createSpy('put');
-    const listSpy = jasmine.createSpy('toArray').and.resolveTo([{ id: 'bundle-1', name: 'Pacchetto' }]);
+    const putSpy = vi.fn();
+    const listSpy = vi.fn().mockResolvedValue([{ id: 'bundle-1', name: 'Pacchetto' }]);
 
     (provider as any).database = {
       table: () => ({ put: putSpy, toArray: listSpy }),

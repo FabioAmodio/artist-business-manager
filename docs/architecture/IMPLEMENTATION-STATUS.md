@@ -4,7 +4,7 @@
 
 Questo documento fotografa lo stato reale dell'implementazione rispetto alla documentazione di dominio e architettura. Distingue tra funzionalita implementate, parzialmente implementate e solo documentate.
 
-Ultimo aggiornamento: 2026-08-26.
+Ultimo aggiornamento: 2026-08-28.
 
 ## Priorita di implementazione
 
@@ -16,23 +16,24 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 |---|---|---|
 | Shell Angular | Implementata | Layout desktop/mobile, sidebar, topbar, route outlet |
 | Routing GitHub Pages | Implementato | `404.html` + redirect query param |
-| Offline First base | Parziale | IndexedDB/Dexie attivo, ma solo alcune collection reali |
-| Storage Provider | Parziale | `IStorageProvider` e `IndexedDbProvider`, ma supporto collection esplicito e limitato |
-| Sync cloud | Solo documentata | `DisabledSyncProvider`, nessun sync engine reale |
+| Offline First base | Implementata V1 | IndexedDB/Dexie attivo come fonte operativa locale; sincronizzazione non blocca il lavoro offline |
+| Storage Provider | Implementata V1 | `IStorageProvider`, `IndexedDbProvider`, eliminazione permanente dal Cestino e collection applicative |
+| Sync cloud | Parziale | Sincronizzazione automatica e manuale verso File System/Google Drive; conflitti risolti per `updatedAt`, senza outbox persistente |
 | Fair / Eventi | Implementata V1 | CRUD, persistenza, validazioni, List First, FairSeries/FairEdition, Ricavi/Bilancio e indicatori copertura costi |
 | Party / Clienti / Fornitori | Implementata V1 | CRUD anagrafico, ricerca, filtro, persistenza; Fornitori come ruolo Party |
 | Acquisti | Implementata V1 | CRUD acquisti destinati alla vendita, ricerca, fornitore opzionale, persistenza |
 | Prodotti | Implementata V1 | CRUD prodotti di catalogo, ricerca, prezzo suggerito, tag placeholder, stato attivo |
 | Lotti | Implementata V1 | CRUD lotti, ricerca, Product 1:N, acquisto origine opzionale, alias; pagina non primaria |
 | Dashboard | Parziale | Pagina reale; rileva e mostra la Fiera persistita in corso, KPI generali ancora placeholder |
-| Impostazioni | Parziale | Trasparenza AI e preferenze in memoria |
-| Operation / Payment | Implementata V1 | Vendite, Lavorazioni, wizard fiera, pagamenti 1:N, persistenza IndexedDB |
+| Impostazioni | Implementata V1 | Trasparenza AI, sorgente persistente, File System, Google Drive OAuth, import/export JSON |
+| Operation / Payment | Implementata V1 | Vendite, Lavorazioni, pacchetti con operazioni dettaglio, quantità, data/ora e pagamenti 1:N |
 | Work / Sale | Solo documentate | Confini e lifecycle documentati |
-| Catalogo / Product / Bundle | Parziale | Product implementato V1; Bundle come prodotto, composizione avanzata non implementata |
+| Catalogo / Product / Bundle | Implementata V1 | Prodotti, servizi e pacchetti; ripartizione percentuale/importo e collegamenti predefiniti |
 | Finance | Solo documentata | Nessun report finanziario completo |
 | Pagamenti | Implementata V1 | Righe Payment 1:N su Operation, anagrafica modalita |
 | Scadenze | Implementata V1 | Vista read-only delle lavorazioni aperte ordinate per consegna |
-| Import storico Excel | Solo documentata | Post-MVP/MVP+1 |
+| Import storico Excel | Implementata assistita | Generato dataset storico personale da `data_template.xlsx`; mapping e anomalie verificati manualmente |
+| Cestino | Implementata V1 | Ripristino e cancellazione definitiva singola/multipla con selezione tutto |
 
 ## Schermate presenti
 
@@ -44,10 +45,12 @@ Le priorita del progetto sono: UX, chiarezza del codice, coerenza del design sys
 | `/purchases` | `PurchasesPage` | Implementata V1 | Acquisti prodotti destinati alla vendita: fornitore, data, descrizione, importo, note |
 | `/lots` | `LotsPage` | Implementata V1 | Pagina tecnica mantenuta; gestione contestuale da Prodotti/Acquisti |
 | `/events` | `FairsPage` | Implementata V1 | Gestione FairSeries/FairEdition con dati economici aggregati V1 |
-| `/settings` | `SettingsPage` | Parziale | Trasparenza AI e preferenze non persistite |
+| `/settings` | `SettingsPage` | Implementata V1 | Trasparenza AI e configurazione persistenza/sincronizzazione |
 | `/works` | `OperationsPage` | Implementata V1 | Backoffice/registrazione Operazioni con profilo Work/Sale |
 | `/sales` | `OperationsPage` | Implementata V1 | Wizard fiera e lista Operazioni |
-| `/catalog` | `ProductsPage` | Implementata V1 | Prodotti di catalogo: nome, prezzo suggerito, stato, tag, dialog |
+| `/catalog` | `CatalogPage` | Implementata V1 | Prodotti, servizi e pacchetti con CRUD e componenti |
+| `/products` | `ProductsPage` | Implementata V1 | Gestione prodotti e acquisti collegati, alias e collegamento predefinito |
+| `/trash` | `TrashPage` | Implementata V1 | Elementi cancellati, ripristino e cancellazione permanente |
 | `/finance` | `PlaceholderPage` | Placeholder | Feature documentata ma non implementata |
 | `/deadlines` | `DeadlinesPage` | Implementata V1 | Lavorazioni richieste/in corso, scadenze e modifica record |
 | `/404` | `NotFoundPage` | Implementata | Pagina errore |
