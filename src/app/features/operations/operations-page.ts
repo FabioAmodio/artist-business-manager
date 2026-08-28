@@ -108,6 +108,7 @@ export class OperationsPage implements OnInit {
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }
   protected fairName(id?: string): string { const fair = this.fairs().find((item) => item.id === id); return fair ? `${fair.name} · ${fair.edition || fair.year}` : 'Fiera non indicata'; }
   protected formatDate(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT').format(new Date(`${value}T00:00:00`)) : 'Non indicata'; }
+  protected formatDateTime(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Non indicata'; }
   protected productName(id?: string): string { return this.products().find((product) => product.id === id)?.name ?? 'Prodotto non indicato'; }
   protected serviceName(id?: string): string { return this.services().find((service) => service.id === id)?.description ?? 'Servizio non indicato'; }
   protected bundleName(id?: string): string { return this.bundles().find((bundle) => bundle.id === id)?.name ?? 'Pacchetto non indicato'; }
@@ -240,7 +241,7 @@ export class OperationsPage implements OnInit {
   protected startEditing(operation: Operation): void {
     this.resetMessages();
     this.customerMode.set(operation.partyId ? 'existing' : (operation.customerName ? 'soft' : 'none'));
-    this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, type: this.salesOnly ? 'sale' : operation.type };
+    this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, operationDate: this.dateTimeInputValue(operation.operationDate ?? operation.createdAt), type: this.salesOnly ? 'sale' : operation.type };
     this.paymentDraft = this.emptyPaymentDraft();
     this.fairPaymentManuallyEdited = false;
     this.offerSelection.set(operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : '');
@@ -333,7 +334,7 @@ export class OperationsPage implements OnInit {
     const customerName = this.customerMode() === 'soft' ? this.draft.customerName?.trim() : undefined;
     const type = this.salesOnly ? 'sale' : (this.draft.type || 'work');
     const lotId = this.draft.serviceId ? undefined : (this.draft.lotId ?? this.autoDetectLotId());
-    return { ...this.draft, title, fairEditionId, partyId, customerName, lotId, type, quantity: this.draft.quantity ?? 1, workStatus: this.draft.serviceId ? (this.draft.workStatus ?? 'requested') : this.draft.workStatus, needsReview: this.draft.needsReview ?? false };
+    return { ...this.draft, title, fairEditionId, partyId, customerName, lotId, type, quantity: this.draft.quantity ?? 1, operationDate: this.toIsoDateTime(this.draft.operationDate), workStatus: this.draft.serviceId ? (this.draft.workStatus ?? 'requested') : this.draft.workStatus, needsReview: this.draft.needsReview ?? false };
   }
 
   private async saveBundleSale(input: OperationInput): Promise<Operation> {
@@ -344,7 +345,7 @@ export class OperationsPage implements OnInit {
     const parent = this.editingId() ? await this.service.update(this.editingId()!, parentInput) : await this.service.create(parentInput);
     if (this.editingId()) {
       for (const detail of this.bundleDetails()) {
-        await this.service.update(detail.id, { type: detail.serviceId ? 'work' : 'sale', title: detail.title, productId: detail.productId, serviceId: detail.serviceId, bundleId: bundle.id, parentOperationId: parent.id, lotId: detail.lotId, quantity: detail.quantity, amount: detail.amount, partyId: parent.partyId, customerName: parent.customerName, fairEditionId: parent.fairEditionId, description: parent.description, notes: parent.notes, workStatus: detail.serviceId ? 'requested' : undefined, deliveryDate: parent.deliveryDate, needsReview: parent.needsReview });
+        await this.service.update(detail.id, { type: detail.serviceId ? 'work' : 'sale', title: detail.title, productId: detail.productId, serviceId: detail.serviceId, bundleId: bundle.id, parentOperationId: parent.id, lotId: detail.lotId, quantity: detail.quantity, amount: detail.amount, operationDate: parent.operationDate, partyId: parent.partyId, customerName: parent.customerName, fairEditionId: parent.fairEditionId, description: parent.description, notes: parent.notes, workStatus: detail.serviceId ? 'requested' : undefined, deliveryDate: parent.deliveryDate, needsReview: parent.needsReview });
       }
       return parent;
     }
@@ -354,12 +355,12 @@ export class OperationsPage implements OnInit {
     const resolvedTotal = resolved.reduce((total, item) => total + item.amount, 0);
     const factor = resolvedTotal > 0 ? (parent.amount ?? resolvedTotal) / resolvedTotal : 0;
     for (const detail of resolved) {
-      await this.service.create({ type: detail.catalogKind === 'service' ? 'work' : 'sale', title: detail.name, productId: detail.catalogKind === 'product' ? detail.catalogId : undefined, serviceId: detail.catalogKind === 'service' ? detail.catalogId : undefined, bundleId: bundle.id, parentOperationId: parent.id, lotId: detail.catalogKind === 'product' ? this.defaultLotForProduct(detail.catalogId) : undefined, quantity: detail.quantity * (parent.quantity ?? 1), amount: detail.amount * factor, partyId: parent.partyId, customerName: parent.customerName, fairEditionId: parent.fairEditionId, description: parent.description, notes: parent.notes, workStatus: detail.catalogKind === 'service' ? 'requested' : undefined, deliveryDate: parent.deliveryDate, needsReview: parent.needsReview });
+      await this.service.create({ type: detail.catalogKind === 'service' ? 'work' : 'sale', title: detail.name, productId: detail.catalogKind === 'product' ? detail.catalogId : undefined, serviceId: detail.catalogKind === 'service' ? detail.catalogId : undefined, bundleId: bundle.id, parentOperationId: parent.id, lotId: detail.catalogKind === 'product' ? this.defaultLotForProduct(detail.catalogId) : undefined, quantity: detail.quantity * (parent.quantity ?? 1), amount: detail.amount * factor, operationDate: parent.operationDate, partyId: parent.partyId, customerName: parent.customerName, fairEditionId: parent.fairEditionId, description: parent.description, notes: parent.notes, workStatus: detail.catalogKind === 'service' ? 'requested' : undefined, deliveryDate: parent.deliveryDate, needsReview: parent.needsReview });
     }
     return parent;
   }
   private emptyDraft(type: OperationType = 'work'): OperationInput {
-    return { type, title: '', description: '', partyId: undefined, fairEditionId: type === 'sale' ? this.activeFair()?.id : undefined, productId: undefined, serviceId: undefined, bundleId: undefined, parentOperationId: undefined, lotId: undefined, customerName: '', amount: undefined, quantity: 1, notes: '', workStatus: type === 'work' ? 'requested' : undefined, deliveryDate: type === 'work' ? this.today() : undefined, needsReview: false };
+    return { type, title: '', description: '', partyId: undefined, fairEditionId: type === 'sale' ? this.activeFair()?.id : undefined, productId: undefined, serviceId: undefined, bundleId: undefined, parentOperationId: undefined, lotId: undefined, customerName: '', amount: undefined, quantity: 1, operationDate: this.dateTimeInputValue(new Date().toISOString()), notes: '', workStatus: type === 'work' ? 'requested' : undefined, deliveryDate: type === 'work' ? this.today() : undefined, needsReview: false };
   }
 
   /** Alias (csv) vince sempre; il collegamento predefinito del prodotto interviene solo se nessun alias corrisponde alla descrizione (anch'essa trattata come csv). */
@@ -396,5 +397,7 @@ export class OperationsPage implements OnInit {
   protected hasPaymentDraft(): boolean { return typeof this.paymentDraft.amount === 'number' || Boolean(this.paymentDraft.paymentMethodId); }
   private emptyPaymentDraft(): PaymentDraft { return { amount: undefined, paymentDate: new Date().toISOString().slice(0, 10), paymentMethodId: '' }; }
   private today(): string { return new Date().toISOString().slice(0, 10); }
+  private dateTimeInputValue(value: string): string { const date = new Date(value); const offset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() - offset).toISOString().slice(0, 16); }
+  private toIsoDateTime(value?: string): string { return value ? new Date(value).toISOString() : new Date().toISOString(); }
   private defaultPaymentMethodId(): string { return this.paymentMethods().find((paymentMethod) => paymentMethod.id === 'system-payment-method-contanti')?.id ?? 'system-payment-method-contanti'; }
 }

@@ -11,7 +11,7 @@ import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 19;
+export const DATABASE_VERSION = 20;
 
 interface LegacyFair {
   readonly id: string;
@@ -212,7 +212,7 @@ export class AppDatabase extends Dexie {
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
       lots: 'id, productId, purchaseId, updatedAt, deletedAt',
-      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, deliveryDate, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
       paymentMethods: 'id, name, system, updatedAt, deletedAt',
       payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
       parties: 'id, type, displayName, email, updatedAt, deletedAt',

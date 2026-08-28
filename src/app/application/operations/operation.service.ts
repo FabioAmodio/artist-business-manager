@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { OperationRepository } from '../../core/repositories/operation.repository';
 import type { Operation, OperationType } from '../../domain/models/operation';
 
-export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'productId' | 'serviceId' | 'bundleId' | 'parentOperationId' | 'lotId' | 'customerName' | 'amount' | 'quantity' | 'notes' | 'workStatus' | 'deliveryDate' | 'needsReview'>;
+export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'productId' | 'serviceId' | 'bundleId' | 'parentOperationId' | 'lotId' | 'customerName' | 'amount' | 'quantity' | 'operationDate' | 'notes' | 'workStatus' | 'deliveryDate' | 'needsReview'>;
 
 @Injectable({ providedIn: 'root' })
 export class OperationService {
@@ -18,6 +18,7 @@ export class OperationService {
     const operation: Operation = {
       ...input,
       quantity: input.quantity ?? 1,
+      operationDate: input.operationDate ?? now,
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,

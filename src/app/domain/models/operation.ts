@@ -17,6 +17,7 @@ export interface Operation {
   readonly customerName?: string;
   readonly amount?: number;
   readonly quantity?: number;
+  readonly operationDate?: IsoDateTime;
   readonly notes?: string;
   readonly workStatus?: 'requested' | 'in-progress' | 'completed' | 'delivered' | 'cancelled';
   readonly deliveryDate?: string;

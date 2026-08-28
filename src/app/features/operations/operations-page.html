@@ -23,7 +23,7 @@
     <div class="operation-list">
       @for (operation of visibleOperations(); track operation.id) {
         <article class="operation-row" [class.works-row]="worksOnly">
-          <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p></div>
+          <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p><p>{{ formatDateTime(operation.operationDate ?? operation.createdAt) }}</p></div>
           <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } @if (operation.type === 'sale') { <span><strong>Pagato</strong>{{ paymentTotal(operation.id).toFixed(2) }} €</span> }</div>
           @if (salesOnly) {
             <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" (click)="openWork(operation)">Lavorazione</button> }</div>
@@ -111,6 +111,10 @@
             @if (editingId() && operationPayments(editingId()).length) { <div class="payment-list">@for (payment of operationPayments(editingId()); track payment.id) { <div><span>{{ payment.paymentDate }}</span><span>{{ paymentMethodName(payment.paymentMethodId) }}</span><strong>{{ payment.amount.toFixed(2) }} €</strong><button class="danger-button" type="button" (click)="removePayment(payment)">Elimina</button></div> }</div> }
             @if (!isEditingFullyPaid()) { <div class="payment-form"><label>Importo <input name="paymentAmount" type="number" min="0.01" step="0.01" [(ngModel)]="paymentDraft.amount" /></label><label>Data <input name="paymentDate" type="date" [(ngModel)]="paymentDraft.paymentDate" /></label><label>Modalita <select name="paymentMethod" [(ngModel)]="paymentDraft.paymentMethodId"><option value="">Nessuna</option>@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label>@if (editingId()) { <button class="text-button" type="button" [disabled]="!hasPaymentDraft()" (click)="addPayment()">+ Aggiungi pagamento</button> }</div> }
           </section>
+          }
+          @if (draft.type === 'sale') {
+            @if (mode() === 'fair') { <div class="operation-date"><strong>Data e ora</strong><span>{{ formatDateTime(draft.operationDate) }}</span></div> }
+            @else { <label>Data e ora <input name="operationDate" type="datetime-local" [(ngModel)]="draft.operationDate" /></label> }
           }
           <app-form-actions [disabled]="operationForm.invalid === true" [saving]="saving()" saveLabel="Salva operazione" (cancel)="cancelForm()"></app-form-actions>
         </form>

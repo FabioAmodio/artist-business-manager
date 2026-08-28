@@ -22,7 +22,7 @@ export class OperationRepository implements IOperationRepository {
       .filter((operation) => filter?.includeDeleted || !operation.deletedAt)
       .filter((operation) => !filter?.type || operation.type === filter.type || (filter.type === 'sale' && (operation.type === 'bundle' || Boolean(operation.bundleId))))
       .filter((operation) => !filter?.text || `${operation.title} ${operation.description ?? ''}`.toLowerCase().includes(filter.text.toLowerCase()))
-      .sort((first, second) => second.updatedAt.localeCompare(first.updatedAt));
+      .sort((first, second) => (second.operationDate ?? second.createdAt).localeCompare(first.operationDate ?? first.createdAt));
   }
 
   save(operation: Operation): Promise<void> {
