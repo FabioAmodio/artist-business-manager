@@ -28,3 +28,5 @@ yarn-debug.log*
 yarn-error.log*
 /token.txt
 /docs/business/data_template.xlsx
+/docs/business/artist-business-manager-data.json
+/docs/business/artist-business-manager-data-full.json
