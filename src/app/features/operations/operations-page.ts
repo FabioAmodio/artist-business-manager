@@ -269,10 +269,31 @@ export class OperationsPage implements OnInit {
     const partyId = this.customerMode() === 'existing' ? this.draft.partyId : undefined;
     const customerName = this.customerMode() === 'soft' ? this.draft.customerName?.trim() : undefined;
     const type = this.salesOnly ? 'sale' : (this.draft.type || 'work');
-    return { ...this.draft, title, fairEditionId, partyId, customerName, lotId: this.mode() === 'fair' ? undefined : this.draft.lotId, type, workStatus: this.draft.serviceId ? (this.draft.workStatus ?? 'requested') : this.draft.workStatus, needsReview: this.draft.needsReview ?? false };
+    const lotId = this.draft.serviceId ? undefined : (this.draft.lotId ?? this.autoDetectLotId());
+    return { ...this.draft, title, fairEditionId, partyId, customerName, lotId, type, workStatus: this.draft.serviceId ? (this.draft.workStatus ?? 'requested') : this.draft.workStatus, needsReview: this.draft.needsReview ?? false };
   }
   private emptyDraft(type: OperationType = 'work'): OperationInput {
     return { type, title: '', description: '', partyId: undefined, fairEditionId: type === 'sale' ? this.activeFair()?.id : undefined, productId: undefined, serviceId: undefined, lotId: undefined, customerName: '', amount: undefined, notes: '', workStatus: type === 'work' ? 'requested' : undefined, deliveryDate: type === 'work' ? this.today() : undefined, needsReview: false };
+  }
+
+  /** Alias (csv) vince sempre; il collegamento predefinito del prodotto interviene solo se nessun alias corrisponde alla descrizione (anch'essa trattata come csv). */
+  private autoDetectLotId(): string | undefined {
+    if (this.draft.serviceId || !this.draft.productId) return undefined;
+    const candidateLots = this.lots().filter((lot) => lot.productId === this.draft.productId);
+    if (!candidateLots.length) return undefined;
+
+    const descriptionTerms = this.parseCsvTerms(this.draft.description ?? '');
+    const aliasMatch = descriptionTerms.length
+      ? candidateLots.find((lot) => (lot.aliases ?? []).some((alias) => descriptionTerms.includes(alias.trim().toLowerCase())))
+      : undefined;
+    if (aliasMatch) return aliasMatch.id;
+
+    const product = this.products().find((item) => item.id === this.draft.productId);
+    return product?.defaultLotId && candidateLots.some((lot) => lot.id === product.defaultLotId) ? product.defaultLotId : undefined;
+  }
+
+  private parseCsvTerms(value: string): readonly string[] {
+    return value.split(',').map((term) => term.trim().toLowerCase()).filter(Boolean);
   }
 
   private filterOperations(operations: readonly Operation[]): readonly Operation[] {
