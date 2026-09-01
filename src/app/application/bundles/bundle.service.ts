@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BundleRepository } from '../../core/repositories/bundle.repository';
+import { distributeAmountsToCents } from '../../domain/shared/money';
 import type { Bundle, BundleInput, BundleItemInput, BundleItemResolvedAmount } from '../../domain/models/bundle';
 
 @Injectable({ providedIn: 'root' })
@@ -77,36 +78,41 @@ export class BundleService {
 
     const totalPricedAmount = pricedEntries.reduce((total, item) => total + (item.hasPrice ? item.amount : 0), 0);
     const bundleAmount = bundle.bundlePrice ?? totalPricedAmount;
+    const totalProductAmount = pricedEntries.filter((entry) => entry.catalogKind === 'product').reduce((total, entry) => total + entry.amount, 0);
 
-    return bundle.items.map((item) => {
-      const baseInfo = pricedEntries.find((entry) => entry.id === item.id) ?? {
-        ...item, amount: 0, hasPrice: false,
-      };
+    const rawAmounts = bundle.items.map((item) => {
       if (item.catalogKind === 'product') {
         const product = productLookup.get(item.catalogId);
         const base = (product?.suggestedPrice ?? 0) * item.quantity;
         const percentage = typeof item.percentage === 'number' ? item.percentage / 100 : undefined;
         const explicitAmount = percentage != null ? bundleAmount * percentage : undefined;
-        const fallbackAmount = totalPricedAmount > 0 ? bundleAmount * (base / totalPricedAmount) : base;
+        return explicitAmount ?? (totalPricedAmount > 0 ? bundleAmount * (base / totalPricedAmount) : base);
+      }
+      const remaining = Math.max(bundleAmount - totalProductAmount, 0);
+      return bundle.items.filter((entry) => entry.catalogKind === 'service').length === 1 ? remaining : 0;
+    });
+    const roundedAmounts = distributeAmountsToCents(rawAmounts, bundleAmount);
+
+    return bundle.items.map((item, index) => {
+      if (item.catalogKind === 'product') {
+        const product = productLookup.get(item.catalogId);
         return {
           id: item.id,
           catalogKind: item.catalogKind,
           catalogId: item.catalogId,
           quantity: item.quantity,
-          amount: explicitAmount ?? fallbackAmount,
+          amount: roundedAmounts[index],
           name: product?.name ?? 'Prodotto sconosciuto',
         };
       }
 
       const service = serviceLookup.get(item.catalogId);
-      const remaining = Math.max(bundleAmount - pricedEntries.filter((entry) => entry.catalogKind === 'product').reduce((total, entry) => total + entry.amount, 0), 0);
-      const fallbackAmount = bundle.items.filter((entry) => entry.catalogKind === 'service').length === 1 ? remaining : 0;
       return {
         id: item.id,
         catalogKind: item.catalogKind,
         catalogId: item.catalogId,
         quantity: item.quantity,
-        amount: fallbackAmount,
+        amount: roundedAmounts[index],
         name: service?.description ?? 'Servizio sconosciuto',
       };
     });

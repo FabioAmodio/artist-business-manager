@@ -30,3 +30,4 @@ yarn-error.log*
 /docs/business/data_template.xlsx
 /docs/business/artist-business-manager-data.json
 /docs/business/artist-business-manager-data-full.json
+/docs/business/artist-business-manager-data-wrk.json

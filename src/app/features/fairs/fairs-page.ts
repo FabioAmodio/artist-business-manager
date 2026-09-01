@@ -118,7 +118,8 @@ export class FairsPage implements OnInit {
 
   protected fairRevenue(fair: Fair): number | undefined {
     const sales = this.operations()
-      .filter((operation) => operation.type === 'sale' && operation.fairEditionId === fair.id)
+      // le righe "work" generate da un pacchetto sono la quota di ricavo di un servizio venduto insieme ad altri elementi
+      .filter((operation) => operation.fairEditionId === fair.id && (operation.type === 'sale' || (operation.type === 'work' && Boolean(operation.parentOperationId))))
       .reduce((total, operation) => total + (operation.amount ?? 0), 0);
     const reimbursement = this.amountValue(fair.reimbursement);
     if (!sales && typeof reimbursement !== 'number') return undefined;

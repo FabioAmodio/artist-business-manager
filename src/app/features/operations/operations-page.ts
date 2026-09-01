@@ -10,6 +10,7 @@ import { LotService } from '../../application/lots/lot.service';
 import { ProductService } from '../../application/products/product.service';
 import { ServiceService } from '../../application/services/service.service';
 import { BundleService } from '../../application/bundles/bundle.service';
+import { distributeAmountsToCents } from '../../domain/shared/money';
 import type { Lot } from '../../domain/models/lot';
 import type { Operation, OperationType } from '../../domain/models/operation';
 import type { Bundle } from '../../domain/models/bundle';
@@ -58,6 +59,7 @@ export class OperationsPage implements OnInit {
   private readonly bundleService = inject(BundleService);
 
   protected readonly operations = signal<readonly Operation[]>([]);
+  private allOperations: readonly Operation[] = [];
   protected readonly salesOnly = this.route.snapshot.data['salesOnly'] === true;
   protected readonly worksOnly = this.route.snapshot.data['worksOnly'] === true;
   protected readonly paymentMethods = signal<readonly PaymentMethod[]>([]);
@@ -69,6 +71,7 @@ export class OperationsPage implements OnInit {
   protected readonly services = signal<readonly Service[]>([]);
   protected readonly bundles = signal<readonly Bundle[]>([]);
   protected readonly bundleDetails = signal<BundleDetailDraft[]>([]);
+  protected readonly bundleParentMode = signal(false);
   protected readonly offerSelection = signal('');
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -116,6 +119,16 @@ export class OperationsPage implements OnInit {
   protected paymentMethodName(id?: string): string { return this.paymentMethods().find((paymentMethod) => paymentMethod.id === id)?.name ?? 'Non indicata'; }
   protected operationPayments(operationId: string | null): readonly Payment[] { return operationId ? this.payments().filter((payment) => payment.operationId === operationId) : []; }
   protected paymentTotal(operationId: string | null): number { return this.operationPayments(operationId).reduce((total, payment) => total + payment.amount, 0); }
+  /** Le righe derivate da un pacchetto non hanno pagamenti propri: il pagato viene ripartito da quello registrato sul pacchetto padre. */
+  protected paymentTotalFor(operation: Operation): number {
+    if (!operation.parentOperationId) return this.paymentTotal(operation.id);
+    const parent = this.allOperations.find((item) => item.id === operation.parentOperationId);
+    if (!parent) return this.paymentTotal(operation.id);
+    const parentAmount = parent.amount ?? 0;
+    if (parentAmount <= 0) return 0;
+    const parentPaid = this.paymentTotal(parent.id);
+    return Math.min(operation.amount ?? 0, parentPaid * (operation.amount ?? 0) / parentAmount);
+  }
   protected isEditingFullyPaid(): boolean { return Boolean(this.editingId()) && (this.draft.amount ?? 0) > 0 && this.paymentTotal(this.editingId()) >= (this.draft.amount ?? 0); }
   protected workStatusLabel(status?: Operation['workStatus']): string {
     return ({ requested: 'Richiesta', 'in-progress': 'In corso', completed: 'Terminata', delivered: 'Consegnata/Spedita', cancelled: 'Cancellata' } as Record<string, string>)[status ?? ''] ?? 'Non indicata';
@@ -137,7 +150,7 @@ export class OperationsPage implements OnInit {
       if (key) usage.set(key, (usage.get(key) ?? 0) + 1);
     }
     return [
-      ...this.products().filter((product) => product.active).map((product) => ({ key: `product:${product.id}`, label: product.name })),
+      ...(!this.worksOnly ? this.products().filter((product) => product.active).map((product) => ({ key: `product:${product.id}`, label: product.name })) : []),
       ...this.services().map((service) => ({ key: `service:${service.id}`, label: service.description })),
       ...(!this.worksOnly ? this.bundles().filter((bundle) => bundle.active).map((bundle) => ({ key: `bundle:${bundle.id}`, label: bundle.name })) : []),
     ].sort((first, second) => (usage.get(second.key) ?? 0) - (usage.get(first.key) ?? 0) || first.label.localeCompare(second.label));
@@ -149,21 +162,21 @@ export class OperationsPage implements OnInit {
   protected bundleDetailTotal(): number { return this.bundleDetails().reduce((total, detail) => total + detail.amount, 0); }
   protected updateBundleDetailAmount(id: string, amount: number | null): void {
     const total = this.draft.amount ?? 0;
-    const nextAmount = Math.max(0, amount ?? 0);
+    const nextAmount = Math.round(Math.max(0, amount ?? 0) * 100) / 100;
     this.bundleDetails.update((details) => {
       const updated = details.map((detail) => detail.id === id ? { ...detail, amount: nextAmount } : { ...detail });
       const others = updated.filter((detail) => detail.id !== id);
       const remaining = total - nextAmount;
       if (remaining < 0 || !others.length) return updated;
       const othersTotal = others.reduce((sum, detail) => sum + detail.amount, 0);
-      let distributed = 0;
-      for (const [index, detail] of others.entries()) {
-        const isLast = index === others.length - 1;
-        const value = isLast ? remaining - distributed : othersTotal > 0 ? remaining * detail.amount / othersTotal : remaining / others.length;
-        detail.amount = Math.max(0, value);
-        distributed += detail.amount;
-      }
-      return updated;
+      const rawAmounts = others.map((detail) => othersTotal > 0 ? remaining * detail.amount / othersTotal : remaining / others.length);
+      const roundedAmounts = distributeAmountsToCents(rawAmounts, remaining);
+      let otherIndex = 0;
+      return updated.map((detail) => {
+        if (detail.id === id) return detail;
+        const value = roundedAmounts[otherIndex]; otherIndex += 1;
+        return { ...detail, amount: Math.max(0, value) };
+      });
     });
   }
   protected startNewOperation(): void {
@@ -181,6 +194,7 @@ export class OperationsPage implements OnInit {
     const [kind, id] = key.split(':');
     if (kind === 'bundle') {
       const bundle = this.bundles().find((item) => item.id === id);
+      this.bundleParentMode.set(true);
       this.draft = { ...this.draft, productId: undefined, serviceId: undefined, bundleId: id, lotId: undefined, title: bundle?.name ?? '', amount: bundle?.bundlePrice, workStatus: undefined };
       if (this.mode() === 'fair') this.paymentDraft = { ...this.paymentDraft, amount: bundle?.bundlePrice, paymentMethodId: this.defaultPaymentMethodId() };
       this.bundleDetails.set([]);
@@ -188,11 +202,13 @@ export class OperationsPage implements OnInit {
     }
     if (kind === 'service') {
       const service = this.services().find((item) => item.id === id);
+      this.bundleParentMode.set(false);
       this.draft = { ...this.draft, productId: undefined, serviceId: id, bundleId: undefined, lotId: undefined, title: service?.description ?? '', workStatus: 'requested', deliveryDate: this.draft.deliveryDate ?? this.today() };
       if (this.mode() === 'fair') this.paymentDraft = { ...this.paymentDraft, paymentMethodId: this.defaultPaymentMethodId() };
       return;
     }
     const product = this.products().find((item) => item.id === id);
+    this.bundleParentMode.set(false);
     this.draft = { ...this.draft, productId: id, serviceId: undefined, bundleId: undefined, title: product?.name ?? '', amount: product?.suggestedPrice, workStatus: this.worksOnly ? (this.draft.workStatus ?? 'requested') : undefined, deliveryDate: this.worksOnly ? (this.draft.deliveryDate ?? this.today()) : undefined };
     if (this.mode() === 'fair') this.paymentDraft = { ...this.paymentDraft, amount: product?.suggestedPrice, paymentMethodId: this.defaultPaymentMethodId() };
   }
@@ -233,6 +249,7 @@ export class OperationsPage implements OnInit {
     this.draft = this.emptyDraft(this.salesOnly ? 'sale' : this.worksOnly ? 'work' : type);
     this.paymentDraft = this.emptyPaymentDraft();
     this.bundleDetails.set([]);
+    this.bundleParentMode.set(false);
     this.fairPaymentManuallyEdited = false;
     this.offerSelection.set('');
     this.editingId.set(null);
@@ -245,7 +262,8 @@ export class OperationsPage implements OnInit {
     this.paymentDraft = this.emptyPaymentDraft();
     this.fairPaymentManuallyEdited = false;
     this.offerSelection.set(operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : '');
-    if (operation.bundleId) {
+    this.bundleParentMode.set(operation.type === 'bundle');
+    if (operation.type === 'bundle') {
       this.offerSelection.set(`bundle:${operation.bundleId}`);
       this.bundleDetails.set(this.operations().filter((item) => item.parentOperationId === operation.id).map((item) => ({ id: item.id, title: item.title, productId: item.productId, serviceId: item.serviceId, lotId: item.lotId, quantity: item.quantity ?? 1, amount: item.amount ?? 0 })));
       const remaining = Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0);
@@ -257,6 +275,7 @@ export class OperationsPage implements OnInit {
     this.creating.set(false);
     this.mode.set('backoffice');
   }
+  protected isBundleChild(): boolean { return Boolean(this.draft.parentOperationId); }
   protected cancelForm(): void { this.creating.set(false); this.editingId.set(null); }
 
   protected async save(): Promise<void> {
@@ -267,7 +286,7 @@ export class OperationsPage implements OnInit {
       if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > (input.amount ?? 0)) {
         throw new Error('Il pagamento non puo superare l\'importo della vendita.');
       }
-      const operation = input.bundleId ? await this.saveBundleSale(input) : this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
+      const operation = (input.bundleId && this.bundleParentMode()) ? await this.saveBundleSale(input) : this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
       if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > 0) {
         await this.paymentService.create({ operationId: operation.id, amount: fairPaymentAmount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId || this.defaultPaymentMethodId() });
       } else if (this.mode() !== 'fair' && this.hasPaymentDraft()) {
@@ -311,12 +330,12 @@ export class OperationsPage implements OnInit {
     this.loading.set(true);
     try {
       const [operations, parties, fairs, lots, paymentMethods, payments, products, services, bundles] = await Promise.all([this.service.list(this.salesOnly ? 'sale' : 'all'), this.clientService.list(), this.fairService.list(), this.lotService.list(), this.paymentMethodService.list(), this.paymentService.list(), this.productService.list(), this.serviceService.list(), this.bundleService.list()]);
-      this.operations.set(this.filterOperations(operations)); this.parties.set(parties); this.fairs.set(fairs); this.lots.set(lots); this.paymentMethods.set(paymentMethods); this.payments.set(payments); this.products.set(products); this.services.set(services); this.bundles.set(bundles);
+      this.allOperations = operations; this.operations.set(this.filterOperations(operations)); this.parties.set(parties); this.fairs.set(fairs); this.lots.set(lots); this.paymentMethods.set(paymentMethods); this.payments.set(payments); this.products.set(products); this.services.set(services); this.bundles.set(bundles);
     } catch { this.errorMessage.set('Impossibile caricare le operazioni.'); }
     finally { this.loading.set(false); }
   }
 
-  private async loadOperations(): Promise<void> { this.loading.set(true); try { this.operations.set(this.filterOperations(await this.service.list(this.salesOnly ? 'sale' : 'all', this.query()))); } finally { this.loading.set(false); } }
+  private async loadOperations(): Promise<void> { this.loading.set(true); try { const operations = await this.service.list(this.salesOnly ? 'sale' : 'all', this.query()); this.allOperations = operations; this.operations.set(this.filterOperations(operations)); } finally { this.loading.set(false); } }
   private resetMessages(): void { this.errorMessage.set(''); this.successMessage.set(''); }
   private openTriggeredOperation(): void {
     this.openFairWizard();
@@ -354,8 +373,9 @@ export class OperationsPage implements OnInit {
     const resolved = this.bundleService.resolveItemAmounts(bundle, productLookup, serviceLookup);
     const resolvedTotal = resolved.reduce((total, item) => total + item.amount, 0);
     const factor = resolvedTotal > 0 ? (parent.amount ?? resolvedTotal) / resolvedTotal : 0;
-    for (const detail of resolved) {
-      await this.service.create({ type: detail.catalogKind === 'service' ? 'work' : 'sale', title: detail.name, productId: detail.catalogKind === 'product' ? detail.catalogId : undefined, serviceId: detail.catalogKind === 'service' ? detail.catalogId : undefined, bundleId: bundle.id, parentOperationId: parent.id, lotId: detail.catalogKind === 'product' ? this.defaultLotForProduct(detail.catalogId) : undefined, quantity: detail.quantity * (parent.quantity ?? 1), amount: detail.amount * factor, operationDate: parent.operationDate, partyId: parent.partyId, customerName: parent.customerName, fairEditionId: parent.fairEditionId, description: parent.description, notes: parent.notes, workStatus: detail.catalogKind === 'service' ? 'requested' : undefined, deliveryDate: parent.deliveryDate, needsReview: parent.needsReview });
+    const scaledAmounts = distributeAmountsToCents(resolved.map((detail) => detail.amount * factor), parent.amount ?? resolvedTotal);
+    for (const [index, detail] of resolved.entries()) {
+      await this.service.create({ type: detail.catalogKind === 'service' ? 'work' : 'sale', title: detail.name, productId: detail.catalogKind === 'product' ? detail.catalogId : undefined, serviceId: detail.catalogKind === 'service' ? detail.catalogId : undefined, bundleId: bundle.id, parentOperationId: parent.id, lotId: detail.catalogKind === 'product' ? this.defaultLotForProduct(detail.catalogId) : undefined, quantity: detail.quantity * (parent.quantity ?? 1), amount: scaledAmounts[index], operationDate: parent.operationDate, partyId: parent.partyId, customerName: parent.customerName, fairEditionId: parent.fairEditionId, description: parent.description, notes: parent.notes, workStatus: detail.catalogKind === 'service' ? 'requested' : undefined, deliveryDate: parent.deliveryDate, needsReview: parent.needsReview });
     }
     return parent;
   }
