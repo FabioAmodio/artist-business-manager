@@ -1,5 +1,7 @@
 # Diagrammi Tecnici: Navigazione e Routing
 
+> **Diagrammi storici della prima shell.** Il flusso GitHub Pages resta valido; diagrammi menu, conteggi e placeholder sono superati. Per la struttura corrente vedere `docs/architecture/IMPLEMENTATION-STATUS.md` e il codice di navigazione.
+
 ## 1. GitHub Pages SPA Routing Flow
 
 ```

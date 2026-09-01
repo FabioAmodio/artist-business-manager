@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.1.0] - 2026-09-01
+
+### Implementato
+
+- Riepilogo annuale con selettore anno, swipe mobile, metriche Lavorazioni/Fiere/Bilancio e deep-link filtrati.
+- Dashboard operativa fiera con copertura costi, lavori rapidi, vendite e pagamenti parziali.
+- `ActiveFairService` con rilevamento automatico, forzatura persistente e indicatore globale.
+- Catalogo unificato Prodotti/Servizi/Bundle, disponibilita derivata e layout mobile compatto.
+- Payment 1:N, ripartizione pagamenti bundle e distribuzione ai centesimi con Largest Remainder Method.
+- Filtri anno/offerta e pannelli ricerca richiudibili nelle liste.
+- Navigazione corrente a 12 voci con `/dashboard` etichettata Riepilogo.
+- Cestino, File System e sincronizzazione Google Drive.
+
+### Documentazione
+
+- Riscritto `IMPLEMENTATION-STATUS.md` come fotografia corrente.
+- Aggiornati Fair Mode, reporting, roadmap e guide operative.
+- Marcati come storici i report della prima shell e le relative matrici di test.
+
 ## Decisioni di dominio successive
 
 - Introdotta [OPERATIONS-DOMAIN-SPECIFICATION.md](../business/OPERATIONS-DOMAIN-SPECIFICATION.md) come specifica normativa per Operazione, macchina a stati delle commissioni, record incompleti, Clienti soft e contabilizzazione fieristica distinta da origine e consegna.

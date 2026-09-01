@@ -42,11 +42,11 @@ npm test
 npm run build
 ```
 
-Attualmente non esiste uno script lint. La persistenza applicativa e ancora in evoluzione: verificare lo stato in [OFFLINE-FIRST-PERSISTENCE.md](architecture/OFFLINE-FIRST-PERSISTENCE.md) prima di assumere che sync o provider remoti siano disponibili.
+Attualmente non esiste uno script lint. IndexedDB e la fonte locale; sincronizzazione File System e Google Drive sono disponibili. Verificare limiti e gap in [IMPLEMENTATION-STATUS.md](architecture/IMPLEMENTATION-STATUS.md) e i principi in [OFFLINE-FIRST-PERSISTENCE.md](architecture/OFFLINE-FIRST-PERSISTENCE.md).
 
 ## Ambienti e dati
 
-TEST usa esclusivamente dati fittizi e deve avere prefisso `ABM-TEST`; RELEASE usa dati reali e prefisso `ABM-PROD`. La configurazione compilabile separata e descritta in [ENVIRONMENTS.md](architecture/ENVIRONMENTS.md); finche non viene implementata, non simulare l'isolamento cambiando manualmente dati nel browser.
+TEST usa esclusivamente dati fittizi e deve avere prefisso `ABM-TEST`; RELEASE usa dati reali e prefisso `ABM-PROD`. La configurazione compilabile separata e descritta in [ENVIRONMENTS.md](architecture/ENVIRONMENTS.md). Non simulare l'isolamento cambiando manualmente dati nel browser.
 
 ## Workflow Git
 

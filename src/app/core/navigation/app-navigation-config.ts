@@ -13,7 +13,7 @@ export interface NavigationItem {
 export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
   {
     path: '/dashboard',
-    label: 'Dashboard',
+    label: 'Riepilogo',
     icon: '📊',
     exact: true,
   },

@@ -1,5 +1,7 @@
 # Application Shell Infrastructure - Phase Summary
 
+> **Snapshot storico della shell iniziale.** Token di base e redirect restano rilevanti, ma topbar, navigazione mobile, route e feature sono evoluti. La descrizione corrente e in `IMPLEMENTATION-STATUS.md`; il codice usa `app.scss`.
+
 ## Completion Status: ✅ COMPLETE
 
 All technical infrastructure components have been implemented without business logic or data schema.

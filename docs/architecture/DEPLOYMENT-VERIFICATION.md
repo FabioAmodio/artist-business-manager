@@ -1,5 +1,7 @@
 # Verifica Deploy - Summary
 
+> **Snapshot di deploy del 2026-08-21.** Tempi, dimensioni bundle, nomi chunk e warning CSS non rappresentano la build corrente. Per lo stato funzionale vedere `IMPLEMENTATION-STATUS.md`; eseguire `npm run build` per i dati aggiornati.
+
 Data: 2026-08-21  
 Status: ✅ ALL GREEN
 

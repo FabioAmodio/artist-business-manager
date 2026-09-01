@@ -1,5 +1,7 @@
 # ✅ COMPLETION CHECKLIST - Phase 2: Navigation & Routing
 
+> **Checklist storica della Phase 2.** I riferimenti a 9 voci, hamburger e `app.css` non rappresentano la UI corrente. La verifica attuale usa 12 voci, `app.scss`, sidebar da 700 px e action bar mobile; vedere `docs/architecture/IMPLEMENTATION-STATUS.md`.
+
 ## 📊 Project Status: 100% COMPLETE ✅
 
 ---

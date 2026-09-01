@@ -20,6 +20,8 @@ I risultati devono consentire il passaggio dal totale all'elenco dei record che 
 
 La Dashboard usa come periodo predefinito l'anno corrente e permette di selezionare un intervallo personalizzato o confrontarlo con un periodo precedente.
 
+**Copertura V1 (2026-09-01):** e implementata la selezione per anno solare con range derivato dai dati e swipe mobile. Sono disponibili metriche Lavorazioni globali, Fiere annuali e Bilancio annuale con deep-link filtrati ai record di origine. Intervalli personalizzati, confronto tra periodi e distinzione sistematica tra venduto e incassato restano requisiti successivi.
+
 Deve rispondere almeno a queste domande:
 
 - Quanto ho guadagnato quest'anno in entrate effettivamente incassate?
@@ -138,7 +140,7 @@ Deve rispondere almeno a queste domande:
 
 ## Prodotti
 
-La V1 della feature Prodotti non implementa statistiche o dashboard. Il modello deve pero conservare le dimensioni minime per i report futuri: nome prodotto, stato attivo/non attivo, prezzo suggerito, tag e collegamento futuro a Lotto.
+La V1 include nel Riepilogo annuale il dettaglio delle entrate per prodotto, servizio e bundle, con deep-link alla lista Vendite filtrata. Il modello conserva nome prodotto, stato attivo/non attivo, prezzo suggerito, tag e collegamento a Lotto. Quantita, ranking, confronti e marginalita per prodotto restano futuri.
 
 Quando saranno implementati vendite e report, il reporting prodotti dovra rispondere almeno a queste domande:
 
@@ -163,7 +165,7 @@ Filtri futuri minimi: prodotto, acquisto origine e alias. Le vendite non ancora 
 
 ## Acquisti destinati alla vendita
 
-La V1 della feature Acquisti non implementa statistiche o dashboard. Il modello deve pero conservare i dati necessari a ricostruire in futuro il costo di prodotti acquistati o prodotti per la vendita, coerentemente con il foglio storico `Prodotti`.
+La V1 include gli Acquisti nelle uscite del Bilancio annuale e offre un deep-link alla lista filtrata per anno. La pagina Acquisti calcola inoltre il bilancio rispetto alle vendite collegate ai lotti. Analisi per fornitore, prodotto, marginalita e riconciliazione restano future.
 
 Quando saranno implementati report e collegamenti a catalogo/lotti, il reporting dovra rispondere almeno a queste domande:
 

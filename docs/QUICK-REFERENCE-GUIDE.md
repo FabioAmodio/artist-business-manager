@@ -1,4 +1,6 @@
-# 🚀 Quick Reference Guide: Navigation & Routing
+# Quick Reference Guide: Navigation & Routing
+
+> Aggiornata al 2026-09-01. Per lo stato complessivo corrente vedere `docs/architecture/IMPLEMENTATION-STATUS.md`.
 
 ## For Developers: Jump-Start Implementation
 
@@ -12,9 +14,9 @@
 src/app/
 ├── app.ts                          ← Router redirect handling
 ├── app.html                        ← Uses <app-responsive-nav>
-├── app.css                         ← Media queries (700px breakpoint)
+├── app.scss                        ← Shell e media queries (700px breakpoint)
 └── core/navigation/
-    ├── app-navigation-config.ts    ← 9 navigation items defined
+    ├── app-navigation-config.ts    ← 12 navigation items defined
     └── responsive-nav.component.ts ← Responsive menu component
 ```
 
@@ -48,7 +50,7 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
 
 ### Change Mobile Breakpoint
 
-**File:** `src/app/app.css`
+**File:** `src/app/app.scss`
 
 ```css
 @media (max-width: 699px) {  ← Change this number
@@ -89,9 +91,9 @@ html[data-theme="dark"] {
 npm start
 
 # Navigate to (in address bar)
-http://localhost:4200/dashboard
-http://localhost:4200/works
-http://localhost:4200/clients
+http://localhost:4200/artist-business-manager/dashboard
+http://localhost:4200/artist-business-manager/works
+http://localhost:4200/artist-business-manager/clients
 
 # Should work without errors
 ```
@@ -113,9 +115,8 @@ https://username.github.io/artist-business-manager/works
 # Press F12 → Ctrl+Shift+M → Adjust viewport size
 
 # Option 2: Test on real mobile
-# Smartphone: Should show hamburger menu
-# Tablet: Should show mix of items + hamburger
-# Desktop: Should show all items
+# Mobile (<700px): action bar fissa con Home, Eventi, FAB, Catalogo e Altro
+# Desktop/tablet (>=700px): sidebar con tutte le voci
 ```
 
 ### Debug Navigation Issues
@@ -151,7 +152,7 @@ calculateVisibleItems(): void  // Recalculate visibility (called on resize)
 
 **Signals:**
 ```typescript
-navigationItems: NavigationItem[]  // List of menu items (9 items)
+navigationItems: NavigationItem[]  // List of menu items (12 items)
 moreMenuOpen: Signal<boolean>      // Is "Altro" menu open?
 visibleItems: Signal<NavigationItem[]>  // Items visible in sidebar
 hasMoreItems: Signal<boolean>      // Should show "Altro" button?
@@ -173,7 +174,7 @@ hasMoreItems: Signal<boolean>      // Should show "Altro" button?
 .sidebar-nav              /* Main navigation bar */
 .nav-item                 /* Individual navigation item */
 .nav-item.active          /* Active/current item */
-.nav-more-button          /* "Altro" hamburger button */
+.nav-more-button          /* Pulsante "Altro" */
 .nav-more-menu            /* Dropdown menu container */
 .more-menu-header         /* Menu title section */
 .more-menu-item           /* Item inside dropdown */
@@ -206,9 +207,9 @@ hasMoreItems: Signal<boolean>      // Should show "Altro" button?
 
 ### "Menu doesn't show on mobile"
 
-- [ ] Check breakpoint in `app.css` (@media 700px)
-- [ ] Verify `calculateVisibleItems()` is called
-- [ ] Check CSS: `.nav-more-button { display: flex; }`
+- [ ] Check breakpoint in `app.scss` (`@media (max-width: 699px)`)
+- [ ] Verify `<app-mobile-action-bar>` is rendered
+- [ ] Check CSS: `.mobile-bar { position: fixed; }`
 - [ ] Test with DevTools device emulation
 - [ ] Check `hasMoreItems()` is true
 
@@ -223,8 +224,8 @@ hasMoreItems: Signal<boolean>      // Should show "Altro" button?
 ### "Styling looks wrong"
 
 - [ ] Check CSS variables are defined in root `:root {}`
-- [ ] Verify `app.css` has the media queries
-- [ ] Check component inline styles are applied
+- [ ] Verify `app.scss` has the shell media queries
+- [ ] Check component external SCSS is loaded
 - [ ] Verify theme data attribute: `<html data-theme="light">`
 - [ ] Clear browser cache (Ctrl+Shift+Delete)
 
@@ -264,7 +265,7 @@ npm start
 # 1. Menu is visible
 # 2. Clicking items navigates
 # 3. Active state highlights current page
-# 4. Resize browser → hamburger appears/disappears
+# 4. Resize browser → sidebar/action bar switch at 700px
 ```
 
 ---
@@ -349,8 +350,8 @@ npm run build
 - [ ] `npm run build` succeeds
 - [ ] No TypeScript errors
 - [ ] No console errors (CSS warning is OK)
-- [ ] All 9 navigation items work locally
-- [ ] Deep-links work on localhost (http://localhost:4200/dashboard)
+- [ ] All 12 navigation items work locally
+- [ ] Deep-links work on localhost (`http://localhost:4200/artist-business-manager/dashboard`)
 - [ ] Mobile/tablet/desktop responsive
 - [ ] Accessibility audit passes
 
@@ -400,25 +401,25 @@ npm run build
 
 | Size | Width | Behavior |
 |------|-------|----------|
-| Mobile | < 700px | Hamburger only |
-| Tablet | 700-1024px | Mix + Hamburger |
-| Desktop | ≥ 1024px | All items |
+| Mobile | < 700px | Action bar fissa + menu Altro |
+| Tablet/Desktop | ≥ 700px | Sidebar con tutte le voci |
 
-### Navigation Items (11 total)
+### Navigation Items (12 total)
 
 | # | Path | Label | Icon |
 |---|------|-------|------|
-| 1 | /dashboard | Dashboard | 📊 |
-| 2 | /works | Lavori | ✓ |
-| 3 | /clients | Clienti | 👥 |
-| 4 | /suppliers | Fornitori | ▣ |
-| 5 | /purchases | Acquisti | ＋ |
-| 6 | /events | Eventi | 📅 |
-| 7 | /sales | Vendite | 💰 |
-| 8 | /catalog | Prodotti | 📦 |
-| 9 | /finance | Finanza | 💳 |
-| 10 | /deadlines | Scadenze | ⏰ |
+| 1 | /dashboard | Riepilogo | 📊 |
+| 2 | /sales | Vendite | 💰 |
+| 3 | /works | Lavori | ✓ |
+| 4 | /deadlines | Scadenze | ⏰ |
+| 5 | /clients | Clienti | 👥 |
+| 6 | /catalog | Catalogo | 📦 |
+| 7 | /purchases | Acquisti | ＋ |
+| 8 | /suppliers | Fornitori | ▣ |
+| 9 | /events | Eventi | 📅 |
+| 10 | /payment-methods | Pagamenti | ▤ |
 | 11 | /settings | Impostazioni | ⚙ |
+| 12 | /trash | Cestino | 🗑 |
 
 ### ARIA Attributes
 
@@ -471,7 +472,7 @@ Want implementation status?
 Want to modify code?
     → Edit: app-navigation-config.ts (config changes)
     → Edit: responsive-nav.component.ts (component changes)
-    → Edit: app.css (styling changes)
+    → Edit: app.scss (styling changes)
 ```
 
 ---

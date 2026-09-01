@@ -1,5 +1,7 @@
 # Revisione architetturale post-bootstrap
 
+> **Review storica precedente all'implementazione delle feature.** Le osservazioni su route placeholder, Dexie vuoto e assenza di repository descrivono lo stato iniziale e risultano chiuse o superate. Per lo stato corrente vedere `IMPLEMENTATION-STATUS.md`.
+
 ## Perimetro
 
 La revisione confronta la struttura Angular attuale con:

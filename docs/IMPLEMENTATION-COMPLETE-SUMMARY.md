@@ -1,5 +1,7 @@
 # 🎯 Implementazione Completa: Navigazione Responsiva e Routing GitHub Pages
 
+> **Snapshot storico della Phase 2.** Conteggi, menu, nomi file e route placeholder descrivono la prima shell e non lo stato corrente. Per navigazione e feature aggiornate vedere `docs/architecture/IMPLEMENTATION-STATUS.md` e `src/app/core/navigation/app-navigation-config.ts`.
+
 ## ✅ Status: COMPLETATA AL 100%
 
 ---

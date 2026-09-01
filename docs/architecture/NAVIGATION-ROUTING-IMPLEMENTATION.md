@@ -1,5 +1,7 @@
 # Navigazione Responsiva e Routing su GitHub Pages
 
+> **Nota 2026-09-01:** il pattern di redirect GitHub Pages resta corrente. La sezione sulla navigazione e uno snapshot storico: oggi il menu contiene 12 voci ordinate da `app-navigation-config.ts`, usa la label **Riepilogo** per `/dashboard` e sotto i 700 px mostra una action bar mobile.
+
 ## Panoramica
 
 Questo documento descrive le soluzioni implementate per:

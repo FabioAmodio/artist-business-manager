@@ -106,25 +106,22 @@ La conversione non deve duplicare o perdere l'Operazione e deve conservare il va
 
 ## Modalita Fiera
 
-Quando la data corrente e compresa tra inizio e fine di una fiera, estremi inclusi, l'app entra automaticamente nel contesto della fiera. In questo contesto:
+Quando la data corrente e compresa tra inizio e fine di una fiera, estremi inclusi, l'app entra automaticamente nel contesto della fiera. In assenza di una fiera reale, l'utente puo forzare temporaneamente e persistentemente una `FairEdition`; il topbar rende visibile la forzatura e permette di uscirne con conferma. In questo contesto:
 
 - la dashboard diventa una dashboard operativa dell'evento;
 - vendite e commissioni da fiera sono le azioni prioritarie;
 - le informazioni essenziali devono essere raggiungibili con pochi tocchi e offline;
 - l'utente mantiene comunque accesso a tutti gli altri workflow.
 
-Se piu fiere risultano attive contemporaneamente, l'app deve rendere l'ambiguita esplicita e permettere di scegliere il contesto, senza selezione silenziosa. Se non esiste una fiera attiva, si usa il contesto generale.
+Se piu fiere risultano attive contemporaneamente, l'app deve rendere l'ambiguita esplicita e permettere di scegliere il contesto, senza selezione silenziosa. Se non esiste una fiera attiva o forzata, si usa il contesto generale.
 
 Il contesto attivo e sempre una `FairEdition`, non una `FairSeries`: la serie identifica la manifestazione ricorrente, l'edizione determina date, luogo, costi e risultati dell'evento corrente.
 
 ## FAB centrale e inserimento rapido
 
-Su mobile la Bottom Navigation Bar contiene al centro un FAB. Il FAB propone:
+Su mobile la Bottom Navigation Bar contiene al centro un FAB. La V1 apre direttamente il wizard Vendita tramite `/sales?create=...`. Se esiste una fiera reale o forzata, la vendita viene associata automaticamente e, dopo il salvataggio, il flusso torna al Riepilogo. Senza contesto fiera il wizard resta disponibile come vendita generale.
 
-- con fiera attiva: `Nuova Vendita Fiera` come azione primaria e `Nuova Commissione` come alternativa immediata;
-- senza fiera attiva: `Nuova Commissione` come primaria e `Nuova Vendita` come alternativa immediata.
-
-L'utente non e vincolato dalla proposta. L'apertura deve portare direttamente al primo campo utile e non a una schermata intermedia di scelta.
+L'apertura porta direttamente al primo campo utile e non a una schermata intermedia di scelta. Un flusso dedicato e contestuale per `Nuova Commissione` resta un'evoluzione successiva.
 
 La vendita rapida puo raccogliere prodotto, bundle, quantita, tag, importo, metodo di pagamento e note. La commissione rapida puo raccogliere cliente, prodotto, tag, acconto, importo previsto, stato, scadenza e note. I campi non indispensabili possono essere completati dopo.
 

@@ -9,6 +9,7 @@ Assistente operativo offline-first per commissioni, fiere, prodotti, clienti e v
 - [Git Strategy](docs/architecture/GIT-STRATEGY.md)
 - [Environments](docs/architecture/ENVIRONMENTS.md)
 - [Architecture](docs/architecture/ARCHITECTURE.md)
+- [Current implementation status](docs/architecture/IMPLEMENTATION-STATUS.md)
 - [Application architecture proposal](docs/architecture/APPLICATION-ARCHITECTURE-PROPOSAL.md)
 - [Fair series and editions](docs/architecture/FAIR-SERIES-EDITIONS.md)
 - [Offline First](docs/architecture/OFFLINE-FIRST-PERSISTENCE.md)

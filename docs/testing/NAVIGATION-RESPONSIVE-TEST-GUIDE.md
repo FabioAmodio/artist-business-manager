@@ -1,5 +1,7 @@
 # Guida ai Test: Navigazione Responsiva e Routing GitHub Pages
 
+> **Piano di test storico della prima shell.** I casi sul routing GitHub Pages restano utili; matrici con Finanza, 9/11 voci o hamburger devono essere reinterpretate usando le 12 voci correnti, la sidebar da 700 px e la action bar mobile. Fonte: `src/app/core/navigation/app-navigation-config.ts`.
+
 ## Sommario dei Test
 
 Questa guida fornisce una procedura completa per testare:
