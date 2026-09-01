@@ -17,7 +17,16 @@
     </div>
   }
 
-  <div class="list-heading"><h2>Elenco fiere</h2><span>{{ visibleFairs().length }} registrate</span></div>
+  <div class="list-heading"><h2>Elenco fiere</h2><div class="list-heading-end"><span>{{ visibleFairs().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
+  @if (filtersOpen()) {
+    <div class="filter-panel fair-filter-panel">
+      <label>Stato
+        <select name="fairFilter" [ngModel]="fairFilter() ?? ''" (ngModelChange)="changeFairFilter($event)">
+          <option value="">Tutte</option><option value="completed">Concluse</option><option value="upcoming">Prossime</option>
+        </select>
+      </label>
+    </div>
+  }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleFairs().length) {

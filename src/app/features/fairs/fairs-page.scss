@@ -43,6 +43,9 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
 .series-suggestion { background: var(--color-surface-secondary); border-left: 3px solid var(--color-accent); margin-bottom: 1rem; padding: .75rem 1rem; }
 .series-suggestion p { margin: 0 0 .75rem; }
 .series-suggestion div { display: flex; gap: .5rem; }
+.fair-filter-panel { display: grid; grid-template-columns: minmax(10rem, 16rem); justify-content: end; }
+.fair-filter-panel select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; padding: .7rem; width: 100%; }
+.fair-filter-panel select:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .list-heading { border-bottom: 1px solid var(--color-border); margin-top: 1rem; padding-bottom: .75rem; }
 .fair-list { display: grid; gap: .75rem; }
 .fair-row { align-items: start; background: color-mix(in srgb, var(--color-surface-secondary) 36%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius-base); display: grid; gap: .9rem; grid-template-columns: minmax(18rem, 1.35fr) minmax(16rem, .85fr) minmax(34rem, 2.2fr) auto; padding: .85rem; }
@@ -68,6 +71,7 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } .fair-row { grid-template-columns: 1fr; } .fair-indicators { grid-column: auto; } .fair-money { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 699px) {
   .fairs-page { padding: var(--spacing-3) var(--spacing-4) var(--spacing-4); }
+  .fair-filter-panel { grid-template-columns: 1fr; }
   .list-heading { margin-top: 0; }
   .page-header, .fair-row { align-items: stretch; flex-direction: column; }
   .fair-money { grid-template-columns: repeat(3, minmax(0, 1fr)); }

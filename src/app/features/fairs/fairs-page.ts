@@ -36,6 +36,7 @@ export class FairsPage implements OnInit {
   protected readonly matchedSeries = signal<FairSeries | null>(null);
   protected readonly yearFilter = signal<number | null>(null);
   protected readonly fairFilter = signal<'completed' | 'upcoming' | null>(null);
+  protected readonly filtersOpen = signal(false);
   protected draft: FairInput = this.emptyDraft();
 
   ngOnInit(): void {
@@ -74,6 +75,12 @@ export class FairsPage implements OnInit {
 
   protected changeYear(year: number | null): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
+  }
+
+  protected hasActiveFilters(): boolean { return this.fairFilter() !== null; }
+
+  protected changeFairFilter(filter: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { fairFilter: filter || null }, queryParamsHandling: 'merge' });
   }
 
   protected startCreating(): void {

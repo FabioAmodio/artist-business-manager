@@ -1,4 +1,4 @@
-<section class="dashboard" [attr.aria-label]="displayedFair()?.name ?? 'Riepilogo annuale'">
+<section class="dashboard" [attr.aria-label]="displayedFair()?.name ?? 'Riepilogo annuale'" (touchstart)="startYearSwipe($event)" (touchend)="endYearSwipe($event)">
   <app-page-header [icon]="displayedFair() ? '⚡' : '📊'" [title]="displayedFair()?.name ?? 'Riepilogo'" [filterOptions]="dashboardViewOptions()" [filterValue]="dashboardView()" filterLabel="Vista dashboard" [filterReplacesTitle]="dashboardViewOptions().length > 0" (filterChange)="changeDashboardView($event)" />
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (loading()) {
@@ -56,7 +56,7 @@
 
     <button class="primary-action" type="button" (click)="openFairSale()">+ Nuova vendita fiera</button>
   } @else {
-    <div class="year-selector" aria-label="Anno del riepilogo" (touchstart)="startYearSwipe($event)" (touchend)="endYearSwipe($event)">
+    <div class="year-selector" aria-label="Anno del riepilogo">
       <button type="button" aria-label="Anno precedente" title="Anno precedente" [disabled]="selectedYear() <= yearRange().min" (click)="changeYear(-1)">‹</button>
       <strong>{{ selectedYear() }}</strong>
       <button type="button" aria-label="Anno successivo" title="Anno successivo" [disabled]="selectedYear() >= yearRange().max" (click)="changeYear(1)">›</button>
