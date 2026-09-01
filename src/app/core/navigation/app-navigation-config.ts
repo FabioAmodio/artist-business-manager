@@ -18,9 +18,19 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     exact: true,
   },
   {
+    path: '/sales',
+    label: 'Vendite',
+    icon: '💰',
+  },
+  {
     path: '/works',
     label: 'Lavori',
     icon: '✓',
+  },
+  {
+    path: '/deadlines',
+    label: 'Scadenze',
+    icon: '⏰',
   },
   {
     path: '/clients',
@@ -28,9 +38,9 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '👥',
   },
   {
-    path: '/suppliers',
-    label: 'Fornitori',
-    icon: '▣',
+    path: '/catalog',
+    label: 'Catalogo',
+    icon: '📦',
   },
   {
     path: '/purchases',
@@ -38,9 +48,9 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '＋',
   },
   {
-    path: '/payment-methods',
-    label: 'Pagamenti',
-    icon: '▤',
+    path: '/suppliers',
+    label: 'Fornitori',
+    icon: '▣',
   },
   {
     path: '/events',
@@ -48,19 +58,9 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '📅',
   },
   {
-    path: '/sales',
-    label: 'Vendite',
-    icon: '💰',
-  },
-  {
-    path: '/catalog',
-    label: 'Catalogo',
-    icon: '📦',
-  },
-  {
-    path: '/deadlines',
-    label: 'Scadenze',
-    icon: '⏰',
+    path: '/payment-methods',
+    label: 'Pagamenti',
+    icon: '▤',
   },
   {
     path: '/settings',
