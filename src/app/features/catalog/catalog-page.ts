@@ -13,6 +13,7 @@ import type { Operation } from '../../domain/models/operation';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
+import { isBundleAvailable } from '../../domain/shared/catalog-availability';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 interface BundleDraftItem {
@@ -80,9 +81,7 @@ export class CatalogPage implements OnInit {
   }
 
   protected isBundleAvailable(bundle: Bundle): boolean {
-    return bundle.active && bundle.items.length > 0 && bundle.items.every((item) => item.catalogKind === 'product'
-      ? this.products().some((product) => product.id === item.catalogId && product.active)
-      : this.services().some((service) => service.id === item.catalogId));
+    return isBundleAvailable(bundle, this.products(), this.services());
   }
 
   protected async load(): Promise<void> {
@@ -302,7 +301,7 @@ export class CatalogPage implements OnInit {
 
   protected startEditingService(service: Service): void {
     this.resetMessages();
-    this.serviceDraft = { code: service.code, description: service.description };
+    this.serviceDraft = { code: service.code, description: service.description, active: service.active };
     this.createMode.set('service');
     this.editingType.set('service');
     this.editingId.set(service.id);
@@ -382,7 +381,7 @@ export class CatalogPage implements OnInit {
   }
 
   private emptyServiceDraft(): ServiceInput {
-    return { code: '', description: '' };
+    return { code: '', description: '', active: true };
   }
 
   private emptyBundleDraft(): { name: string; description: string; active: boolean; bundlePrice?: number } {

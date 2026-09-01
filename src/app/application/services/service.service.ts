@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ServiceRepository } from '../../core/repositories/service.repository';
 import type { Service } from '../../domain/models/service';
 
-export type ServiceInput = Pick<Service, 'code' | 'description'>;
+export type ServiceInput = Pick<Service, 'code' | 'description' | 'active'>;
 
 @Injectable({ providedIn: 'root' })
 export class ServiceService {
@@ -17,7 +17,7 @@ export class ServiceService {
   async create(input: ServiceInput): Promise<Service> {
     this.validate(input);
     const now = new Date().toISOString();
-    const service: Service = { id: crypto.randomUUID(), code: input.code.trim().toUpperCase(), description: input.description.trim(), system: false, createdAt: now, updatedAt: now };
+    const service: Service = { id: crypto.randomUUID(), code: input.code.trim().toUpperCase(), description: input.description.trim(), active: input.active, system: false, createdAt: now, updatedAt: now };
     await this.repository.save(service);
     return service;
   }
@@ -27,7 +27,7 @@ export class ServiceService {
     if (!existing) throw new Error('Servizio non trovato.');
     if (existing.system) throw new Error('I servizi di sistema non possono essere modificati.');
     this.validate(input);
-    const service: Service = { ...existing, code: input.code.trim().toUpperCase(), description: input.description.trim(), updatedAt: new Date().toISOString() };
+    const service: Service = { ...existing, code: input.code.trim().toUpperCase(), description: input.description.trim(), active: input.active, updatedAt: new Date().toISOString() };
     await this.repository.save(service);
     return service;
   }
@@ -50,7 +50,7 @@ export class ServiceService {
     const systemServices = [
       { id: 'system-service-commission', code: 'COMMISSION', description: 'Commission' },
       { id: 'system-service-sketch', code: 'SKETCH', description: 'Sketch' },
-    ].filter((service) => !ids.has(service.id)).map((service) => ({ ...service, system: true, createdAt: now, updatedAt: now } satisfies Service));
+    ].filter((service) => !ids.has(service.id)).map((service) => ({ ...service, active: true, system: true, createdAt: now, updatedAt: now } satisfies Service));
     await Promise.all(systemServices.map((service) => this.repository.save(service)));
   }
 }

@@ -27,7 +27,7 @@
           </div>
           <div class="context-grid">
             <span class="product-price"><strong>Prezzo</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
-            <span class="product-status"><strong>Stato</strong><em [class.active]="product.active" [class.inactive]="!product.active" [attr.aria-label]="product.active ? 'Attivo' : 'Non attivo'" [attr.title]="product.active ? 'Attivo' : 'Non attivo'"><b aria-hidden="true">{{ product.active ? '●' : '○' }}</b><i>{{ product.active ? 'Attivo' : 'Non attivo' }}</i></em></span>
+            <span class="product-status"><strong>Stato</strong><em [class.active]="product.active" [class.inactive]="!product.active" [attr.aria-label]="product.active ? 'Disponibile' : 'Non disponibile'" [attr.title]="product.active ? 'Disponibile' : 'Non disponibile'"><b aria-hidden="true">{{ product.active ? '●' : '○' }}</b><i>{{ product.active ? 'Disponibile' : 'Non disponibile' }}</i></em></span>
             <button class="linked-info" type="button" (click)="openProductManagement(product)"><strong>Acquisti collegati</strong><span>{{ productLots(product.id).length ? productLots(product.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
           <div class="row-actions">
@@ -44,7 +44,7 @@
             <h3>{{ service.description }}</h3>
             <p>{{ service.code }}</p>
           </div>
-          <div class="context-grid"><span class="service-price"><strong>Prezzo</strong>n.d.</span><span class="product-status"><strong>Stato</strong><em class="active" aria-label="Disponibile" title="Disponibile"><b aria-hidden="true">●</b><i>Disponibile</i></em></span><span class="service-placeholder" aria-hidden="true"></span></div>
+          <div class="context-grid"><span class="service-price"><strong>Prezzo</strong>n.d.</span><span class="product-status"><strong>Stato</strong><em [class.active]="service.active" [class.inactive]="!service.active" [attr.aria-label]="service.active ? 'Disponibile' : 'Non disponibile'" [attr.title]="service.active ? 'Disponibile' : 'Non disponibile'"><b aria-hidden="true">{{ service.active ? '●' : '○' }}</b><i>{{ service.active ? 'Disponibile' : 'Non disponibile' }}</i></em></span><span class="service-placeholder" aria-hidden="true"></span></div>
           <div class="row-actions">
             <button class="secondary-button list-action" type="button" aria-label="Modifica servizio" title="Modifica servizio" (click)="startEditingService(service)">✎</button>
             <button class="danger-button list-action" type="button" aria-label="Elimina servizio" title="Elimina servizio" (click)="removeService(service)">🗑</button>
@@ -61,7 +61,7 @@
           </div>
           <div class="context-grid">
             <span class="bundle-price"><strong>Prezzo</strong>{{ bundle.bundlePrice != null ? (bundle.bundlePrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
-            <span class="bundle-status product-status"><strong>Stato</strong><em [class.active]="isBundleAvailable(bundle)" [class.inactive]="!isBundleAvailable(bundle)" [attr.aria-label]="isBundleAvailable(bundle) ? 'Attivo' : 'Non attivo'" [attr.title]="isBundleAvailable(bundle) ? 'Attivo' : 'Non attivo'"><b aria-hidden="true">{{ isBundleAvailable(bundle) ? '●' : '○' }}</b><i>{{ isBundleAvailable(bundle) ? 'Attivo' : 'Non attivo' }}</i></em></span>
+            <span class="bundle-status product-status"><strong>Stato</strong><em [class.active]="isBundleAvailable(bundle)" [class.inactive]="!isBundleAvailable(bundle)" [attr.aria-label]="isBundleAvailable(bundle) ? 'Disponibile' : 'Non disponibile'" [attr.title]="isBundleAvailable(bundle) ? 'Disponibile' : 'Non disponibile'"><b aria-hidden="true">{{ isBundleAvailable(bundle) ? '●' : '○' }}</b><i>{{ isBundleAvailable(bundle) ? 'Disponibile' : 'Non disponibile' }}</i></em></span>
             <span class="bundle-components"><strong>Componenti</strong>{{ bundle.items.length }}</span>
           </div>
           <div class="row-actions">
@@ -82,7 +82,7 @@
           <div class="form-grid">
             <label class="wide">Nome <input name="name" required [(ngModel)]="productDraft.name" /></label>
             <label>Prezzo suggerito <input name="suggestedPrice" type="number" min="0" step="0.01" [(ngModel)]="productDraft.suggestedPrice" /></label>
-            <label class="checkbox-label"><input name="active" type="checkbox" [(ngModel)]="productDraft.active" /> Attivo</label>
+            <label class="checkbox-label"><input name="active" type="checkbox" [(ngModel)]="productDraft.active" /> Disponibile</label>
             <label class="full-width">Tag <input name="tags" [(ngModel)]="productTagText" placeholder="fiera, novita" /></label>
             <label class="full-width">Descrizione <textarea name="description" rows="4" [(ngModel)]="productDraft.description"></textarea></label>
           </div>
@@ -106,6 +106,7 @@
           <div class="form-grid">
             <label>Codice <input name="code" required [(ngModel)]="serviceDraft.code" /></label>
             <label class="wide">Descrizione <input name="description" required [(ngModel)]="serviceDraft.description" /></label>
+            <label class="checkbox-label"><input name="serviceActive" type="checkbox" [(ngModel)]="serviceDraft.active" /> Disponibile</label>
           </div>
           <div class="row-actions"><button class="primary-button" type="submit" [disabled]="serviceForm.invalid || saving()">{{ editingId() ? 'Aggiorna servizio' : 'Salva servizio' }}</button><button class="text-button" type="button" (click)="clearCreateMode()">Annulla</button></div>
         </form>
@@ -117,7 +118,7 @@
           <div class="form-grid">
             <label class="wide">Nome <input name="bundleName" required [(ngModel)]="bundleDraft.name" /></label>
             <label>Prezzo pacchetto <input name="bundlePrice" type="number" min="0" step="0.01" [(ngModel)]="bundleDraft.bundlePrice" /></label>
-            <label class="checkbox-label"><input name="bundleActive" type="checkbox" [(ngModel)]="bundleDraft.active" /> Attivo</label>
+            <label class="checkbox-label"><input name="bundleActive" type="checkbox" [(ngModel)]="bundleDraft.active" /> Disponibile</label>
             <label class="full-width">Descrizione <textarea name="bundleDescription" rows="3" [(ngModel)]="bundleDraft.description"></textarea></label>
           </div>
 

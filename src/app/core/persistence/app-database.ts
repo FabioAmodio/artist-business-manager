@@ -11,7 +11,7 @@ import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 21;
+export const DATABASE_VERSION = 22;
 
 interface LegacyFair {
   readonly id: string;
@@ -207,7 +207,7 @@ export class AppDatabase extends Dexie {
       const operations = await transaction.table('operations').toArray() as Array<Operation & { readonly saleStatus?: unknown }>;
       await transaction.table('operations').bulkPut(operations.map(({ saleStatus: _saleStatus, ...operation }) => operation));
     });
-    this.version(DATABASE_VERSION).stores({
+    this.version(21).stores({
       bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
@@ -224,6 +224,24 @@ export class AppDatabase extends Dexie {
     }).upgrade(async (transaction) => {
       const operations = await transaction.table('operations').toArray() as Operation[];
       await transaction.table('operations').bulkPut(operations.map((operation) => operation.workStatus && !operation.deliveryDate ? { ...operation, deliveryDate: operation.createdAt.slice(0, 10) } : operation));
+    });
+    this.version(DATABASE_VERSION).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
+      fairs: 'id, startDate, endDate, updatedAt, deletedAt',
+      fairSeries: 'id, name, updatedAt, deletedAt',
+      fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
+      lots: 'id, productId, purchaseId, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
+      paymentMethods: 'id, name, system, updatedAt, deletedAt',
+      payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
+      parties: 'id, type, displayName, email, updatedAt, deletedAt',
+      products: 'id, name, active, updatedAt, deletedAt',
+      purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
+      services: 'id, code, description, active, system, updatedAt, deletedAt',
+      appSettings: 'id, updatedAt',
+    }).upgrade(async (transaction) => {
+      const services = await transaction.table('services').toArray() as Array<Service & { readonly active?: boolean }>;
+      await transaction.table('services').bulkPut(services.map((service) => ({ ...service, active: service.active ?? true })));
     });
   }
 

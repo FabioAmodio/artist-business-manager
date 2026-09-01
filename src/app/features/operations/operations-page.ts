@@ -20,6 +20,7 @@ import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Service } from '../../domain/models/service';
 import type { Fair } from '../../domain/models/fair';
+import { isBundleAvailable } from '../../domain/shared/catalog-availability';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ActiveFairService } from '../../core/event/active-fair.service';
@@ -38,6 +39,12 @@ interface BundleDetailDraft {
   lotId?: string;
   quantity: number;
   amount: number;
+}
+
+interface OfferChoice {
+  readonly key: string;
+  readonly label: string;
+  readonly available: boolean;
 }
 
 @Component({
@@ -139,11 +146,17 @@ export class OperationsPage implements OnInit {
   protected changeYear(year: number | null): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
   }
-  protected offerFilterChoices(): readonly { readonly key: string; readonly label: string }[] {
+  protected availableOfferFilterChoices(): readonly OfferChoice[] {
+    return this.offerFilterChoices().filter((offer) => offer.available);
+  }
+  protected unavailableOfferFilterChoices(): readonly OfferChoice[] {
+    return this.offerFilterChoices().filter((offer) => !offer.available);
+  }
+  private offerFilterChoices(): readonly OfferChoice[] {
     return [
-      ...this.products().map((product) => ({ key: `product:${product.id}`, label: `Prodotto · ${product.name}` })),
-      ...this.services().map((service) => ({ key: `service:${service.id}`, label: `Servizio · ${service.description}` })),
-      ...this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: `Bundle · ${bundle.name}` })),
+      ...this.products().map((product) => ({ key: `product:${product.id}`, label: `Prodotto · ${product.name}`, available: product.active })),
+      ...this.services().map((service) => ({ key: `service:${service.id}`, label: `Servizio · ${service.description}`, available: service.active })),
+      ...this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: `Bundle · ${bundle.name}`, available: isBundleAvailable(bundle, this.products(), this.services()) })),
     ].sort((first, second) => first.label.localeCompare(second.label));
   }
   protected changeOfferFilter(offer: string): void {
@@ -168,6 +181,7 @@ export class OperationsPage implements OnInit {
   protected paymentMethodName(id?: string): string { return this.paymentMethods().find((paymentMethod) => paymentMethod.id === id)?.name ?? 'Non indicata'; }
   protected operationPayments(operationId: string | null): readonly Payment[] { return operationId ? this.payments().filter((payment) => payment.operationId === operationId) : []; }
   protected paymentTotal(operationId: string | null): number { return this.operationPayments(operationId).reduce((total, payment) => total + payment.amount, 0); }
+  protected remainingPaymentAmount(): number { return Math.max((this.draft.amount ?? 0) - this.paymentTotal(this.editingId()), 0); }
   /** Le righe derivate da un pacchetto non hanno pagamenti propri: il pagato viene ripartito da quello registrato sul pacchetto padre. */
   protected paymentTotalFor(operation: Operation): number {
     if (!operation.parentOperationId) return this.paymentTotal(operation.id);
@@ -189,7 +203,15 @@ export class OperationsPage implements OnInit {
   protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
   protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || typeof operation.amount === 'number'; }
   protected activeFair(): Fair | null { return this.activeFairMode.activeFair(); }
-  protected offerChoices(): ReadonlyArray<{ readonly key: string; readonly label: string }> {
+  protected availableOfferChoices(): readonly OfferChoice[] {
+    return this.offerChoices().filter((offer) => offer.available);
+  }
+
+  protected unavailableOfferChoices(): readonly OfferChoice[] {
+    return this.offerChoices().filter((offer) => !offer.available);
+  }
+
+  private offerChoices(): readonly OfferChoice[] {
     const concludedFairIds = this.fairs()
       .filter((fair) => fair.endDate < new Date().toISOString().slice(0, 10))
       .sort((first, second) => second.endDate.localeCompare(first.endDate))
@@ -202,9 +224,9 @@ export class OperationsPage implements OnInit {
       if (key) usage.set(key, (usage.get(key) ?? 0) + 1);
     }
     return [
-      ...(!this.worksOnly ? this.products().filter((product) => product.active).map((product) => ({ key: `product:${product.id}`, label: product.name })) : []),
-      ...this.services().map((service) => ({ key: `service:${service.id}`, label: service.description })),
-      ...(!this.worksOnly ? this.bundles().filter((bundle) => bundle.active).map((bundle) => ({ key: `bundle:${bundle.id}`, label: bundle.name })) : []),
+      ...(!this.worksOnly ? this.products().map((product) => ({ key: `product:${product.id}`, label: product.name, available: product.active })) : []),
+      ...this.services().map((service) => ({ key: `service:${service.id}`, label: service.description, available: service.active })),
+      ...(!this.worksOnly ? this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: bundle.name, available: isBundleAvailable(bundle, this.products(), this.services()) })) : []),
     ].sort((first, second) => (usage.get(second.key) ?? 0) - (usage.get(first.key) ?? 0) || first.label.localeCompare(second.label));
   }
 
@@ -260,6 +282,10 @@ export class OperationsPage implements OnInit {
   }
   protected selectingFairProduct(): boolean { return this.mode() === 'fair' && this.creating() && !this.draft.productId && !this.draft.serviceId && !this.draft.bundleId; }
   protected selectOffer(key: string): void {
+    if (this.mode() === 'fair' && !this.availableOfferChoices().some((offer) => offer.key === key)) {
+      this.errorMessage.set('Questo elemento non e disponibile per l\'inserimento rapido.');
+      return;
+    }
     if (!this.creating()) this.startCreating('sale');
     this.offerSelection.set(key);
     const [kind, id] = key.split(':');
@@ -354,9 +380,8 @@ export class OperationsPage implements OnInit {
     const input = this.prepareInput();
     try {
       const fairPaymentAmount = this.paymentDraft.amount ?? 0;
-      if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > (input.amount ?? 0)) {
-        throw new Error('Il pagamento non puo superare l\'importo della vendita.');
-      }
+      const paymentAmount = this.mode() === 'fair' ? fairPaymentAmount : (this.paymentDraft.amount ?? 0);
+      if (paymentAmount > 0) this.ensurePaymentDoesNotExceedTotal(input.amount ?? 0, this.paymentTotal(this.editingId()), paymentAmount);
       const operation = (input.bundleId && this.bundleParentMode()) ? await this.saveBundleSale(input) : this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
       if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > 0) {
         await this.paymentService.create({ operationId: operation.id, amount: fairPaymentAmount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId || this.defaultPaymentMethodId() });
@@ -386,6 +411,7 @@ export class OperationsPage implements OnInit {
     if (!this.editingId() || !this.hasPaymentDraft()) return;
     this.saving.set(true); this.resetMessages();
     try {
+      this.ensurePaymentDoesNotExceedTotal(this.draft.amount ?? 0, this.paymentTotal(this.editingId()), this.paymentDraft.amount ?? 0);
       await this.paymentService.create({ operationId: this.editingId()!, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       this.paymentDraft = this.emptyPaymentDraft();
       this.payments.set(await this.paymentService.list());
@@ -435,7 +461,7 @@ export class OperationsPage implements OnInit {
     const bundle = this.bundles().find((item) => item.id === input.bundleId);
     if (!bundle) throw new Error('Pacchetto non trovato.');
     const parentInput: OperationInput = { ...input, type: 'bundle', title: bundle.name, productId: undefined, serviceId: undefined, lotId: undefined, amount: input.amount ?? bundle.bundlePrice, quantity: input.quantity ?? 1 };
-    if (this.editingId() && Math.abs(this.bundleDetailTotal() - (parentInput.amount ?? 0)) > 0.01) throw new Error('La somma dei dettagli deve coincidere con il prezzo del pacchetto.');
+    if (this.editingId() && this.bundleDetails().length && Math.abs(this.bundleDetailTotal() - (parentInput.amount ?? 0)) > 0.01) throw new Error('La somma dei dettagli deve coincidere con il prezzo del pacchetto.');
     const parent = this.editingId() ? await this.service.update(this.editingId()!, parentInput) : await this.service.create(parentInput);
     if (this.editingId()) {
       for (const detail of this.bundleDetails()) {
@@ -490,6 +516,9 @@ export class OperationsPage implements OnInit {
   }
 
   protected hasPaymentDraft(): boolean { return typeof this.paymentDraft.amount === 'number' || Boolean(this.paymentDraft.paymentMethodId); }
+  private ensurePaymentDoesNotExceedTotal(total: number, alreadyPaid: number, paymentAmount: number): void {
+    if (alreadyPaid + paymentAmount > total + 0.005) throw new Error('La somma dei pagamenti non puo superare l\'importo della vendita.');
+  }
   private emptyPaymentDraft(): PaymentDraft { return { amount: undefined, paymentDate: new Date().toISOString().slice(0, 10), paymentMethodId: '' }; }
   private today(): string { return new Date().toISOString().slice(0, 10); }
   private dateTimeInputValue(value: string): string { const date = new Date(value); const offset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() - offset).toISOString().slice(0, 16); }

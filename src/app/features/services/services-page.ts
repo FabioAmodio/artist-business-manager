@@ -29,7 +29,7 @@ export class ServicesPage implements OnInit {
   ngOnInit(): void { void this.load(); }
   protected isServiceUsed(service: Service): boolean { return this.operations().some((operation) => operation.serviceId === service.id); }
   protected startCreating(): void { this.resetMessages(); this.draft = this.emptyDraft(); this.editingId.set(null); this.creating.set(true); }
-  protected startEditing(service: Service): void { this.resetMessages(); this.draft = { code: service.code, description: service.description }; this.editingId.set(service.id); this.creating.set(false); }
+  protected startEditing(service: Service): void { this.resetMessages(); this.draft = { code: service.code, description: service.description, active: service.active }; this.editingId.set(service.id); this.creating.set(false); }
   protected cancelForm(): void { this.creating.set(false); this.editingId.set(null); }
 
   protected async save(): Promise<void> {
@@ -56,5 +56,5 @@ export class ServicesPage implements OnInit {
   }
 
   private resetMessages(): void { this.errorMessage.set(''); this.successMessage.set(''); }
-  private emptyDraft(): ServiceInput { return { code: '', description: '' }; }
+  private emptyDraft(): ServiceInput { return { code: '', description: '', active: true }; }
 }
