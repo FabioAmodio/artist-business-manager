@@ -1,5 +1,5 @@
 <section class="purchases-page" aria-labelledby="purchases-title">
-  <app-page-header icon="＋" title="Acquisti" [actions]="[{ key: 'new', label: '+ Nuovo acquisto' }]" [hidden]="!!editingId()" [filterOptions]="yearFilterOptions()" [filterValue]="yearFilter()?.toString() ?? ''" (filterChange)="changeYearFilter($event)" (select)="startCreating()" />
+  <app-page-header icon="＋" title="Acquisti" [actions]="[{ key: 'new', label: '+ Nuovo acquisto' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -7,6 +7,11 @@
   <div class="list-heading"><h2>Elenco acquisti</h2><div class="list-heading-end"><span>{{ visiblePurchases().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
   @if (filtersOpen()) { <div class="toolbar filter-panel">
     <label>Ricerca <input name="query" type="search" [(ngModel)]="query" placeholder="Descrizione, fornitore, note" /></label>
+    <label>Anno
+      <select name="yearFilter" [ngModel]="yearFilter()?.toString() ?? ''" (ngModelChange)="changeYearFilter($event)">
+        @for (option of yearFilterOptions(); track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+      </select>
+    </label>
   </div> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>

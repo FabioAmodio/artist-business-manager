@@ -14,7 +14,7 @@ body {
 	font-family: 'Manrope', 'Segoe UI', sans-serif;
 }
 
-.page-filter.replaces-title { font: 400 1.25rem var(--font-serif); margin-left: 0; max-width: min(22rem, 45vw); }
+header.topbar .page-filter.replaces-title { font-size: 1rem; max-width: min(22rem, 45vw); padding: .35rem 1.75rem .35rem .55rem; }
 
 main.main-content .list-action {
 	display: inline-flex;
@@ -159,7 +159,7 @@ main.main-content .product-status .active { color: var(--color-status-success); 
 main.main-content .product-status .inactive { color: var(--color-status-error); }
 
 @media (max-width: 699px) {
-	.page-filter.replaces-title { font: 400 1rem var(--font-serif); margin-left: 0; max-width: 100%; }
+	header.topbar .page-filter.replaces-title { font-size: .9rem; max-width: 100%; min-width: 0; padding: .25rem 1.4rem .25rem .4rem; width: 100%; }
 
 	main.main-content section[class$='-page'] {
 		padding-top: var(--spacing-3);

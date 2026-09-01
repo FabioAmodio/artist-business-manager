@@ -1,5 +1,5 @@
 <section class="fairs-page" aria-labelledby="fairs-title">
-  <app-page-header icon="📅" title="Fiere" [actions]="[{ key: 'new', label: '+ Nuova fiera' }]" [hidden]="!!editingId()" [filterOptions]="yearFilterOptions()" [filterValue]="yearFilter()?.toString() ?? ''" (filterChange)="changeYearFilter($event)" (select)="startCreating()" />
+  <app-page-header icon="📅" title="Fiere" [actions]="[{ key: 'new', label: '+ Nuova fiera' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) {
     <p class="feedback error" role="alert">{{ errorMessage() }}</p>
@@ -20,6 +20,11 @@
   <div class="list-heading"><h2>Elenco fiere</h2><div class="list-heading-end"><span>{{ visibleFairs().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
   @if (filtersOpen()) {
     <div class="filter-panel fair-filter-panel">
+      <label>Anno
+        <select name="yearFilter" [ngModel]="yearFilter()?.toString() ?? ''" (ngModelChange)="changeYearFilter($event)">
+          @for (option of yearFilterOptions(); track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+        </select>
+      </label>
       <label>Stato
         <select name="fairFilter" [ngModel]="fairFilter() ?? ''" (ngModelChange)="changeFairFilter($event)">
           <option value="">Tutte</option><option value="completed">Concluse</option><option value="upcoming">Prossime</option>

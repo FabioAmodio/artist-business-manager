@@ -125,7 +125,7 @@ export class OperationsPage implements OnInit {
 
   protected async applyFilters(): Promise<void> { await this.loadOperations(); }
   protected hasActiveFilters(): boolean {
-    return Boolean(this.query().trim()) || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter());
+    return Boolean(this.query().trim()) || this.yearFilter() !== null || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter());
   }
   protected availableYears(): readonly number[] {
     return [...new Set([new Date().getFullYear(), ...this.allOperations.map((operation) => Number((operation.operationDate ?? operation.createdAt).slice(0, 4)))])]

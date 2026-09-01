@@ -77,7 +77,7 @@ export class FairsPage implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
   }
 
-  protected hasActiveFilters(): boolean { return this.fairFilter() !== null; }
+  protected hasActiveFilters(): boolean { return this.fairFilter() !== null || this.yearFilter() !== null; }
 
   protected changeFairFilter(filter: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { fairFilter: filter || null }, queryParamsHandling: 'merge' });

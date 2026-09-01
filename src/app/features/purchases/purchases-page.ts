@@ -67,7 +67,7 @@ export class PurchasesPage implements OnInit {
       return !normalized || `${purchase.purchaseDate} ${purchase.description} ${purchase.notes ?? ''} ${purchase.totalAmount} ${this.supplierName(purchase.supplierId)}`.toLowerCase().includes(normalized);
     });
   }
-  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()); }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.yearFilter() !== null; }
 
   protected availableYears(): readonly number[] {
     return [...new Set([new Date().getFullYear(), ...this.purchases().map((purchase) => Number(purchase.purchaseDate.slice(0, 4)))])]
