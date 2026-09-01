@@ -21,6 +21,7 @@ import type { Product } from '../../domain/models/product';
 import type { Service } from '../../domain/models/service';
 import type { Fair } from '../../domain/models/fair';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 interface PaymentDraft {
   amount?: number;
@@ -40,7 +41,7 @@ interface BundleDetailDraft {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-operations-page',
   templateUrl: './operations-page.html',
   styleUrl: './operations-page.scss',

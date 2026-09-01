@@ -11,10 +11,11 @@ import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule],
+  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-purchases-page',
   templateUrl: './purchases-page.html',
   styleUrl: './purchases-page.scss',

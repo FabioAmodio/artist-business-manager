@@ -1,12 +1,13 @@
 <section class="trash-page" aria-labelledby="trash-title">
-  <header class="page-header">
-    <div><h1 id="trash-title">Cestino</h1><p>Elementi cancellati</p></div>
+  <app-page-header icon="🗑" title="Cestino" />
+  <div class="trash-toolbar">
+    <p>Elementi cancellati</p>
     <div class="page-actions">
       <button class="secondary-button" type="button" [disabled]="!entries().length || busy()" (click)="toggleAll()">{{ allSelected() ? 'Deseleziona tutto' : 'Seleziona tutto' }}</button>
       <button class="secondary-button" type="button" [disabled]="!selectedIds().size || busy()" (click)="restoreSelected()">Ripristina selezionati</button>
       <button class="danger-button" type="button" [disabled]="!selectedIds().size || busy()" (click)="deleteSelected()">Elimina selezionati</button>
     </div>
-  </header>
+  </div>
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }

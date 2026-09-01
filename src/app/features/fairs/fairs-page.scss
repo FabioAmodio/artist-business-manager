@@ -61,6 +61,8 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
 @media (max-width: 1180px) { .fair-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .fair-indicators { grid-column: 1 / -2; } .fair-row > * { min-width: 0; } .fair-money span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } .fair-row { grid-template-columns: 1fr; } .fair-indicators { grid-column: auto; } .fair-money { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 699px) {
+  .fairs-page { padding: var(--spacing-3) var(--spacing-4) var(--spacing-4); }
+  .list-heading { margin-top: 0; }
   .page-header, .fair-row { align-items: stretch; flex-direction: column; }
   .page-header { top: 0; }
   .primary-button { width: 100%; }

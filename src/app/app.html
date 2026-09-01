@@ -1,9 +1,28 @@
 <div class="app-shell">
   <header class="topbar">
-    <a class="brand" routerLink="/dashboard" aria-label="Artist Business Manager Home">
-      <span class="brand-mark"><img src="icons/logo.svg" alt="" /></span>
-      <span class="brand-text">Artist Business Manager</span>
-    </a>
+    <div class="topbar-start">
+      <a class="brand" routerLink="/dashboard" aria-label="Artist Business Manager Home">
+        <span class="brand-mark"><img src="icons/logo.svg" alt="" /></span>
+        <span class="brand-text">Artist Business Manager</span>
+      </a>
+      @if (pageHeader.title()) {
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="page-title"><span class="page-icon" aria-hidden="true">{{ pageHeader.icon() }}</span><h1>{{ pageHeader.title() }}</h1></span>
+      }
+    </div>
+    @if (pageHeader.actions().length && !pageHeader.hidden()) {
+      <div class="page-add">
+        <button class="add-button" type="button" [attr.aria-label]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.title]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.aria-haspopup]="pageHeader.actions().length > 1 ? 'menu' : null" [attr.aria-expanded]="pageHeader.actions().length > 1 ? menuOpen() : null" (click)="trigger()">+</button>
+        @if (pageHeader.actions().length > 1 && menuOpen()) {
+          <div class="add-menu-backdrop" (click)="closeMenu()"></div>
+          <ul class="add-menu" role="menu">
+            @for (action of pageHeader.actions(); track action.key) {
+              <li role="none"><button role="menuitem" type="button" (click)="chooseAction(action.key)">{{ action.label }}</button></li>
+            }
+          </ul>
+        }
+      </div>
+    }
   </header>
 
   <div class="shell-body">

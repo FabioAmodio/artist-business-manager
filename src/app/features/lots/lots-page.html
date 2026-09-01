@@ -1,12 +1,5 @@
 <section class="lots-page" aria-labelledby="lots-title">
-  <header class="page-header">
-    <div>
-      <h1 id="lots-title">Collegamenti</h1>
-    </div>
-    @if (!editingId()) {
-      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo collegamento</button>
-    }
-  </header>
+  <app-page-header icon="🔗" title="Collegamenti" [actions]="[{ key: 'new', label: '+ Nuovo collegamento' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -33,7 +26,7 @@
             <span><strong>Alias</strong>{{ lot.aliases?.length ? lot.aliases.join(', ') : 'n.d.' }}</span>
             <span><strong>Note</strong>{{ lot.notes || 'n.d.' }}</span>
           </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(lot)">Modifica</button><button class="danger-button" type="button" [disabled]="isLotUsed(lot)" [title]="isLotUsed(lot) ? 'Collegamento usato in un\'operazione' : 'Elimina collegamento'" (click)="remove(lot)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica collegamento" title="Modifica collegamento" (click)="startEditing(lot)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina collegamento" [disabled]="isLotUsed(lot)" [title]="isLotUsed(lot) ? 'Collegamento usato in un\'operazione' : 'Elimina collegamento'" (click)="remove(lot)">🗑</button></div>
         </article>
       }
     </div>

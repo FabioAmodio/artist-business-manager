@@ -1,12 +1,5 @@
 <section class="fairs-page" aria-labelledby="fairs-title">
-  <header class="page-header">
-    <div>
-      <h1 id="fairs-title">Fiere</h1>
-    </div>
-    @if (!editingId()) {
-      <button class="primary-button" type="button" (click)="startCreating()">+ Nuova fiera</button>
-    }
-  </header>
+  <app-page-header icon="📅" title="Fiere" [actions]="[{ key: 'new', label: '+ Nuova fiera' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) {
     <p class="feedback error" role="alert">{{ errorMessage() }}</p>
@@ -50,7 +43,7 @@
                     <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')">{{ coverageLabel(fair, 'hotel') }}</span>
                     @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')">{{ coverageLabel(fair, 'other') }}</span> }
           </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(fair)">Modifica</button><button class="danger-button" type="button" [disabled]="isFairUsed(fair)" [title]="isFairUsed(fair) ? 'Fiera usata in operazioni' : 'Elimina fiera'" (click)="remove(fair)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica fiera" title="Modifica fiera" (click)="startEditing(fair)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina fiera" [disabled]="isFairUsed(fair)" [title]="isFairUsed(fair) ? 'Fiera usata in operazioni' : 'Elimina fiera'" (click)="remove(fair)">🗑</button></div>
         </article>
       }
     </div>

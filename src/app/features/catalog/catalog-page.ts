@@ -13,6 +13,7 @@ import type { Operation } from '../../domain/models/operation';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 interface BundleDraftItem {
   id: string;
@@ -25,7 +26,7 @@ interface BundleDraftItem {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DecimalPipe, FormsModule],
+  imports: [CurrencyPipe, DecimalPipe, FormsModule, PageHeaderComponent],
   selector: 'app-catalog-page',
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',
@@ -86,6 +87,10 @@ export class CatalogPage implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  protected handleCreateSelect(key: string): void {
+    this.openCreate(key as 'product' | 'service' | 'bundle');
   }
 
   protected openCreate(type: 'product' | 'service' | 'bundle'): void {

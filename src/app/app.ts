@@ -1,9 +1,10 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet, ActivatedRoute, Router } from '@angular/router';
 import { ResponsiveNavComponent } from './core/navigation/responsive-nav.component';
 import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.component';
 import { AppStateService } from './core/state/app-state.service';
 import { SyncStatusService } from './core/synchronization/sync-status.service';
+import { PageHeaderService } from './shared/components/page-header.service';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
@@ -14,6 +15,20 @@ import { SyncStatusService } from './core/synchronization/sync-status.service';
 export class App {
   protected readonly appState = inject(AppStateService);
   protected readonly syncStatus = inject(SyncStatusService);
+  protected readonly pageHeader = inject(PageHeaderService);
+  protected readonly menuOpen = signal(false);
+
+  protected toggleMenu(): void { this.menuOpen.update((open) => !open); }
+  protected closeMenu(): void { this.menuOpen.set(false); }
+  protected trigger(): void {
+    const actions = this.pageHeader.actions();
+    if (actions.length === 1) { this.pageHeader.select(actions[0].key); return; }
+    this.toggleMenu();
+  }
+  protected chooseAction(key: string): void {
+    this.pageHeader.select(key);
+    this.closeMenu();
+  }
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,

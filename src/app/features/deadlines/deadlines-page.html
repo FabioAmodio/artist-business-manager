@@ -1,5 +1,5 @@
 <section class="deadlines-page" aria-labelledby="deadlines-title">
-  <header class="page-header"><h1 id="deadlines-title">Scadenze</h1></header>
+  <app-page-header icon="⏰" title="Scadenze" />
   <div class="list-heading"><h2>Lavorazioni aperte</h2><span>{{ works().length }} registrate</span></div>
   @if (loading()) { <p class="empty-state">Caricamento...</p> }
   @else if (!works().length) { <div class="empty-state"><h3>Nessuna lavorazione aperta</h3></div> }
@@ -10,7 +10,7 @@
           <div><h3>{{ work.title }}</h3><p>{{ offerName(work) }} · {{ customerName(work) }}</p></div>
           <div class="deadline-date"><strong>Consegna</strong><span>{{ formatDate(work.deliveryDate) }}</span></div>
           <div class="badges">@if (isOverdue(work)) { <span class="overdue">Scaduta</span> } @else if (isDueSoon(work)) { <span class="due-soon">In scadenza</span> }</div>
-          <button class="text-button" type="button" (click)="openWork(work)">Modifica</button>
+          <button class="text-button list-action" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="openWork(work)">✎</button>
         </article>
       }
     </div>

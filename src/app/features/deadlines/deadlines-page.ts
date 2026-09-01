@@ -8,9 +8,11 @@ import type { Operation } from '../../domain/models/operation';
 import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Service } from '../../domain/models/service';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [PageHeaderComponent],
   selector: 'app-deadlines-page',
   templateUrl: './deadlines-page.html',
   styleUrl: './deadlines-page.scss',

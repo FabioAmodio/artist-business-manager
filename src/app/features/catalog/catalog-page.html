@@ -1,14 +1,5 @@
 <section class="catalog-page" aria-labelledby="catalog-title">
-  <header class="page-header">
-    <div>
-      <h1 id="catalog-title">Catalogo</h1>
-    </div>
-    <div class="page-actions">
-      <button class="primary-button" type="button" (click)="openCreate('product')">+ Nuovo prodotto</button>
-      <button class="primary-button" type="button" (click)="openCreate('service')">+ Nuovo servizio</button>
-      <button class="primary-button" type="button" (click)="openCreate('bundle')">+ Nuovo pacchetto</button>
-    </div>
-  </header>
+  <app-page-header icon="📦" title="Catalogo" [actions]="[{ key: 'product', label: '+ Nuovo prodotto' }, { key: 'service', label: '+ Nuovo servizio' }, { key: 'bundle', label: '+ Nuovo pacchetto' }]" (select)="handleCreateSelect($event)" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -31,8 +22,8 @@
             <button class="linked-info" type="button" (click)="openProductManagement(product)"><strong>Acquisti collegati</strong><span>{{ productLots(product.id).length ? productLots(product.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
           <div class="row-actions">
-            <button class="secondary-button" type="button" (click)="startEditingProduct(product)">Modifica</button>
-            <button class="danger-button" type="button" (click)="removeProduct(product)">Elimina</button>
+            <button class="secondary-button list-action" type="button" aria-label="Modifica prodotto" title="Modifica prodotto" (click)="startEditingProduct(product)">✎</button>
+            <button class="danger-button list-action" type="button" aria-label="Elimina prodotto" title="Elimina prodotto" (click)="removeProduct(product)">🗑</button>
           </div>
         </article>
       }
@@ -46,8 +37,8 @@
           </div>
           <div class="context-grid"><span><strong>Stato</strong>Disponibile</span></div>
           <div class="row-actions">
-            <button class="secondary-button" type="button" (click)="startEditingService(service)">Modifica</button>
-            <button class="danger-button" type="button" (click)="removeService(service)">Elimina</button>
+            <button class="secondary-button list-action" type="button" aria-label="Modifica servizio" title="Modifica servizio" (click)="startEditingService(service)">✎</button>
+            <button class="danger-button list-action" type="button" aria-label="Elimina servizio" title="Elimina servizio" (click)="removeService(service)">🗑</button>
           </div>
         </article>
       }
@@ -64,8 +55,8 @@
             <span><strong>Componenti</strong>{{ bundle.items.length }}</span>
           </div>
           <div class="row-actions">
-            <button class="secondary-button" type="button" (click)="startEditingBundle(bundle)">Modifica</button>
-            <button class="danger-button" type="button" (click)="removeBundle(bundle)">Elimina</button>
+            <button class="secondary-button list-action" type="button" aria-label="Modifica pacchetto" title="Modifica pacchetto" (click)="startEditingBundle(bundle)">✎</button>
+            <button class="danger-button list-action" type="button" aria-label="Elimina pacchetto" title="Elimina pacchetto" (click)="removeBundle(bundle)">🗑</button>
           </div>
         </article>
       }
@@ -90,7 +81,7 @@
               <div class="linked-lots-heading"><h3 id="catalog-product-linked-lots-title">Acquisti collegati</h3><button class="text-button" type="button" (click)="startCreatingLot(products().find(product => product.id === editingId())!)">+ Aggiungi</button></div>
               @if (productLots(editingId()!).length) {
                 <div class="linked-lot-list">
-                  @for (lot of productLots(editingId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><label class="default-toggle"><input type="checkbox" [checked]="isDefaultLot(lot)" (change)="toggleDefaultLot(lot)" /> Predefinito</label><button class="text-button" type="button" (click)="startEditingLot(lot)">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }
+                  @for (lot of productLots(editingId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><label class="default-toggle"><input type="checkbox" [checked]="isDefaultLot(lot)" (change)="toggleDefaultLot(lot)" /> Predefinito</label><button class="text-button list-action" type="button" aria-label="Modifica collegamento" title="Modifica collegamento" (click)="startEditingLot(lot)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina collegamento" title="Elimina collegamento" (click)="removeLot(lot)">🗑</button></div> }
                 </div>
               } @else { <p class="linked-lots-empty">Nessun acquisto collegato.</p> }
             </section>
@@ -142,7 +133,7 @@
                 <label>Quantita <input name="qty-{{ item.id }}" type="number" min="1" step="1" [(ngModel)]="item.quantity" /></label>
                 <label>Importo <input name="amount-{{ item.id }}" type="number" min="0" step="0.01" [(ngModel)]="item.amount" /></label>
                 <label>Percentuale <input name="pct-{{ item.id }}" type="number" [value]="item.amount !== undefined && bundleAmountTotal() > 0 ? (item.amount / bundleAmountTotal() * 100 | number:'1.0-2') : (item.percentage ?? '')" readonly /></label>
-                <button class="danger-button" type="button" (click)="removeBundleItem(item.id)">Elimina</button>
+                <button class="danger-button list-action" type="button" aria-label="Elimina componente" title="Elimina componente" (click)="removeBundleItem(item.id)">🗑</button>
               </div>
             }
           </div>

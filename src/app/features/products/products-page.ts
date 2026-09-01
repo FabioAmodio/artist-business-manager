@@ -10,10 +10,11 @@ import type { Operation } from '../../domain/models/operation';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, FormActionsComponent, FormsModule],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-products-page',
   templateUrl: './products-page.html',
   styleUrl: './products-page.scss',

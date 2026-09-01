@@ -6,10 +6,11 @@ import { PaymentMethodService, type PaymentMethodInput } from '../../application
 import type { Payment } from '../../domain/models/payment';
 import type { PaymentMethod } from '../../domain/models/payment-method';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-payment-methods-page',
   templateUrl: './payment-methods-page.html',
   styleUrl: './payment-methods-page.scss',

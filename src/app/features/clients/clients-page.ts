@@ -6,10 +6,11 @@ import { OperationService } from '../../application/operations/operation.service
 import type { Operation } from '../../domain/models/operation';
 import type { Party } from '../../domain/models/party';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-clients-page',
   templateUrl: './clients-page.html',
   styleUrl: './clients-page.scss',

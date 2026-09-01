@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TrashService, type TrashEntry } from '../../application/trash/trash.service';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe],
+  imports: [DatePipe, PageHeaderComponent],
   selector: 'app-trash-page',
   templateUrl: './trash-page.html',
   styleUrl: './trash-page.scss',

@@ -1,12 +1,5 @@
 <section class="clients-page" aria-labelledby="clients-title">
-  <header class="page-header">
-    <div>
-      <h1 id="clients-title">Clienti</h1>
-    </div>
-    @if (!editingId()) {
-      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo cliente</button>
-    }
-  </header>
+  <app-page-header icon="👥" title="Clienti" [actions]="[{ key: 'new', label: '+ Nuovo cliente' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -41,7 +34,7 @@
             <span><strong>Sito</strong>{{ client.website || 'n.d.' }}</span>
             <span><strong>Social</strong>{{ client.social || 'n.d.' }}</span>
           </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(client)">Modifica</button><button class="danger-button" type="button" [disabled]="isClientUsed(client)" [title]="isClientUsed(client) ? 'Cliente usato in un\'operazione' : 'Elimina cliente'" (click)="remove(client)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica cliente" title="Modifica cliente" (click)="startEditing(client)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina cliente" [disabled]="isClientUsed(client)" [title]="isClientUsed(client) ? 'Cliente usato in un\'operazione' : 'Elimina cliente'" (click)="remove(client)">🗑</button></div>
         </article>
       }
     </div>

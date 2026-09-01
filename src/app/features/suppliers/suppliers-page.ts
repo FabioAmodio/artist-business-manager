@@ -5,10 +5,11 @@ import { SupplierService, type SupplierInput } from '../../application/suppliers
 import type { Party, SupplierType } from '../../domain/models/party';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-suppliers-page',
   templateUrl: './suppliers-page.html',
   styleUrl: './suppliers-page.scss',

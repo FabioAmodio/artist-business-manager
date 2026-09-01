@@ -8,10 +8,11 @@ import type { Lot } from '../../domain/models/lot';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-lots-page',
   templateUrl: './lots-page.html',
   styleUrl: './lots-page.scss',

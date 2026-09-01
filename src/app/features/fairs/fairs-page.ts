@@ -8,10 +8,11 @@ import type { Fair } from '../../domain/models/fair';
 import type { FairSeries } from '../../domain/models/fair';
 import type { Operation } from '../../domain/models/operation';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-fairs-page',
   templateUrl: './fairs-page.html',
   styleUrl: './fairs-page.scss',

@@ -1,8 +1,5 @@
 <section class="operations-page" aria-labelledby="operations-title">
-  <header class="page-header">
-    <div><h1 id="operations-title">{{ salesOnly ? 'Vendite' : worksOnly ? 'Lavori' : 'Operazioni' }}</h1></div>
-    @if (!editingId()) { <button class="primary-button" type="button" (click)="startNewOperation()">{{ salesOnly ? '+ Nuova vendita' : worksOnly ? '+ Nuova lavorazione' : '+ Nuova operazione' }}</button> }
-  </header>
+  <app-page-header [icon]="salesOnly ? '💰' : worksOnly ? '✓' : '📋'" [title]="salesOnly ? 'Vendite' : worksOnly ? 'Lavori' : 'Operazioni'" [actions]="[{ key: 'new', label: salesOnly ? '+ Nuova vendita' : worksOnly ? '+ Nuova lavorazione' : '+ Nuova operazione' }]" [hidden]="!!editingId()" (select)="startNewOperation()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -32,7 +29,7 @@
           } @else if (!worksOnly) {
             <div class="badges"><span [class.active]="hasWork(operation)">Work</span><span [class.active]="hasSale(operation)">Sale</span></div>
           }
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(operation)">Modifica</button><button class="danger-button" type="button" (click)="remove(operation)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica operazione" title="Modifica operazione" (click)="startEditing(operation)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina operazione" title="Elimina operazione" (click)="remove(operation)">🗑</button></div>
         </article>
       }
     </div>
@@ -112,7 +109,7 @@
             } @else {
             <section class="payments-section">
             <div class="payments-heading"><h3>Pagamenti</h3>@if (editingId()) { <span>{{ paymentTotal(editingId()).toFixed(2) }} € registrati</span> }</div>
-            @if (editingId() && operationPayments(editingId()).length) { <div class="payment-list">@for (payment of operationPayments(editingId()); track payment.id) { <div><span>{{ payment.paymentDate }}</span><span>{{ paymentMethodName(payment.paymentMethodId) }}</span><strong>{{ payment.amount.toFixed(2) }} €</strong><button class="danger-button" type="button" (click)="removePayment(payment)">Elimina</button></div> }</div> }
+            @if (editingId() && operationPayments(editingId()).length) { <div class="payment-list">@for (payment of operationPayments(editingId()); track payment.id) { <div><span>{{ payment.paymentDate }}</span><span>{{ paymentMethodName(payment.paymentMethodId) }}</span><strong>{{ payment.amount.toFixed(2) }} €</strong><button class="danger-button list-action" type="button" aria-label="Elimina pagamento" title="Elimina pagamento" (click)="removePayment(payment)">🗑</button></div> }</div> }
             @if (!isEditingFullyPaid()) { <div class="payment-form"><label>Importo <input name="paymentAmount" type="number" min="0.01" step="0.01" [(ngModel)]="paymentDraft.amount" /></label><label>Data <input name="paymentDate" type="date" [(ngModel)]="paymentDraft.paymentDate" /></label><label>Modalita <select name="paymentMethod" [(ngModel)]="paymentDraft.paymentMethodId"><option value="">Nessuna</option>@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label>@if (editingId()) { <button class="text-button" type="button" [disabled]="!hasPaymentDraft()" (click)="addPayment()">+ Aggiungi pagamento</button> }</div> }
             </section>
             }

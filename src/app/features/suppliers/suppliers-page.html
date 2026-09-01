@@ -1,12 +1,5 @@
 <section class="suppliers-page" aria-labelledby="suppliers-title">
-  <header class="page-header">
-    <div>
-      <h1 id="suppliers-title">Fornitori</h1>
-    </div>
-    @if (!editingId()) {
-      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo fornitore</button>
-    }
-  </header>
+  <app-page-header icon="▣" title="Fornitori" [actions]="[{ key: 'new', label: '+ Nuovo fornitore' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -44,7 +37,7 @@
             <span><strong>Sito</strong>{{ supplier.website || 'n.d.' }}</span>
             <span><strong>Note</strong>{{ supplier.notes || 'n.d.' }}</span>
           </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(supplier)">Modifica</button><button class="danger-button" type="button" [disabled]="isSupplierUsed(supplier)" [title]="isSupplierUsed(supplier) ? 'Fornitore usato in un acquisto' : 'Elimina fornitore'" (click)="remove(supplier)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica fornitore" title="Modifica fornitore" (click)="startEditing(supplier)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina fornitore" [disabled]="isSupplierUsed(supplier)" [title]="isSupplierUsed(supplier) ? 'Fornitore usato in un acquisto' : 'Elimina fornitore'" (click)="remove(supplier)">🗑</button></div>
         </article>
       }
     </div>

@@ -1,12 +1,5 @@
 <section class="purchases-page" aria-labelledby="purchases-title">
-  <header class="page-header">
-    <div>
-      <h1 id="purchases-title">Acquisti</h1>
-    </div>
-    @if (!editingId()) {
-      <button class="primary-button" type="button" (click)="startCreating()">+ Nuovo acquisto</button>
-    }
-  </header>
+  <app-page-header icon="＋" title="Acquisti" [actions]="[{ key: 'new', label: '+ Nuovo acquisto' }]" [hidden]="!!editingId()" (select)="startCreating()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
@@ -35,7 +28,7 @@
             <span><strong>Bilancio</strong><em class="purchase-balance" [class.negative]="purchaseBalance(purchase) < 0">{{ purchaseBalance(purchase) | currency:'EUR':'symbol':'1.2-2' }}</em></span>
             <button class="linked-info" type="button" (click)="openPurchaseLots(purchase)"><strong>Prodotti collegati</strong><span>{{ purchaseLots(purchase.id).length ? purchaseLots(purchase.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
-          <div class="row-actions"><button class="text-button" type="button" (click)="startEditing(purchase)">Modifica</button><button class="danger-button" type="button" [disabled]="isPurchaseUsed(purchase)" [title]="isPurchaseUsed(purchase) ? 'Acquisto usato da prodotti collegati' : 'Elimina acquisto'" (click)="remove(purchase)">Elimina</button></div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica acquisto" title="Modifica acquisto" (click)="startEditing(purchase)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina acquisto" [disabled]="isPurchaseUsed(purchase)" [title]="isPurchaseUsed(purchase) ? 'Acquisto usato da prodotti collegati' : 'Elimina acquisto'" (click)="remove(purchase)">🗑</button></div>
         </article>
       }
     </div>
@@ -63,7 +56,7 @@
             <div class="linked-lots-heading"><h3 id="purchase-linked-lots-title">Prodotti collegati</h3><button class="text-button" type="button" (click)="startCreatingLot(purchases().find(purchase => purchase.id === editingId())!)">+ Aggiungi</button></div>
             @if (editingPurchaseLots().length) {
               <div class="linked-lot-list">
-                @for (lot of editingPurchaseLots(); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button" type="button" (click)="startEditingLot(lot)">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }
+                @for (lot of editingPurchaseLots(); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button list-action" type="button" aria-label="Modifica collegamento" title="Modifica collegamento" (click)="startEditingLot(lot)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina collegamento" title="Elimina collegamento" (click)="removeLot(lot)">🗑</button></div> }
               </div>
             } @else { <p class="linked-lots-empty">Nessun prodotto collegato.</p> }
           </section>
@@ -100,7 +93,7 @@
       <div class="purchase-form">
         <div class="form-heading"><div><h2 id="purchase-lots-title">Prodotti collegati</h2><p class="context-lock">Acquisto origine: {{ purchaseLabel(lotPurchaseId()) }}</p></div><button class="text-button" type="button" (click)="startCreatingLot(purchases().find(purchase => purchase.id === lotPurchaseId())!)">+ Aggiungi</button></div>
         @if (purchaseLots(lotPurchaseId()!).length) {
-          <div class="linked-lot-list">@for (lot of purchaseLots(lotPurchaseId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button" type="button" (click)="startEditingLot(lot); closeLotList()">Modifica</button><button class="danger-button" type="button" (click)="removeLot(lot)">Elimina</button></div> }</div>
+          <div class="linked-lot-list">@for (lot of purchaseLots(lotPurchaseId()!); track lot.id) { <div class="linked-lot-row"><span>{{ lot.name }}</span><button class="text-button list-action" type="button" aria-label="Modifica collegamento" title="Modifica collegamento" (click)="startEditingLot(lot); closeLotList()">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina collegamento" title="Elimina collegamento" (click)="removeLot(lot)">🗑</button></div> }</div>
         } @else { <p class="linked-lots-empty">Nessun prodotto collegato.</p> }
         <div class="row-actions"><button class="text-button" type="button" (click)="closeLotList()">Chiudi</button></div>
       </div>
