@@ -10,6 +10,13 @@ function createRepositoryMock() {
     getById: async (id: string) => operations.get(id) ?? null,
     list: async () => [...operations.values()].filter((operation) => !operation.deletedAt),
     save: async (operation: Operation) => { operations.set(operation.id, operation); },
+    transition: async (id: string, transition: { status: string }) => {
+      const operation = operations.get(id);
+      if (!operation) throw new Error('Operazione non trovata.');
+      const updated: Operation = { ...operation, workStatus: transition.status as Operation['workStatus'] };
+      operations.set(id, updated);
+      return updated;
+    },
     softDelete: async (id: string) => {
       const operation = operations.get(id);
       if (operation) operations.set(id, { ...operation, deletedAt: new Date().toISOString() });
@@ -43,5 +50,17 @@ describe('OperationService', () => {
     await service.delete(created.id);
 
     expect(repository.operations.get(created.id)?.deletedAt).toBeDefined();
+  });
+
+  it('delegates work status transitions', async () => {
+    const repository = createRepositoryMock();
+    TestBed.configureTestingModule({ providers: [OperationService, { provide: OperationRepository, useValue: repository }] });
+    const service = TestBed.inject(OperationService);
+    const created = await service.create({ type: 'work', title: 'Ritratto', workStatus: 'requested', needsReview: false });
+
+    const updated = await service.transitionWorkStatus(created.id, 'in-progress');
+
+    expect(updated.workStatus).toBe('in-progress');
+    expect(repository.operations.get(created.id)?.workStatus).toBe('in-progress');
   });
 });

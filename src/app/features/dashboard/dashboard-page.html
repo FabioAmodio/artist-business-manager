@@ -1,35 +1,90 @@
-<section class="dashboard" aria-labelledby="dashboard-title">
-  @if (dashboard().fair; as fair) {
-    <header class="dashboard-header fair-header">
-      <div>
-        <h1 id="dashboard-title">{{ fair.name }}</h1>
-        @if (activeFair(); as active) { <p class="fair-in-progress">Fiera in corso: {{ active.name }}</p> }
-        <p class="muted">{{ fair.location }} · {{ fair.startDate }} - {{ fair.endDate }}</p>
+<section class="dashboard" [attr.aria-label]="activeFair()?.name ?? 'Riepilogo'">
+  <app-page-header [icon]="activeFair() ? '⚡' : '📊'" [title]="activeFair()?.name ?? 'Riepilogo'" />
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (activeFair(); as fair) {
+    <article class="active-fair-card">
+      <div class="fair-main">
+        <h2>{{ fair.name }} · {{ fair.edition || fair.year }}</h2>
+        <p>{{ fair.location }} · {{ fair.startDate }} - {{ fair.endDate }}</p>
       </div>
-      <span class="live-badge" aria-label="Fiera attiva" title="Fiera attiva"><span class="badge-icon" aria-hidden="true">⚡</span><span class="badge-label">Attiva</span></span>
-    </header>
-    <div class="kpi-grid">
-      <article class="kpi"><span>Giorni rimanenti</span><strong>{{ dashboard().daysRemaining }}</strong></article>
-      <article class="kpi"><span>Vendite oggi</span><strong>{{ dashboard().todaySales | currency }}</strong></article>
-      <article class="kpi"><span>Incasso cumulativo</span><strong>{{ dashboard().cumulativeSales | currency }}</strong></article>
-      <article class="kpi"><span>Numero vendite</span><strong>{{ dashboard().saleCount }}</strong></article>
-    </div>
-    <section class="coverage" aria-labelledby="coverage-title">
-      <div><h2 id="coverage-title">Copertura costi</h2></div>
-      <strong [class.positive]="dashboard().profit >= 0">{{ dashboard().profit | currency }}</strong>
-      <p>{{ dashboard().uncoveredCosts > 0 ? ('Mancano ' + (dashboard().uncoveredCosts | currency) + ' per coprire i costi') : 'Costi previsti coperti' }}</p>
+      <div class="fair-money" aria-label="Riepilogo economico">
+        <span><strong>Costi</strong><em>{{ formatMoney(totalCosts(fair)) }}</em></span>
+        <span class="fair-reimbursement"><strong>Rimborso</strong><em>{{ formatMoney(fair.reimbursement) }}</em></span>
+        <span><strong>Ricavi</strong><em>{{ formatMoney(fairRevenue(fair)) }}</em></span>
+        <span><strong>Bilancio</strong><em class="fair-balance">{{ formatMoney(fairBalance(fair)) }} @if (fairBalance(fair) !== undefined) { <i class="balance-dot" [class.positive]="fairBalance(fair)! >= 0" [class.negative]="fairBalance(fair)! < 0" aria-hidden="true"></i> }</em></span>
+      </div>
+      <div class="fair-indicators" aria-label="Copertura costi">
+        <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'stand')" [class.indicator-error]="!isCostCovered(fair, 'stand')" [attr.aria-label]="coverageLabel(fair, 'stand')" [attr.title]="coverageLabel(fair, 'stand')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'stand')" aria-hidden="true">🪑</b><span class="badge-label">{{ coverageLabel(fair, 'stand') }}</span></span>
+        <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'travel')" [class.indicator-error]="!isCostCovered(fair, 'travel')" [attr.aria-label]="coverageLabel(fair, 'travel')" [attr.title]="coverageLabel(fair, 'travel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'travel')" aria-hidden="true">🚗</b><span class="badge-label">{{ coverageLabel(fair, 'travel') }}</span></span>
+        <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')" [attr.aria-label]="coverageLabel(fair, 'hotel')" [attr.title]="coverageLabel(fair, 'hotel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'hotel')" aria-hidden="true">🏨</b><span class="badge-label">{{ coverageLabel(fair, 'hotel') }}</span></span>
+        @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')" [attr.aria-label]="coverageLabel(fair, 'other')" [attr.title]="coverageLabel(fair, 'other')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'other')" aria-hidden="true">🧾</b><span class="badge-label">{{ coverageLabel(fair, 'other') }}</span></span> }
+      </div>
+    </article>
+
+    <section class="dashboard-section" aria-labelledby="active-works-title">
+      <div class="section-heading"><h2 id="active-works-title">Lavori aperti</h2><span>{{ activeWorks().length }}</span></div>
+      @if (activeWorks().length) {
+        <div class="dashboard-list">
+          @for (work of activeWorks(); track work.id) {
+            <article class="dashboard-row work-row">
+              <div><h3>{{ work.title }}</h3><p>{{ customerLabel(work) }} · {{ formatDateTime(work.operationDate ?? work.createdAt) }}</p></div>
+              <div class="row-facts"><span><strong>Consegna</strong>{{ formatDate(work.deliveryDate) }}</span><span><strong>Importo</strong>{{ formatMoney(work.amount) }}</span></div>
+              <span class="status-badge" [attr.aria-label]="workStatusLabel(work)" [attr.title]="workStatusLabel(work)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(work) }}</span><span class="badge-label">{{ workStatusLabel(work) }}</span></span>
+              <button class="quick-status" type="button" [disabled]="transitioningId() === work.id" [attr.aria-label]="work.workStatus === 'requested' ? 'Inizia lavorazione' : 'Segna come consegnata'" [attr.title]="work.workStatus === 'requested' ? 'Inizia lavorazione' : 'Segna come consegnata'" (click)="advanceWork(work)"><span aria-hidden="true">{{ work.workStatus === 'requested' ? '▶' : '📦' }}</span><span class="action-label">{{ work.workStatus === 'requested' ? 'Inizia' : 'Consegna' }}</span></button>
+            </article>
+          }
+        </div>
+      } @else { <p class="empty-inline">Nessun lavoro richiesto o in corso.</p> }
     </section>
+
+    <section class="dashboard-section" aria-labelledby="fair-sales-title">
+      <div class="section-heading"><h2 id="fair-sales-title">Vendite</h2><span>{{ fairSales().length }}</span></div>
+      @if (fairSales().length) {
+        <div class="dashboard-list">
+          @for (sale of fairSales(); track sale.id) {
+            <article class="dashboard-row sale-row">
+              <div><h3>{{ sale.title }}</h3><p>{{ customerLabel(sale) }} · {{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</p></div>
+              <div class="row-facts"><span><strong>Quantità</strong>{{ sale.quantity ?? 1 }}</span><span><strong>Importo</strong>{{ formatMoney(sale.amount) }}</span><span><strong>Pagato</strong>{{ formatMoney(paymentTotal(sale.id)) }}</span></div>
+              @if (!isFullyPaid(sale)) { <button class="payment-button" type="button" aria-label="Registra pagamento" title="Registra pagamento" (click)="openPaymentDialog(sale)"><span class="payment-icon" aria-hidden="true">€</span><span class="action-label">Pagamento</span></button> }
+            </article>
+          }
+        </div>
+      } @else { <p class="empty-inline">Nessuna vendita registrata per questa fiera.</p> }
+    </section>
+
     <a class="primary-action" routerLink="/sales">+ Nuova vendita fiera</a>
   } @else {
-    <header class="dashboard-header">
-      <div><h1 id="dashboard-title">La tua attivita</h1></div>
-      @if (activeFair(); as active) { <p class="fair-in-progress">Fiera in corso: {{ active.name }}</p> }
-    </header>
     <div class="kpi-grid">
       <article class="kpi"><span>Vendite del periodo</span><strong>0,00 €</strong></article>
       <article class="kpi"><span>Commissioni aperte</span><strong>0</strong></article>
       <article class="kpi"><span>Clienti attivi</span><strong>0</strong></article>
       <article class="kpi"><span>Prossime fiere</span><strong>0</strong></article>
     </div>
+  }
+
+  @if (paymentSale(); as sale) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="closePaymentDialog()"></div>
+    <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
+      <form (ngSubmit)="addPayment()" #paymentForm="ngForm">
+        <div class="dialog-heading"><div><h2 id="payment-dialog-title">Registra pagamento</h2><p>{{ sale.title }}</p></div><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingPayment()" (click)="closePaymentDialog()">×</button></div>
+        <p class="payment-summary">Residuo: <strong>{{ formatMoney(paymentRemaining(sale)) }}</strong></p>
+        <div class="payment-form-grid">
+          <label>Importo
+            <input name="paymentAmount" type="number" min="0.01" [max]="paymentRemaining(sale)" step="0.01" required [(ngModel)]="paymentDraft.amount" />
+          </label>
+          <label>Data
+            <input name="paymentDate" type="date" required [(ngModel)]="paymentDraft.paymentDate" />
+          </label>
+          <label>Modalità
+            <select name="paymentMethodId" required [(ngModel)]="paymentDraft.paymentMethodId">
+              @for (method of paymentMethods(); track method.id) { <option [value]="method.id">{{ method.name }}</option> }
+            </select>
+          </label>
+        </div>
+        <div class="dialog-actions"><button class="cancel-button" type="button" [disabled]="savingPayment()" (click)="closePaymentDialog()">Annulla</button><button class="save-button" type="submit" [disabled]="paymentForm.invalid || savingPayment()">{{ savingPayment() ? 'Salvataggio...' : 'Registra' }}</button></div>
+      </form>
+    </section>
   }
 </section>

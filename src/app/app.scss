@@ -278,7 +278,11 @@
     height: 2rem;
   }
 
-  .main-content { min-height: 0; }
+  .main-content {
+    min-height: 0;
+    padding-bottom: calc(4.5rem + var(--spacing-4) + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: calc(4.5rem + var(--spacing-4) + env(safe-area-inset-bottom, 0px));
+  }
 
   :host ::ng-deep .nav-icon {
     width: 1.25rem;

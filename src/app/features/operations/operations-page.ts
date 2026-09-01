@@ -89,6 +89,7 @@ export class OperationsPage implements OnInit {
   protected readonly customerMode = signal<'none' | 'soft' | 'existing'>('none');
   private pendingCreateTrigger: string | null = null;
   private pendingOpenId: string | null = null;
+  private returnToDashboardAfterSave = false;
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
@@ -184,6 +185,7 @@ export class OperationsPage implements OnInit {
     });
   }
   protected startNewOperation(): void {
+    this.returnToDashboardAfterSave = false;
     if (this.salesOnly && (window.innerWidth < 700 || this.activeFair())) {
       this.openFairWizard();
       return;
@@ -280,7 +282,7 @@ export class OperationsPage implements OnInit {
     this.mode.set('backoffice');
   }
   protected isBundleChild(): boolean { return Boolean(this.draft.parentOperationId); }
-  protected cancelForm(): void { this.creating.set(false); this.editingId.set(null); }
+  protected cancelForm(): void { this.creating.set(false); this.editingId.set(null); this.returnToDashboardAfterSave = false; }
 
   protected async save(): Promise<void> {
     this.saving.set(true); this.resetMessages();
@@ -297,7 +299,9 @@ export class OperationsPage implements OnInit {
         await this.paymentService.create({ operationId: operation.id, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       }
       this.payments.set(await this.paymentService.list());
+      const returnToDashboard = this.returnToDashboardAfterSave;
       this.cancelForm(); this.successMessage.set('Operazione salvata localmente.'); await this.loadOperations();
+      if (returnToDashboard) await this.router.navigate(['/dashboard']);
     } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare l\'operazione.'); }
     finally { this.saving.set(false); }
   }
@@ -342,6 +346,7 @@ export class OperationsPage implements OnInit {
   private async loadOperations(): Promise<void> { this.loading.set(true); try { const operations = await this.service.list(this.salesOnly ? 'sale' : 'all', this.query()); this.allOperations = operations; this.operations.set(this.filterOperations(operations)); } finally { this.loading.set(false); } }
   private resetMessages(): void { this.errorMessage.set(''); this.successMessage.set(''); }
   private openTriggeredOperation(): void {
+    this.returnToDashboardAfterSave = Boolean(this.activeFair());
     this.openFairWizard();
   }
   private openRequestedWork(): void {

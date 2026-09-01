@@ -36,6 +36,10 @@ export class OperationService {
     return operation;
   }
 
+  transitionWorkStatus(id: string, status: NonNullable<Operation['workStatus']>): Promise<Operation> {
+    return this.repository.transition(id, { status });
+  }
+
   delete(id: string): Promise<void> {
     return this.repository.softDelete(id);
   }
