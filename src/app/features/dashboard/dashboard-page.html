@@ -1,9 +1,9 @@
-<section class="dashboard" [attr.aria-label]="activeFair()?.name ?? 'Riepilogo'">
-  <app-page-header [icon]="activeFair() ? '⚡' : '📊'" [title]="activeFair()?.name ?? 'Riepilogo'" />
+<section class="dashboard" [attr.aria-label]="displayedFair()?.name ?? 'Riepilogo annuale'">
+  <app-page-header [icon]="displayedFair() ? '⚡' : '📊'" [title]="displayedFair()?.name ?? 'Riepilogo'" [filterOptions]="dashboardViewOptions()" [filterValue]="dashboardView()" filterLabel="Vista dashboard" [filterReplacesTitle]="dashboardViewOptions().length > 0" (filterChange)="changeDashboardView($event)" />
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
-  } @else if (activeFair(); as fair) {
+  } @else if (displayedFair(); as fair) {
     <article class="active-fair-card">
       <div class="fair-main">
         <h2>{{ fair.name }} · {{ fair.edition || fair.year }}</h2>
@@ -102,6 +102,9 @@
         }
       </section>
     </div>
+    @if (activeFairMode.realActiveFair() === null && activeFairMode.isForced() === false && fairs().length) {
+      <button class="force-fair-button" type="button" (click)="openForceFairDialog()">⚡ Forza modalità fiera</button>
+    }
   }
 
   @if (paymentSale(); as sale) {
@@ -124,6 +127,21 @@
           </label>
         </div>
         <div class="dialog-actions"><button class="cancel-button" type="button" [disabled]="savingPayment()" (click)="closePaymentDialog()">Annulla</button><button class="save-button" type="submit" [disabled]="paymentForm.invalid || savingPayment()">{{ savingPayment() ? 'Salvataggio...' : 'Registra' }}</button></div>
+      </form>
+    </section>
+  }
+
+  @if (forceFairDialogOpen()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="closeForceFairDialog()"></div>
+    <section class="payment-dialog force-fair-dialog" role="dialog" aria-modal="true" aria-labelledby="force-fair-dialog-title">
+      <form (ngSubmit)="forceSelectedFair()">
+        <div class="dialog-heading"><div><h2 id="force-fair-dialog-title">Forza modalità fiera</h2><p>Scegli la fiera da usare come contesto attivo.</p></div><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="forcingFair()" (click)="closeForceFairDialog()">×</button></div>
+        <label class="force-fair-field">Fiera
+          <select name="forcedFairSelection" required [(ngModel)]="forcedFairSelection">
+            @for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }} · {{ fair.startDate }}</option> }
+          </select>
+        </label>
+        <div class="dialog-actions"><button class="cancel-button" type="button" [disabled]="forcingFair()" (click)="closeForceFairDialog()">Annulla</button><button class="save-button" type="submit" [disabled]="!forcedFairSelection || forcingFair()">{{ forcingFair() ? 'Attivazione...' : 'Forza modalità' }}</button></div>
       </form>
     </section>
   }

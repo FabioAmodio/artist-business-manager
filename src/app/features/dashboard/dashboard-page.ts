@@ -21,6 +21,7 @@ import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 import { annualDashboardMetrics, availableYearRange } from '../../domain/shared/annual-dashboard';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ActiveFairService } from '../../core/event/active-fair.service';
 
 interface PaymentDraft {
   amount?: number;
@@ -37,6 +38,7 @@ interface PaymentDraft {
 })
 export class DashboardPage implements OnInit {
   private readonly router = inject(Router);
+  protected readonly activeFairMode = inject(ActiveFairService);
   private readonly fairService = inject(FairService);
   private readonly bundleService = inject(BundleService);
   private readonly operationService = inject(OperationService);
@@ -47,7 +49,7 @@ export class DashboardPage implements OnInit {
   private readonly purchaseService = inject(PurchaseService);
   private readonly serviceService = inject(ServiceService);
 
-  protected readonly activeFair = signal<Fair | null>(null);
+  protected readonly activeFair = this.activeFairMode.activeFair;
   protected readonly operations = signal<readonly Operation[]>([]);
   protected readonly parties = signal<readonly Party[]>([]);
   protected readonly payments = signal<readonly Payment[]>([]);
@@ -61,11 +63,15 @@ export class DashboardPage implements OnInit {
   protected readonly transitioningId = signal<string | null>(null);
   protected readonly paymentSale = signal<Operation | null>(null);
   protected readonly savingPayment = signal(false);
+  protected readonly forceFairDialogOpen = signal(false);
+  protected readonly forcingFair = signal(false);
+  protected readonly dashboardView = signal<'fair' | 'annual'>('fair');
+  protected forcedFairSelection = '';
   protected readonly selectedYear = signal(new Date().getFullYear());
   protected readonly yearRange = computed(() => availableYearRange({ operations: this.operations(), payments: this.payments(), fairs: this.fairs(), purchases: this.purchases(), products: this.products(), services: this.services(), bundles: this.bundles() }, new Date().getFullYear()));
   protected readonly annualMetrics = computed(() => annualDashboardMetrics({ operations: this.operations(), payments: this.payments(), fairs: this.fairs(), purchases: this.purchases(), products: this.products(), services: this.services(), bundles: this.bundles() }, this.selectedYear(), this.today()));
   protected paymentDraft: PaymentDraft = this.emptyPaymentDraft();
-  private readonly fairs = signal<readonly Fair[]>([]);
+  protected readonly fairs = signal<readonly Fair[]>([]);
   private touchStartX: number | null = null;
   protected readonly activeWorks = computed(() => {
     const fairId = this.activeFair()?.id;
@@ -77,6 +83,11 @@ export class DashboardPage implements OnInit {
       .filter((operation) => operation.fairEditionId === fairId && !operation.parentOperationId && (operation.type === 'sale' || operation.type === 'bundle'))
       .sort((first, second) => (second.operationDate ?? second.createdAt).localeCompare(first.operationDate ?? first.createdAt)) : [];
   });
+  protected readonly displayedFair = computed(() => this.dashboardView() === 'fair' ? this.activeFair() : null);
+  protected readonly dashboardViewOptions = computed(() => this.activeFair() ? [
+    { value: 'fair', label: this.activeFair()!.name },
+    { value: 'annual', label: 'Riepilogo annuale' },
+  ] : []);
 
   ngOnInit(): void { void this.load(); }
 
@@ -134,6 +145,33 @@ export class DashboardPage implements OnInit {
 
   protected openFairSale(): void {
     void this.router.navigate(['/sales'], { queryParams: { create: Date.now().toString() } });
+  }
+
+  protected changeDashboardView(value: string): void {
+    if (value === 'fair' || value === 'annual') this.dashboardView.set(value);
+  }
+
+  protected openForceFairDialog(): void {
+    this.forcedFairSelection = this.fairs()[0]?.id ?? '';
+    this.forceFairDialogOpen.set(true);
+  }
+
+  protected closeForceFairDialog(): void {
+    if (!this.forcingFair()) this.forceFairDialogOpen.set(false);
+  }
+
+  protected async forceSelectedFair(): Promise<void> {
+    if (!this.forcedFairSelection) return;
+    this.forcingFair.set(true);
+    this.errorMessage.set('');
+    try {
+      await this.activeFairMode.forceFair(this.forcedFairSelection);
+      this.forceFairDialogOpen.set(false);
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile forzare la modalità fiera.');
+    } finally {
+      this.forcingFair.set(false);
+    }
   }
 
   protected startYearSwipe(event: TouchEvent): void { this.touchStartX = event.changedTouches[0]?.clientX ?? null; }
@@ -199,7 +237,7 @@ export class DashboardPage implements OnInit {
     try {
       const [fairs, operations, parties, payments, paymentMethods, products, purchases, services, bundles] = await Promise.all([this.fairService.list(), this.operationService.list('all'), this.clientService.list(), this.paymentService.list(), this.paymentMethodService.list(), this.productService.list(), this.purchaseService.list(), this.serviceService.list(), this.bundleService.list()]);
       this.fairs.set(fairs);
-      this.activeFair.set(fairs.find((fair) => fair.startDate <= today && today <= fair.endDate) ?? null);
+      this.activeFairMode.setFairs(fairs);
       this.operations.set(operations);
       this.parties.set(parties);
       this.payments.set(payments);

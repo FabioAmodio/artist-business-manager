@@ -14,6 +14,8 @@ body {
 	font-family: 'Manrope', 'Segoe UI', sans-serif;
 }
 
+.page-filter.replaces-title { font: 400 1.25rem var(--font-serif); margin-left: 0; max-width: min(22rem, 45vw); }
+
 main.main-content .list-action {
 	display: inline-flex;
 	align-items: center;
@@ -80,6 +82,10 @@ main.main-content .annual-work-total { align-items: center; border-top: 1px soli
 main.main-content .annual-work-total span { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 main.main-content .annual-work-total strong { color: var(--color-heading); font: 400 1.35rem var(--font-serif); }
 main.main-content .annual-work-total:hover strong, main.main-content .annual-work-total:focus-visible strong { color: var(--color-accent); }
+main.main-content .force-fair-button { background: transparent; border: 1px solid var(--color-accent); border-radius: var(--radius-base); color: var(--color-accent); cursor: pointer; display: block; font: 600 .9rem var(--font-sans); margin: var(--spacing-6) auto 0; padding: .7rem 1rem; }
+main.main-content .force-fair-button:hover, main.main-content .force-fair-button:focus-visible { background: color-mix(in srgb, var(--color-accent) 10%, transparent); outline: none; }
+main.main-content .force-fair-field { color: var(--color-text-primary); display: grid; font-weight: 600; gap: .4rem; margin-top: 1.25rem; }
+main.main-content .force-fair-field select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; padding: .7rem; width: 100%; }
 
 main.main-content .list-heading {
 	align-items: center;
@@ -153,6 +159,8 @@ main.main-content .product-status .active { color: var(--color-status-success); 
 main.main-content .product-status .inactive { color: var(--color-status-error); }
 
 @media (max-width: 699px) {
+	.page-filter.replaces-title { font: 400 1rem var(--font-serif); margin-left: 0; max-width: 100%; }
+
 	main.main-content section[class$='-page'] {
 		padding-top: var(--spacing-3);
 	}

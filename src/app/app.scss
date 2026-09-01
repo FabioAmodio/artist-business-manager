@@ -69,6 +69,8 @@
 .page-filter { background: var(--color-primary-action-bg); border: 1px solid var(--color-primary-action-bg); border-radius: var(--radius-sm); color: inherit; cursor: pointer; flex-shrink: 0; font: 600 .8rem var(--font-sans); margin-left: auto; padding: .25rem 1.5rem .25rem .45rem; }
 .page-filter:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; }
 .page-filter option { background: var(--color-primary-action-bg); color: var(--color-primary-action-text); }
+.forced-fair-indicator { align-items: center; background: color-mix(in srgb, var(--color-status-warning) 22%, transparent); border: 1px solid var(--color-status-warning); border-radius: var(--radius-full); color: inherit; cursor: pointer; display: inline-flex; flex-shrink: 0; font: 600 .75rem var(--font-sans); gap: .3rem; min-height: 2rem; padding: .3rem .65rem; }
+.forced-fair-indicator:hover, .forced-fair-indicator:focus-visible { background: color-mix(in srgb, var(--color-status-warning) 38%, transparent); outline: none; }
 
 .page-add { flex-shrink: 0; position: relative; }
 .add-button { align-items: center; background: var(--color-accent); border: 0; border-radius: 999px; color: var(--color-text-inverse); cursor: pointer; display: flex; flex-shrink: 0; font: 700 1.3rem/1 var(--font-sans); height: 2.5rem; justify-content: center; width: 2.5rem; }
@@ -110,6 +112,9 @@
   .page-icon { font-size: 1rem; }
   .page-title h1 { font-size: 1rem; }
   .page-filter { font-size: .72rem; margin-left: auto; max-width: 5.25rem; padding: .2rem 1.15rem .2rem .35rem; }
+  .forced-fair-indicator { grid-column: 2; grid-row: 1; height: 1.75rem; justify-content: center; justify-self: end; min-height: 1.75rem; min-width: 1.75rem; padding: 0; width: 1.75rem; }
+  .forced-fair-indicator span:last-child { display: none; }
+  .topbar:has(.forced-fair-indicator) .brand-text { padding-right: 2.25rem; }
 }
 
 .shell-body {

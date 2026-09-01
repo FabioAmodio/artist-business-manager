@@ -5,6 +5,7 @@ import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.co
 import { AppStateService } from './core/state/app-state.service';
 import { SyncStatusService } from './core/synchronization/sync-status.service';
 import { PageHeaderService } from './shared/components/page-header.service';
+import { ActiveFairService } from './core/event/active-fair.service';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
@@ -16,6 +17,7 @@ export class App {
   protected readonly appState = inject(AppStateService);
   protected readonly syncStatus = inject(SyncStatusService);
   protected readonly pageHeader = inject(PageHeaderService);
+  protected readonly activeFair = inject(ActiveFairService);
   protected readonly menuOpen = signal(false);
 
   protected toggleMenu(): void { this.menuOpen.update((open) => !open); }
@@ -31,6 +33,11 @@ export class App {
   }
   protected changeHeaderFilter(event: Event): void {
     this.pageHeader.changeFilter((event.target as HTMLSelectElement).value);
+  }
+  protected async leaveForcedFairMode(): Promise<void> {
+    const fair = this.activeFair.forcedFair();
+    if (!fair || !window.confirm(`Uscire dalla modalità fiera forzata "${fair.name}"?`)) return;
+    await this.activeFair.clearForcedFair();
   }
   constructor(
     private readonly route: ActivatedRoute,

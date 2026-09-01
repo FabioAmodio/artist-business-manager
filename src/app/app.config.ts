@@ -13,6 +13,7 @@ import { routes } from './app.routes';
 import { environmentProviders } from './core/configuration/environment.providers';
 import { STORAGE_PROVIDER } from './core/configuration/environment.tokens';
 import { PersistenceService } from './application/persistence/persistence.service';
+import { ActiveFairService } from './core/event/active-fair.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,10 +29,12 @@ export const appConfig: ApplicationConfig = {
       const appState = inject(AppStateService);
       const storage = inject(STORAGE_PROVIDER);
       const persistence = inject(PersistenceService);
+      const activeFair = inject(ActiveFairService);
 
       return storage.open().then(
         async () => {
           await persistence.initialize();
+          await activeFair.initialize();
           appState.notifyDatabaseReady();
         },
         (error) => {

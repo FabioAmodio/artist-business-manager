@@ -19,16 +19,20 @@ export class PageHeaderService {
   readonly hidden = signal(false);
   readonly filterOptions = signal<readonly PageHeaderFilterOption[]>([]);
   readonly filterValue = signal('');
+  readonly filterLabel = signal('Anno');
+  readonly filterReplacesTitle = signal(false);
   private handler: ((key: string) => void) | null = null;
   private filterHandler: ((value: string) => void) | null = null;
 
-  configure(icon: string, title: string, actions: readonly PageHeaderAction[], hidden: boolean, filterOptions: readonly PageHeaderFilterOption[], filterValue: string, onSelect: (key: string) => void, onFilterChange: (value: string) => void): void {
+  configure(icon: string, title: string, actions: readonly PageHeaderAction[], hidden: boolean, filterOptions: readonly PageHeaderFilterOption[], filterValue: string, filterLabel: string, filterReplacesTitle: boolean, onSelect: (key: string) => void, onFilterChange: (value: string) => void): void {
     this.icon.set(icon);
     this.title.set(title);
     this.actions.set(actions);
     this.hidden.set(hidden);
     this.filterOptions.set(filterOptions);
     this.filterValue.set(filterValue);
+    this.filterLabel.set(filterLabel);
+    this.filterReplacesTitle.set(filterReplacesTitle);
     this.handler = onSelect;
     this.filterHandler = onFilterChange;
   }
@@ -48,6 +52,8 @@ export class PageHeaderService {
     this.hidden.set(false);
     this.filterOptions.set([]);
     this.filterValue.set('');
+    this.filterLabel.set('Anno');
+    this.filterReplacesTitle.set(false);
     this.handler = null;
     this.filterHandler = null;
   }

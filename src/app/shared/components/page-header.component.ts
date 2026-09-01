@@ -17,12 +17,14 @@ export class PageHeaderComponent {
   readonly hidden = input(false);
   readonly filterOptions = input<ReadonlyArray<PageHeaderFilterOption>>([]);
   readonly filterValue = input('');
+  readonly filterLabel = input('Anno');
+  readonly filterReplacesTitle = input(false);
   readonly select = output<string>();
   readonly filterChange = output<string>();
 
   constructor() {
     effect(() => {
-      this.pageHeader.configure(this.icon(), this.title(), this.actions(), this.hidden(), this.filterOptions(), this.filterValue(), (key) => this.select.emit(key), (value) => this.filterChange.emit(value));
+      this.pageHeader.configure(this.icon(), this.title(), this.actions(), this.hidden(), this.filterOptions(), this.filterValue(), this.filterLabel(), this.filterReplacesTitle(), (key) => this.select.emit(key), (value) => this.filterChange.emit(value));
     });
     inject(DestroyRef).onDestroy(() => this.pageHeader.reset());
   }

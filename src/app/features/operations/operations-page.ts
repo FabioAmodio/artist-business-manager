@@ -22,6 +22,7 @@ import type { Service } from '../../domain/models/service';
 import type { Fair } from '../../domain/models/fair';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ActiveFairService } from '../../core/event/active-fair.service';
 
 interface PaymentDraft {
   amount?: number;
@@ -49,6 +50,7 @@ interface BundleDetailDraft {
 export class OperationsPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly activeFairMode = inject(ActiveFairService);
   private readonly service = inject(OperationService);
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly paymentService = inject(PaymentService);
@@ -180,7 +182,7 @@ export class OperationsPage implements OnInit {
   protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
   protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
   protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || typeof operation.amount === 'number'; }
-  protected activeFair(): Fair | null { const today = new Date().toISOString().slice(0, 10); return this.fairs().find((fair) => fair.startDate <= today && today <= fair.endDate) ?? null; }
+  protected activeFair(): Fair | null { return this.activeFairMode.activeFair(); }
   protected offerChoices(): ReadonlyArray<{ readonly key: string; readonly label: string }> {
     const concludedFairIds = this.fairs()
       .filter((fair) => fair.endDate < new Date().toISOString().slice(0, 10))
@@ -395,6 +397,7 @@ export class OperationsPage implements OnInit {
     this.loading.set(true);
     try {
       const [operations, parties, fairs, lots, paymentMethods, payments, products, services, bundles] = await Promise.all([this.service.list(this.salesOnly ? 'sale' : 'all'), this.clientService.list(), this.fairService.list(), this.lotService.list(), this.paymentMethodService.list(), this.paymentService.list(), this.productService.list(), this.serviceService.list(), this.bundleService.list()]);
+      this.activeFairMode.setFairs(fairs);
       this.allOperations = operations; this.operations.set(this.filterOperations(operations)); this.parties.set(parties); this.fairs.set(fairs); this.lots.set(lots); this.paymentMethods.set(paymentMethods); this.payments.set(payments); this.products.set(products); this.services.set(services); this.bundles.set(bundles);
     } catch { this.errorMessage.set('Impossibile caricare le operazioni.'); }
     finally { this.loading.set(false); }

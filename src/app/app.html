@@ -7,9 +7,12 @@
       </a>
       @if (pageHeader.title()) {
         <span class="brand-divider" aria-hidden="true"></span>
-        <span class="page-title"><span class="page-icon" aria-hidden="true">{{ pageHeader.icon() }}</span><h1>{{ pageHeader.title() }}</h1>@if (pageHeader.filterOptions().length) { <select class="page-filter" aria-label="Anno" [value]="pageHeader.filterValue()" (change)="changeHeaderFilter($event)">@for (option of pageHeader.filterOptions(); track option.value) { <option [value]="option.value" [selected]="option.value === pageHeader.filterValue()">{{ option.label }}</option> }</select> }</span>
+        <span class="page-title"><span class="page-icon" aria-hidden="true">{{ pageHeader.icon() }}</span>@if (!pageHeader.filterReplacesTitle()) { <h1>{{ pageHeader.title() }}</h1> } @if (pageHeader.filterOptions().length) { <select class="page-filter" [class.replaces-title]="pageHeader.filterReplacesTitle()" [attr.aria-label]="pageHeader.filterLabel()" [value]="pageHeader.filterValue()" (change)="changeHeaderFilter($event)">@for (option of pageHeader.filterOptions(); track option.value) { <option [value]="option.value" [selected]="option.value === pageHeader.filterValue()">{{ option.label }}</option> }</select> }</span>
       }
     </div>
+    @if (activeFair.isForced()) {
+      <button class="forced-fair-indicator" type="button" [attr.aria-label]="'Modalità fiera forzata su ' + activeFair.forcedFair()!.name + ': esci'" [attr.title]="'Fiera forzata: ' + activeFair.forcedFair()!.name + '. Clicca per uscire'" (click)="leaveForcedFairMode()"><span aria-hidden="true">⚠</span><span>Forzata</span></button>
+    }
     @if (pageHeader.actions().length && !pageHeader.hidden()) {
       <div class="page-add">
         <button class="add-button" type="button" [attr.aria-label]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.title]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.aria-haspopup]="pageHeader.actions().length > 1 ? 'menu' : null" [attr.aria-expanded]="pageHeader.actions().length > 1 ? menuOpen() : null" (click)="trigger()">+</button>
