@@ -52,8 +52,14 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
 .fair-money span { border-top: 2px solid var(--color-border); color: var(--color-text-secondary); display: grid; font-size: var(--font-size-xs); gap: .15rem; padding-top: .35rem; }
 .fair-money strong { color: var(--color-text-primary); font-size: var(--font-size-xs); }
 .fair-money em { font-style: normal; }
+.fair-balance { align-items: center; display: flex; gap: .35rem; }
+.balance-dot { border-radius: 50%; display: inline-block; height: .5rem; width: .5rem; }
+.balance-dot.positive { background: var(--color-status-success); }
+.balance-dot.negative { background: var(--color-status-error); }
 .fair-indicators { display: grid; gap: .35rem; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); }
-.indicator { border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); display: inline-flex; font-size: var(--font-size-xs); padding: .15rem .65rem; white-space: nowrap; }
+.indicator { align-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); display: inline-flex; font-size: var(--font-size-xs); gap: .4rem; padding: .15rem .65rem; white-space: nowrap; }
+.indicator b { display: inline-grid; flex-shrink: 0; font-size: .9rem; height: 1rem; line-height: 1; place-items: center; position: relative; width: 1rem; }
+.indicator b.not-covered::after { background: currentColor; content: ''; height: 1px; left: -10%; position: absolute; top: 50%; transform: rotate(-45deg); width: 120%; }
 .indicator-success { border-color: var(--color-status-success); color: var(--color-status-success); }
 .indicator-error { border-color: var(--color-status-error); color: var(--color-status-error); }
 .row-actions { display: flex; gap: .25rem; flex-shrink: 0; }
@@ -64,6 +70,8 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
   .fairs-page { padding: var(--spacing-3) var(--spacing-4) var(--spacing-4); }
   .list-heading { margin-top: 0; }
   .page-header, .fair-row { align-items: stretch; flex-direction: column; }
+  .fair-money { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fair-reimbursement { display: none !important; }
   .page-header { top: 0; }
   .primary-button { width: 100%; }
   .form-row-identity, .form-row-dates, .form-row-location, .form-row-money { grid-template-columns: 1fr; }

@@ -32,16 +32,16 @@
             @if (fair.locationNotes) {<small>{{ fair.locationNotes }}</small>} @if (fair.notes) {<small>{{ fair.notes }}</small>}
           </div>
               <div class="fair-money" aria-label="Riepilogo economico">
-                <span><strong>Ricavi</strong><em>{{ formatMoney(fairRevenue(fair)) }}</em></span>
-                <span><strong>Rimborso</strong><em>{{ formatMoney(fair.reimbursement) }}</em></span>
                 <span><strong>Costi</strong><em>{{ formatMoney(totalCosts(fair)) }}</em></span>
-                <span><strong>Bilancio</strong><em>{{ formatMoney(fairBalance(fair)) }}</em></span>
+                <span class="fair-reimbursement"><strong>Rimborso</strong><em>{{ formatMoney(fair.reimbursement) }}</em></span>
+                <span><strong>Ricavi</strong><em>{{ formatMoney(fairRevenue(fair)) }}</em></span>
+                <span><strong>Bilancio</strong><em class="fair-balance">{{ formatMoney(fairBalance(fair)) }} @if (fairBalance(fair) !== undefined) { <i class="balance-dot" [class.positive]="fairBalance(fair)! >= 0" [class.negative]="fairBalance(fair)! < 0" aria-hidden="true"></i> }</em></span>
               </div>
           <div class="fair-indicators" aria-label="Indicatori fiera">
-                    <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'stand')" [class.indicator-error]="!isCostCovered(fair, 'stand')">{{ coverageLabel(fair, 'stand') }}</span>
-                    <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'travel')" [class.indicator-error]="!isCostCovered(fair, 'travel')">{{ coverageLabel(fair, 'travel') }}</span>
-                    <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')">{{ coverageLabel(fair, 'hotel') }}</span>
-                    @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')">{{ coverageLabel(fair, 'other') }}</span> }
+                        <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'stand')" [class.indicator-error]="!isCostCovered(fair, 'stand')" [attr.aria-label]="coverageLabel(fair, 'stand')" [attr.title]="coverageLabel(fair, 'stand')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'stand')" aria-hidden="true">🪑</b><span class="badge-label">{{ coverageLabel(fair, 'stand') }}</span></span>
+                        <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'travel')" [class.indicator-error]="!isCostCovered(fair, 'travel')" [attr.aria-label]="coverageLabel(fair, 'travel')" [attr.title]="coverageLabel(fair, 'travel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'travel')" aria-hidden="true">🚗</b><span class="badge-label">{{ coverageLabel(fair, 'travel') }}</span></span>
+                        <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')" [attr.aria-label]="coverageLabel(fair, 'hotel')" [attr.title]="coverageLabel(fair, 'hotel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'hotel')" aria-hidden="true">🏨</b><span class="badge-label">{{ coverageLabel(fair, 'hotel') }}</span></span>
+                        @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')" [attr.aria-label]="coverageLabel(fair, 'other')" [attr.title]="coverageLabel(fair, 'other')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'other')" aria-hidden="true">🧾</b><span class="badge-label">{{ coverageLabel(fair, 'other') }}</span></span> }
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica fiera" title="Modifica fiera" (click)="startEditing(fair)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina fiera" [disabled]="isFairUsed(fair)" [title]="isFairUsed(fair) ? 'Fiera usata in operazioni' : 'Elimina fiera'" (click)="remove(fair)">🗑</button></div>
         </article>

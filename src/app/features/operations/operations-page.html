@@ -23,11 +23,11 @@
           <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p><p>{{ formatDateTime(operation.operationDate ?? operation.createdAt) }}</p></div>
           <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } <span><strong>Pagato</strong>{{ paymentTotalFor(operation).toFixed(2) }} €</span></div>
           @if (salesOnly) {
-            <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" (click)="openWork(operation)">Lavorazione</button> }</div>
+            <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" aria-label="Lavorazione" title="Lavorazione" (click)="openWork(operation)"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Lavorazione</span></button> }</div>
           } @else if (worksOnly && operation.workStatus) {
-            <div class="badges work-badges"><span>{{ workStatusLabel(operation.workStatus) }}</span></div>
+            <div class="badges work-badges"><span [attr.aria-label]="workStatusLabel(operation.workStatus)" [attr.title]="workStatusLabel(operation.workStatus)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(operation.workStatus) }}</span><span class="badge-label">{{ workStatusLabel(operation.workStatus) }}</span></span></div>
           } @else if (!worksOnly) {
-            <div class="badges"><span [class.active]="hasWork(operation)">Work</span><span [class.active]="hasSale(operation)">Sale</span></div>
+            <div class="badges"><span [class.active]="hasWork(operation)" aria-label="Work" title="Work"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Work</span></span><span [class.active]="hasSale(operation)" aria-label="Sale" title="Sale"><span class="badge-icon" aria-hidden="true">💶</span><span class="badge-label">Sale</span></span></div>
           }
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica operazione" title="Modifica operazione" (click)="startEditing(operation)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina operazione" title="Elimina operazione" (click)="remove(operation)">🗑</button></div>
         </article>

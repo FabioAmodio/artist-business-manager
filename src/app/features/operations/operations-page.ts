@@ -134,6 +134,9 @@ export class OperationsPage implements OnInit {
   protected workStatusLabel(status?: Operation['workStatus']): string {
     return ({ requested: 'Richiesta', 'in-progress': 'In corso', completed: 'Terminata', delivered: 'Consegnata/Spedita', cancelled: 'Cancellata' } as Record<string, string>)[status ?? ''] ?? 'Non indicata';
   }
+  protected workStatusIcon(status?: Operation['workStatus']): string {
+    return ({ requested: '📝', 'in-progress': '🛠️', completed: '✅', delivered: '📦', cancelled: '🚫' } as Record<string, string>)[status ?? ''] ?? '❔';
+  }
   protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
   protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
   protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || typeof operation.amount === 'number'; }

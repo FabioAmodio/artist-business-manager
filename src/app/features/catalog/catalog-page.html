@@ -12,7 +12,7 @@
       @for (product of products(); track product.id) {
         <article class="catalog-item">
           <div class="item-header">
-            <span class="kind-badge">Prodotto</span>
+            <span class="kind-badge" aria-label="Prodotto" title="Prodotto"><span class="badge-icon" aria-hidden="true">🏷️</span><span class="badge-label">Prodotto</span></span>
             <h3>{{ product.name }}</h3>
             <p>{{ product.description || 'Nessuna descrizione' }}</p>
           </div>
@@ -31,7 +31,7 @@
       @for (service of services(); track service.id) {
         <article class="catalog-item">
           <div class="item-header">
-            <span class="kind-badge service">Servizio</span>
+            <span class="kind-badge service" aria-label="Servizio" title="Servizio"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Servizio</span></span>
             <h3>{{ service.description }}</h3>
             <p>{{ service.code }}</p>
           </div>
@@ -46,7 +46,7 @@
       @for (bundle of bundles(); track bundle.id) {
         <article class="catalog-item bundle">
           <div class="item-header">
-            <span class="kind-badge bundle">Pacchetto</span>
+            <span class="kind-badge bundle" aria-label="Pacchetto" title="Pacchetto"><span class="badge-icon" aria-hidden="true">🎁</span><span class="badge-label">Pacchetto</span></span>
             <h3>{{ bundle.name }}</h3>
             <p>{{ bundle.description || 'Nessuna descrizione' }}</p>
           </div>

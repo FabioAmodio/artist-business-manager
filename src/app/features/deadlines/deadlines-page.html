@@ -9,7 +9,7 @@
         <article class="deadline-row">
           <div><h3>{{ work.title }}</h3><p>{{ offerName(work) }} · {{ customerName(work) }}</p></div>
           <div class="deadline-date"><strong>Consegna</strong><span>{{ formatDate(work.deliveryDate) }}</span></div>
-          <div class="badges">@if (isOverdue(work)) { <span class="overdue">Scaduta</span> } @else if (isDueSoon(work)) { <span class="due-soon">In scadenza</span> }</div>
+          <div class="badges">@if (isOverdue(work)) { <span class="overdue" aria-label="Scaduta" title="Scaduta"><span class="badge-icon" aria-hidden="true">⏰</span><span class="badge-label">Scaduta</span></span> } @else if (isDueSoon(work)) { <span class="due-soon" aria-label="In scadenza" title="In scadenza"><span class="badge-icon" aria-hidden="true">⏳</span><span class="badge-label">In scadenza</span></span> }</div>
           <button class="text-button list-action" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="openWork(work)">✎</button>
         </article>
       }

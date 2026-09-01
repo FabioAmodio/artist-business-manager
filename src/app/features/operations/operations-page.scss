@@ -40,9 +40,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .badges button:hover, .badges button:focus-visible { background: color-mix(in srgb, var(--color-status-success) 10%, transparent); outline: none; }
 .sales-badges { grid-template-columns: min-content; min-width: 6.75rem; }
 .work-badges { grid-template-columns: min-content; min-width: 7rem; }
-.work-badges span { width: max-content; }
-.sales-badges span, .sales-badges button { width: max-content; }
-.badges span, .badges button { border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); font-size: var(--font-size-xs); padding: .15rem .65rem; white-space: nowrap; }
+.work-badges > span { width: max-content; }
+.sales-badges > span, .sales-badges > button { width: max-content; }
+.badges > span, .badges > button { border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); font-size: var(--font-size-xs); padding: .15rem .65rem; white-space: nowrap; }
 .badges .active { border-color: var(--color-status-success); color: var(--color-status-success); }
 .row-actions { display: flex; gap: .25rem; }
 .bundle-child-note { border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 1rem 0 0; padding-top: 1rem; }
@@ -68,6 +68,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .full-width { grid-column: 1 / -1; }
 .wide { grid-column: span 2; }
 .operation-form app-form-actions { background: linear-gradient(to top, var(--color-surface) 78%, transparent); bottom: -1.5rem; margin-top: 1rem; padding: .75rem 0 0; position: sticky; }
+@media (min-width: 1181px) { .operation-row:has(.sales-badges) { grid-template-columns: minmax(12rem, .9fr) minmax(34rem, 2.1fr) minmax(9.5rem, max-content) auto; } }
 @media (max-width: 1180px) { .operation-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .badges { grid-column: 1 / -2; } .operation-row > * { min-width: 0; } .context-grid span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } }
 @media (max-width: 799px) { .toolbar, .operation-row, .form-grid, .payment-form, .fair-payment { grid-template-columns: 1fr; } .fair-payment strong { grid-column: auto; } .payment-list > div { grid-template-columns: 1fr; } .badges { grid-column: auto; } .wide { grid-column: auto; } }

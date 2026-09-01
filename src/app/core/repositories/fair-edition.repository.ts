@@ -24,7 +24,7 @@ export class FairEditionRepository implements IFairEditionRepository {
       if (filter?.from && edition.endDate < filter.from) return false;
       if (filter?.to && edition.startDate > filter.to) return false;
       return true;
-    }).sort((first, second) => first.startDate.localeCompare(second.startDate));
+    }).sort((first, second) => second.startDate.localeCompare(first.startDate));
   }
 
   listBySeries(seriesId: string): Promise<readonly FairEdition[]> {

@@ -25,7 +25,7 @@
             <span><strong>Fornitore</strong>{{ supplierName(purchase.supplierId) }}</span>
             <span><strong>Importo totale</strong>{{ purchase.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</span>
             <span><strong>Note</strong>{{ purchase.notes || 'n.d.' }}</span>
-            <span><strong>Bilancio</strong><em class="purchase-balance" [class.negative]="purchaseBalance(purchase) < 0">{{ purchaseBalance(purchase) | currency:'EUR':'symbol':'1.2-2' }}</em></span>
+            <span><strong>Bilancio</strong><em class="purchase-balance">{{ purchaseBalance(purchase) | currency:'EUR':'symbol':'1.2-2' }} <i class="balance-dot" [class.positive]="purchaseBalance(purchase) >= 0" [class.negative]="purchaseBalance(purchase) < 0" aria-hidden="true"></i></em></span>
             <button class="linked-info" type="button" (click)="openPurchaseLots(purchase)"><strong>Prodotti collegati</strong><span>{{ purchaseLots(purchase.id).length ? purchaseLots(purchase.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica acquisto" title="Modifica acquisto" (click)="startEditing(purchase)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina acquisto" [disabled]="isPurchaseUsed(purchase)" [title]="isPurchaseUsed(purchase) ? 'Acquisto usato da prodotti collegati' : 'Elimina acquisto'" (click)="remove(purchase)">🗑</button></div>

@@ -6,7 +6,7 @@
         @if (activeFair(); as active) { <p class="fair-in-progress">Fiera in corso: {{ active.name }}</p> }
         <p class="muted">{{ fair.location }} · {{ fair.startDate }} - {{ fair.endDate }}</p>
       </div>
-      <span class="live-badge">Attiva</span>
+      <span class="live-badge" aria-label="Fiera attiva" title="Fiera attiva"><span class="badge-icon" aria-hidden="true">⚡</span><span class="badge-label">Attiva</span></span>
     </header>
     <div class="kpi-grid">
       <article class="kpi"><span>Giorni rimanenti</span><strong>{{ dashboard().daysRemaining }}</strong></article>

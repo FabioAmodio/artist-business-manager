@@ -30,8 +30,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .context-grid strong { color: var(--color-text-primary); font-size: var(--font-size-xs); }
 .linked-info { background: transparent; border: 0; border-top: 2px solid var(--color-border); color: var(--color-text-secondary); cursor: pointer; display: grid; font: inherit; font-size: var(--font-size-xs); gap: .15rem; padding: .35rem 0 0; text-align: left; }
 .linked-info:hover, .linked-info:focus-visible { border-color: var(--color-accent); color: var(--color-text-primary); outline: none; }
-.purchase-balance { color: var(--color-status-success); font-style: normal; }
-.purchase-balance.negative { color: var(--color-status-error); }
+.purchase-balance { align-items: center; color: var(--color-text-primary); display: flex; font-style: normal; gap: .35rem; }
+.balance-dot { border-radius: 50%; display: inline-block; height: .5rem; width: .5rem; }
+.balance-dot.positive { background: var(--color-status-success); }
+.balance-dot.negative { background: var(--color-status-error); }
 .relation-badges { display: grid; gap: .35rem; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); }
 .relation-badges span { border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); font-size: var(--font-size-xs); padding: .15rem .65rem; white-space: nowrap; }
 .row-actions { display: flex; gap: .25rem; }
