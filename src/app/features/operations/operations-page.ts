@@ -149,6 +149,12 @@ export class OperationsPage implements OnInit {
   protected changeOfferFilter(offer: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { offer: offer || null }, queryParamsHandling: 'merge' });
   }
+  protected changeWorkFilter(filter: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { workFilter: filter || null }, queryParamsHandling: 'merge' });
+  }
+  protected changeFairScopeFilter(scope: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { fairScope: scope || null }, queryParamsHandling: 'merge' });
+  }
   protected typeLabel(type: OperationType): string { return type === 'sale' ? 'Vendita' : type === 'bundle' ? 'Pacchetto' : 'Lavorazione'; }
   protected customerLabel(operation: Operation): string { return operation.partyId ? this.partyName(operation.partyId) : (operation.customerName || 'Cliente non indicato'); }
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }

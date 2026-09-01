@@ -13,6 +13,16 @@
         @for (offer of offerFilterChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }
       </select>
     </label> }
+    @if (salesOnly) { <label>Contesto
+      <select name="fairScopeFilter" [ngModel]="fairScopeFilter() ?? ''" (ngModelChange)="changeFairScopeFilter($event)">
+        <option value="">Tutte</option><option value="fair">In fiera</option><option value="non-fair">Fuori fiera</option>
+      </select>
+    </label> }
+    @if (worksOnly) { <label>Stato lavorazione
+      <select name="workFilter" [ngModel]="workFilter() ?? ''" (ngModelChange)="changeWorkFilter($event)">
+        <option value="">Tutte</option><option value="open">Aperte</option><option value="requested">Da fare</option><option value="in-progress">In lavorazione</option><option value="to-deliver">Da consegnare</option><option value="unpaid">Da saldare</option>
+      </select>
+    </label> }
     @if (!salesOnly && !worksOnly) { <label>Tipo
       <select name="typeFilter" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
         <option value="all">Tutte</option><option value="sale">Vendite</option><option value="work">Lavorazioni</option>

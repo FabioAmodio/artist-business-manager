@@ -16,7 +16,7 @@ h3 { font-size: 1.2rem; }
 .suggestions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .suggestions button, .product-grid button { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; font: 600 .9rem var(--font-sans); min-height: 2.75rem; padding: .5rem .8rem; }
 .cancel-button { background: transparent; border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; font: 600 .9rem var(--font-sans); padding: .8rem 1rem; width: 100%; }
-.toolbar { display: grid; grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 16rem); gap: 1rem; margin: 1rem 0; }
+.toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; margin: 1rem 0; }
 label { color: var(--color-text-primary); display: grid; gap: .4rem; font-weight: 600; }
 input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; padding: .7rem; width: 100%; }
 input:focus, textarea:focus, select:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
