@@ -81,8 +81,13 @@ export class OperationsPage implements OnInit {
   protected readonly mode = signal<'fair' | 'backoffice'>('backoffice');
   protected readonly query = signal('');
   protected readonly typeFilter = signal<OperationType | 'all'>('all');
+  protected readonly yearFilter = signal<number | null>(null);
+  protected readonly workFilter = signal<'open' | 'requested' | 'in-progress' | 'to-deliver' | 'unpaid' | null>(null);
+  protected readonly fairScopeFilter = signal<'fair' | 'non-fair' | null>(null);
+  protected readonly offerFilter = signal('');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly filtersOpen = signal(false);
   protected draft: OperationInput = this.emptyDraft();
   protected paymentDraft: PaymentDraft = this.emptyPaymentDraft();
   private fairPaymentManuallyEdited = false;
@@ -92,6 +97,15 @@ export class OperationsPage implements OnInit {
   private returnToDashboardAfterSave = false;
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const year = Number(params.get('year'));
+      this.yearFilter.set(Number.isInteger(year) && year > 0 ? year : null);
+      const workFilter = params.get('workFilter');
+      this.workFilter.set(workFilter === 'open' || workFilter === 'requested' || workFilter === 'in-progress' || workFilter === 'to-deliver' || workFilter === 'unpaid' ? workFilter : null);
+      const fairScope = params.get('fairScope');
+      this.fairScopeFilter.set(fairScope === 'fair' || fairScope === 'non-fair' ? fairScope : null);
+      this.offerFilter.set(params.get('offer') ?? '');
+    });
     this.route.queryParamMap.subscribe((params) => {
       const trigger = params.get('create');
       if (!trigger || trigger === this.pendingCreateTrigger) return;
@@ -108,6 +122,31 @@ export class OperationsPage implements OnInit {
   }
 
   protected async applyFilters(): Promise<void> { await this.loadOperations(); }
+  protected hasActiveFilters(): boolean {
+    return Boolean(this.query().trim()) || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter());
+  }
+  protected availableYears(): readonly number[] {
+    return [...new Set([new Date().getFullYear(), ...this.allOperations.map((operation) => Number((operation.operationDate ?? operation.createdAt).slice(0, 4)))])]
+      .filter((year) => Number.isInteger(year) && year > 0)
+      .sort((first, second) => second - first);
+  }
+  protected yearFilterOptions(): readonly { readonly value: string; readonly label: string }[] {
+    return [{ value: '', label: 'Tutti' }, ...this.availableYears().map((year) => ({ value: String(year), label: String(year) }))];
+  }
+  protected changeYearFilter(value: string): void { this.changeYear(value ? Number(value) : null); }
+  protected changeYear(year: number | null): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
+  }
+  protected offerFilterChoices(): readonly { readonly key: string; readonly label: string }[] {
+    return [
+      ...this.products().map((product) => ({ key: `product:${product.id}`, label: `Prodotto · ${product.name}` })),
+      ...this.services().map((service) => ({ key: `service:${service.id}`, label: `Servizio · ${service.description}` })),
+      ...this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: `Bundle · ${bundle.name}` })),
+    ].sort((first, second) => first.label.localeCompare(second.label));
+  }
+  protected changeOfferFilter(offer: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { offer: offer || null }, queryParamsHandling: 'merge' });
+  }
   protected typeLabel(type: OperationType): string { return type === 'sale' ? 'Vendita' : type === 'bundle' ? 'Pacchetto' : 'Lavorazione'; }
   protected customerLabel(operation: Operation): string { return operation.partyId ? this.partyName(operation.partyId) : (operation.customerName || 'Cliente non indicato'); }
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }
@@ -163,7 +202,25 @@ export class OperationsPage implements OnInit {
 
   protected openFairWizard(): void { this.mode.set('fair'); this.startCreating('sale'); }
   protected openWork(operation: Operation): void { void this.router.navigate(['/works'], { queryParams: { open: operation.id } }); }
-  protected visibleOperations(): readonly Operation[] { return this.salesOnly ? this.operations().filter((operation) => !operation.parentOperationId) : this.operations(); }
+  protected visibleOperations(): readonly Operation[] {
+    let operations = this.salesOnly ? this.operations().filter((operation) => !operation.parentOperationId) : [...this.operations()];
+    const year = this.yearFilter();
+    if (year) operations = operations.filter((operation) => Number((operation.operationDate ?? operation.createdAt).slice(0, 4)) === year);
+    if (this.salesOnly && this.fairScopeFilter()) operations = operations.filter((operation) => this.fairScopeFilter() === 'fair' ? Boolean(operation.fairEditionId) : !operation.fairEditionId);
+    if (this.salesOnly && this.offerFilter()) {
+      const [kind, id] = this.offerFilter().split(':');
+      operations = operations.filter((operation) => kind === 'product' ? operation.productId === id : kind === 'service' ? operation.serviceId === id : kind === 'bundle' ? operation.bundleId === id : true);
+    }
+    if (this.worksOnly) {
+      const filter = this.workFilter();
+      if (filter === 'open') operations = operations.filter((operation) => operation.workStatus !== 'delivered' && operation.workStatus !== 'cancelled');
+      if (filter === 'requested') operations = operations.filter((operation) => operation.workStatus === 'requested');
+      if (filter === 'in-progress') operations = operations.filter((operation) => operation.workStatus === 'in-progress');
+      if (filter === 'to-deliver') operations = operations.filter((operation) => operation.workStatus === 'completed');
+      if (filter === 'unpaid') operations = operations.filter((operation) => this.paymentTotalFor(operation) + 0.005 < (operation.amount ?? 0));
+    }
+    return operations;
+  }
   protected bundleDetailTotal(): number { return this.bundleDetails().reduce((total, detail) => total + detail.amount, 0); }
   protected updateBundleDetailAmount(id: string, amount: number | null): void {
     const total = this.draft.amount ?? 0;

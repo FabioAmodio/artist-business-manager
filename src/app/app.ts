@@ -29,6 +29,9 @@ export class App {
     this.pageHeader.select(key);
     this.closeMenu();
   }
+  protected changeHeaderFilter(event: Event): void {
+    this.pageHeader.changeFilter((event.target as HTMLSelectElement).value);
+  }
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,

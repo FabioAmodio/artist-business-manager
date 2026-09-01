@@ -4,21 +4,30 @@
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="list-heading"><h2>Elementi catalogo</h2><span>{{ products().length + services().length + bundles().length }} registrati</span></div>
+  <div class="list-heading"><h2>Elementi catalogo</h2><div class="list-heading-end"><span>{{ visibleCatalogCount() }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
+  @if (filtersOpen()) {
+    <div class="toolbar filter-panel">
+      <label>Tipo
+        <select name="catalogTypeFilter" [(ngModel)]="catalogTypeFilter">
+          <option value="all">Tutti</option><option value="product">Prodotti</option><option value="service">Servizi</option><option value="bundle">Bundle</option>
+        </select>
+      </label>
+    </div>
+  }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else {
     <div class="catalog-list">
-      @for (product of products(); track product.id) {
-        <article class="catalog-item">
+      @for (product of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'product' ? products() : []; track product.id) {
+        <article class="catalog-item catalog-product-item">
           <div class="item-header">
             <span class="kind-badge" aria-label="Prodotto" title="Prodotto"><span class="badge-icon" aria-hidden="true">🏷️</span><span class="badge-label">Prodotto</span></span>
             <h3>{{ product.name }}</h3>
             <p>{{ product.description || 'Nessuna descrizione' }}</p>
           </div>
           <div class="context-grid">
-            <span><strong>Prezzo</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
-            <span><strong>Stato</strong>{{ product.active ? 'Attivo' : 'Non attivo' }}</span>
+            <span class="product-price"><strong>Prezzo</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span class="product-status"><strong>Stato</strong><em [class.active]="product.active" [class.inactive]="!product.active" [attr.aria-label]="product.active ? 'Attivo' : 'Non attivo'" [attr.title]="product.active ? 'Attivo' : 'Non attivo'"><b aria-hidden="true">{{ product.active ? '●' : '○' }}</b><i>{{ product.active ? 'Attivo' : 'Non attivo' }}</i></em></span>
             <button class="linked-info" type="button" (click)="openProductManagement(product)"><strong>Acquisti collegati</strong><span>{{ productLots(product.id).length ? productLots(product.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
           <div class="row-actions">
@@ -28,14 +37,14 @@
         </article>
       }
 
-      @for (service of services(); track service.id) {
-        <article class="catalog-item">
+      @for (service of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'service' ? services() : []; track service.id) {
+        <article class="catalog-item catalog-service-item">
           <div class="item-header">
             <span class="kind-badge service" aria-label="Servizio" title="Servizio"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Servizio</span></span>
             <h3>{{ service.description }}</h3>
             <p>{{ service.code }}</p>
           </div>
-          <div class="context-grid"><span><strong>Stato</strong>Disponibile</span></div>
+          <div class="context-grid"><span class="service-price"><strong>Prezzo</strong>n.d.</span><span class="product-status"><strong>Stato</strong><em class="active" aria-label="Disponibile" title="Disponibile"><b aria-hidden="true">●</b><i>Disponibile</i></em></span><span class="service-placeholder" aria-hidden="true"></span></div>
           <div class="row-actions">
             <button class="secondary-button list-action" type="button" aria-label="Modifica servizio" title="Modifica servizio" (click)="startEditingService(service)">✎</button>
             <button class="danger-button list-action" type="button" aria-label="Elimina servizio" title="Elimina servizio" (click)="removeService(service)">🗑</button>
@@ -43,16 +52,17 @@
         </article>
       }
 
-      @for (bundle of bundles(); track bundle.id) {
-        <article class="catalog-item bundle">
+      @for (bundle of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'bundle' ? bundles() : []; track bundle.id) {
+        <article class="catalog-item catalog-bundle-item bundle">
           <div class="item-header">
             <span class="kind-badge bundle" aria-label="Pacchetto" title="Pacchetto"><span class="badge-icon" aria-hidden="true">🎁</span><span class="badge-label">Pacchetto</span></span>
             <h3>{{ bundle.name }}</h3>
             <p>{{ bundle.description || 'Nessuna descrizione' }}</p>
           </div>
           <div class="context-grid">
-            <span><strong>Prezzo</strong>{{ bundle.bundlePrice != null ? (bundle.bundlePrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
-            <span><strong>Componenti</strong>{{ bundle.items.length }}</span>
+            <span class="bundle-price"><strong>Prezzo</strong>{{ bundle.bundlePrice != null ? (bundle.bundlePrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span class="bundle-status product-status"><strong>Stato</strong><em [class.active]="isBundleAvailable(bundle)" [class.inactive]="!isBundleAvailable(bundle)" [attr.aria-label]="isBundleAvailable(bundle) ? 'Attivo' : 'Non attivo'" [attr.title]="isBundleAvailable(bundle) ? 'Attivo' : 'Non attivo'"><b aria-hidden="true">{{ isBundleAvailable(bundle) ? '●' : '○' }}</b><i>{{ isBundleAvailable(bundle) ? 'Attivo' : 'Non attivo' }}</i></em></span>
+            <span class="bundle-components"><strong>Componenti</strong>{{ bundle.items.length }}</span>
           </div>
           <div class="row-actions">
             <button class="secondary-button list-action" type="button" aria-label="Modifica pacchetto" title="Modifica pacchetto" (click)="startEditingBundle(bundle)">✎</button>

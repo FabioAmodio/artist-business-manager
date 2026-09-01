@@ -7,7 +7,7 @@
       </a>
       @if (pageHeader.title()) {
         <span class="brand-divider" aria-hidden="true"></span>
-        <span class="page-title"><span class="page-icon" aria-hidden="true">{{ pageHeader.icon() }}</span><h1>{{ pageHeader.title() }}</h1></span>
+        <span class="page-title"><span class="page-icon" aria-hidden="true">{{ pageHeader.icon() }}</span><h1>{{ pageHeader.title() }}</h1>@if (pageHeader.filterOptions().length) { <select class="page-filter" aria-label="Anno" [value]="pageHeader.filterValue()" (change)="changeHeaderFilter($event)">@for (option of pageHeader.filterOptions(); track option.value) { <option [value]="option.value" [selected]="option.value === pageHeader.filterValue()">{{ option.label }}</option> }</select> }</span>
       }
     </div>
     @if (pageHeader.actions().length && !pageHeader.hidden()) {

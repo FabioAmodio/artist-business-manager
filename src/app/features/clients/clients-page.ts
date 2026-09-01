@@ -28,6 +28,7 @@ export class ClientsPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly typeFilter = signal<'all' | 'person' | 'organization'>('all');
+  protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: ClientInput = this.emptyDraft();
@@ -50,6 +51,7 @@ export class ClientsPage implements OnInit {
     const type = this.typeFilter();
     return type === 'all' ? this.clients() : this.clients().filter((client) => client.type === type);
   }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.typeFilter() !== 'all'; }
 
   protected isClientUsed(client: Party): boolean { return this.operations().some((operation) => operation.partyId === client.id); }
 

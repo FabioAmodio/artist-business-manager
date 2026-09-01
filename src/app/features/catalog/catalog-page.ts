@@ -55,6 +55,8 @@ export class CatalogPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly filtersOpen = signal(false);
+  protected readonly catalogTypeFilter = signal<'all' | 'product' | 'service' | 'bundle'>('all');
   protected productDraft: ProductInput = this.emptyProductDraft();
   protected productTagText = '';
   protected serviceDraft: ServiceInput = this.emptyServiceDraft();
@@ -67,6 +69,20 @@ export class CatalogPage implements OnInit {
 
   protected itemTypeLabel(type: 'product' | 'service' | 'bundle'): string {
     return type === 'product' ? 'Prodotto' : type === 'service' ? 'Servizio' : 'Pacchetto';
+  }
+
+  protected hasActiveFilters(): boolean { return this.catalogTypeFilter() !== 'all'; }
+  protected visibleCatalogCount(): number {
+    const type = this.catalogTypeFilter();
+    return (type === 'all' || type === 'product' ? this.products().length : 0)
+      + (type === 'all' || type === 'service' ? this.services().length : 0)
+      + (type === 'all' || type === 'bundle' ? this.bundles().length : 0);
+  }
+
+  protected isBundleAvailable(bundle: Bundle): boolean {
+    return bundle.active && bundle.items.length > 0 && bundle.items.every((item) => item.catalogKind === 'product'
+      ? this.products().some((product) => product.id === item.catalogId && product.active)
+      : this.services().some((service) => service.id === item.catalogId));
   }
 
   protected async load(): Promise<void> {

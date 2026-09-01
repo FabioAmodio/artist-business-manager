@@ -54,13 +54,53 @@
       } @else { <p class="empty-inline">Nessuna vendita registrata per questa fiera.</p> }
     </section>
 
-    <a class="primary-action" routerLink="/sales">+ Nuova vendita fiera</a>
+    <button class="primary-action" type="button" (click)="openFairSale()">+ Nuova vendita fiera</button>
   } @else {
-    <div class="kpi-grid">
-      <article class="kpi"><span>Vendite del periodo</span><strong>0,00 €</strong></article>
-      <article class="kpi"><span>Commissioni aperte</span><strong>0</strong></article>
-      <article class="kpi"><span>Clienti attivi</span><strong>0</strong></article>
-      <article class="kpi"><span>Prossime fiere</span><strong>0</strong></article>
+    <div class="year-selector" aria-label="Anno del riepilogo" (touchstart)="startYearSwipe($event)" (touchend)="endYearSwipe($event)">
+      <button type="button" aria-label="Anno precedente" title="Anno precedente" [disabled]="selectedYear() <= yearRange().min" (click)="changeYear(-1)">‹</button>
+      <strong>{{ selectedYear() }}</strong>
+      <button type="button" aria-label="Anno successivo" title="Anno successivo" [disabled]="selectedYear() >= yearRange().max" (click)="changeYear(1)">›</button>
+    </div>
+
+    <div class="annual-dashboard">
+      <section class="annual-panel" aria-labelledby="annual-works-title">
+        <div class="annual-panel-heading"><span class="panel-icon" aria-hidden="true">🛠️</span><h2 id="annual-works-title">Lavorazioni</h2></div>
+        <div class="annual-metrics four-columns">
+          <a routerLink="/works" [queryParams]="{ workFilter: 'requested' }"><strong>{{ annualMetrics().works.requested }}</strong><span>Da fare</span></a>
+          <a routerLink="/works" [queryParams]="{ workFilter: 'in-progress' }"><strong>{{ annualMetrics().works.inProgress }}</strong><span>In lavorazione</span></a>
+          <a routerLink="/works" [queryParams]="{ workFilter: 'to-deliver' }"><strong>{{ annualMetrics().works.toDeliver }}</strong><span>Da consegnare</span></a>
+          <a routerLink="/works" [queryParams]="{ workFilter: 'unpaid' }"><strong>{{ annualMetrics().works.unpaid }}</strong><span>Da saldare</span></a>
+        </div>
+        <a class="annual-work-total" routerLink="/works" [queryParams]="{ year: selectedYear() }"><span>Lavorazioni {{ selectedYear() }}</span><strong>{{ annualMetrics().works.annualTotal }}</strong></a>
+      </section>
+
+      <section class="annual-panel" aria-labelledby="annual-fairs-title">
+        <div class="annual-panel-heading"><span class="panel-icon" aria-hidden="true">📅</span><h2 id="annual-fairs-title">Fiere {{ selectedYear() }}</h2></div>
+        <div class="annual-metrics three-columns">
+          <a routerLink="/events" [queryParams]="{ year: selectedYear(), fairFilter: 'completed' }"><strong>{{ annualMetrics().fairs.completed }}</strong><span>Fatte nell'anno</span></a>
+          <a routerLink="/events" [queryParams]="{ year: selectedYear() }"><strong>{{ formatMoney(annualMetrics().fairs.balance) }}</strong><span>Bilancio annuale</span></a>
+          <a routerLink="/events" [queryParams]="{ year: selectedYear(), fairFilter: 'upcoming' }"><strong>{{ annualMetrics().fairs.upcoming }}</strong><span>Prossime</span></a>
+        </div>
+        @if (annualMetrics().fairs.next; as nextFair) {
+          <a class="next-fair" routerLink="/events" [queryParams]="{ year: selectedYear(), fairFilter: 'upcoming' }"><span>Prossima fiera</span><strong>{{ nextFair.name }} · {{ formatDate(nextFair.startDate) }}</strong></a>
+        } @else { <p class="no-next-fair">Nessuna prossima fiera in programma per l'anno.</p> }
+      </section>
+
+      <section class="annual-panel finance-panel" aria-labelledby="annual-balance-title">
+        <div class="annual-panel-heading"><span class="panel-icon" aria-hidden="true">€</span><h2 id="annual-balance-title">Bilancio {{ selectedYear() }}</h2></div>
+        <div class="finance-totals">
+          <div><span>Uscite</span><strong class="negative-value">{{ formatMoney(annualMetrics().finance.expenses) }}</strong></div>
+          <div><span>Entrate</span><strong class="positive-value">{{ formatMoney(annualMetrics().finance.income) }}</strong></div>
+          <div class="net-balance"><span>Bilancio totale</span><strong>{{ formatMoney(annualMetrics().finance.balance) }} <i class="balance-dot" [class.positive]="annualMetrics().finance.balance >= 0" [class.negative]="annualMetrics().finance.balance < 0" aria-hidden="true"></i></strong></div>
+        </div>
+        <div class="finance-details">
+          <div><h3>Origine uscite</h3><a routerLink="/purchases" [queryParams]="{ year: selectedYear() }"><span>Acquisti</span><strong>{{ formatMoney(annualMetrics().finance.purchaseExpenses) }}</strong></a><a routerLink="/events" [queryParams]="{ year: selectedYear() }"><span>Costi fiere</span><strong>{{ formatMoney(annualMetrics().finance.fairExpenses) }}</strong></a></div>
+          <div><h3>Origine entrate</h3><a routerLink="/sales" [queryParams]="{ year: selectedYear(), fairScope: 'fair' }"><span>Fiere</span><strong>{{ formatMoney(annualMetrics().finance.fairIncome) }}</strong></a><a routerLink="/sales" [queryParams]="{ year: selectedYear(), fairScope: 'non-fair' }"><span>Non fiere</span><strong>{{ formatMoney(annualMetrics().finance.nonFairIncome) }}</strong></a>@if (annualMetrics().finance.reimbursements) { <a routerLink="/events" [queryParams]="{ year: selectedYear() }"><span>di cui rimborsi</span><strong>{{ formatMoney(annualMetrics().finance.reimbursements) }}</strong></a> }</div>
+        </div>
+        @if (annualMetrics().finance.revenueDetails.length) {
+          <details class="revenue-breakdown"><summary>Dettaglio per prodotto/servizio</summary><div>@for (detail of annualMetrics().finance.revenueDetails; track detail.key) { <a routerLink="/sales" [queryParams]="{ year: selectedYear(), offer: detail.key === 'other' ? null : detail.key }"><b>{{ detail.label }}</b><strong>{{ formatMoney(detail.amount) }}</strong></a> }</div></details>
+        }
+      </section>
     </div>
   }
 

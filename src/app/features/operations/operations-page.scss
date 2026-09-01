@@ -25,7 +25,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .list-heading { border-bottom: 1px solid var(--color-border); padding-bottom: .75rem; }
 .list-heading span, .operation-row p { color: var(--color-text-secondary); }
 .empty-state { border: 1px solid var(--color-border); margin: 2rem 0; padding: 1.25rem; }
-.operation-list { display: grid; gap: .75rem; max-height: calc(100vh - 18rem); overflow-y: auto; padding-right: .25rem; }
+.operation-list { display: grid; gap: .75rem; }
 .operation-row { align-items: start; background: color-mix(in srgb, var(--color-surface-secondary) 36%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius-base); display: grid; gap: .9rem; grid-template-columns: minmax(12rem, .9fr) minmax(34rem, 2.1fr) 6.75rem auto; padding: .85rem; }
 .operation-row > * { min-width: 0; }
 .works-row { grid-template-columns: minmax(10rem, .75fr) minmax(0, 2.25fr) minmax(7rem, max-content) auto; }

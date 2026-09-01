@@ -1,19 +1,24 @@
 <section class="operations-page" aria-labelledby="operations-title">
-  <app-page-header [icon]="salesOnly ? '💰' : worksOnly ? '✓' : '📋'" [title]="salesOnly ? 'Vendite' : worksOnly ? 'Lavori' : 'Operazioni'" [actions]="[{ key: 'new', label: salesOnly ? '+ Nuova vendita' : worksOnly ? '+ Nuova lavorazione' : '+ Nuova operazione' }]" [hidden]="!!editingId()" (select)="startNewOperation()" />
+  <app-page-header [icon]="salesOnly ? '💰' : worksOnly ? '✓' : '📋'" [title]="salesOnly ? 'Vendite' : worksOnly ? 'Lavori' : 'Operazioni'" [actions]="[{ key: 'new', label: salesOnly ? '+ Nuova vendita' : worksOnly ? '+ Nuova lavorazione' : '+ Nuova operazione' }]" [hidden]="!!editingId()" [filterOptions]="yearFilterOptions()" [filterValue]="yearFilter()?.toString() ?? ''" (filterChange)="changeYearFilter($event)" (select)="startNewOperation()" />
 
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="toolbar">
+  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><div class="list-heading-end"><span>{{ visibleOperations().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
+  @if (filtersOpen()) { <div class="toolbar filter-panel">
     <label>Ricerca <input type="search" name="query" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Titolo o descrizione" /></label>
+    @if (salesOnly) { <label>Prodotto/Servizio/Bundle
+      <select name="offerFilter" [ngModel]="offerFilter()" (ngModelChange)="changeOfferFilter($event)">
+        <option value="">Tutti</option>
+        @for (offer of offerFilterChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }
+      </select>
+    </label> }
     @if (!salesOnly && !worksOnly) { <label>Tipo
       <select name="typeFilter" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
         <option value="all">Tutte</option><option value="sale">Vendite</option><option value="work">Lavorazioni</option>
       </select>
     </label> }
-  </div>
-
-  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><span>{{ visibleOperations().length }} registrate</span></div>
+  </div> }
   @if (loading()) { <p class="empty-state">Caricamento...</p> }
   @else if (!visibleOperations().length) { <div class="empty-state"><h3>{{ salesOnly ? 'Nessuna vendita registrata' : worksOnly ? 'Nessuna lavorazione registrata' : 'Nessuna operazione registrata' }}</h3></div> }
   @else {

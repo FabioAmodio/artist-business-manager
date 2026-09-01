@@ -1,6 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
 import { OperationService } from '../../application/operations/operation.service';
 import { ProductService } from '../../application/products/product.service';
@@ -21,6 +22,8 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
   styleUrl: './purchases-page.scss',
 })
 export class PurchasesPage implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly service = inject(PurchaseService);
   private readonly lotService = inject(LotService);
   private readonly operationService = inject(OperationService);
@@ -36,6 +39,8 @@ export class PurchasesPage implements OnInit {
   protected readonly creating = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
+  protected readonly yearFilter = signal<number | null>(null);
+  protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: PurchaseInput = this.emptyDraft();
@@ -46,12 +51,38 @@ export class PurchasesPage implements OnInit {
   protected lotDraft: LotInput = this.emptyLotDraft();
   protected lotAliasText = '';
 
-  ngOnInit(): void { void this.loadAll(); }
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const year = Number(params.get('year'));
+      this.yearFilter.set(Number.isInteger(year) && year > 0 ? year : null);
+    });
+    void this.loadAll();
+  }
 
   protected visiblePurchases(): readonly Purchase[] {
     const normalized = this.query().trim().toLowerCase();
-    if (!normalized) return this.purchases();
-    return this.purchases().filter((purchase) => `${purchase.purchaseDate} ${purchase.description} ${purchase.notes ?? ''} ${purchase.totalAmount} ${this.supplierName(purchase.supplierId)}`.toLowerCase().includes(normalized));
+    const year = this.yearFilter();
+    return this.purchases().filter((purchase) => {
+      if (year && Number(purchase.purchaseDate.slice(0, 4)) !== year) return false;
+      return !normalized || `${purchase.purchaseDate} ${purchase.description} ${purchase.notes ?? ''} ${purchase.totalAmount} ${this.supplierName(purchase.supplierId)}`.toLowerCase().includes(normalized);
+    });
+  }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()); }
+
+  protected availableYears(): readonly number[] {
+    return [...new Set([new Date().getFullYear(), ...this.purchases().map((purchase) => Number(purchase.purchaseDate.slice(0, 4)))])]
+      .filter((year) => Number.isInteger(year) && year > 0)
+      .sort((first, second) => second - first);
+  }
+
+  protected yearFilterOptions(): readonly { readonly value: string; readonly label: string }[] {
+    return [{ value: '', label: 'Tutti' }, ...this.availableYears().map((year) => ({ value: String(year), label: String(year) }))];
+  }
+
+  protected changeYearFilter(value: string): void { this.changeYear(value ? Number(value) : null); }
+
+  protected changeYear(year: number | null): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
   }
 
   protected supplierName(id?: string): string {

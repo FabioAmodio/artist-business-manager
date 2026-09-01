@@ -1,5 +1,5 @@
 <section class="fairs-page" aria-labelledby="fairs-title">
-  <app-page-header icon="📅" title="Fiere" [actions]="[{ key: 'new', label: '+ Nuova fiera' }]" [hidden]="!!editingId()" (select)="startCreating()" />
+  <app-page-header icon="📅" title="Fiere" [actions]="[{ key: 'new', label: '+ Nuova fiera' }]" [hidden]="!!editingId()" [filterOptions]="yearFilterOptions()" [filterValue]="yearFilter()?.toString() ?? ''" (filterChange)="changeYearFilter($event)" (select)="startCreating()" />
 
   @if (errorMessage()) {
     <p class="feedback error" role="alert">{{ errorMessage() }}</p>
@@ -17,14 +17,14 @@
     </div>
   }
 
-  <div class="list-heading"><h2>Elenco fiere</h2><span>{{ fairs().length }} registrate</span></div>
+  <div class="list-heading"><h2>Elenco fiere</h2><span>{{ visibleFairs().length }} registrate</span></div>
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
-  } @else if (!fairs().length) {
+  } @else if (!visibleFairs().length) {
     <div class="empty-state"><h3>Nessuna fiera registrata</h3></div>
   } @else {
     <div class="fair-list">
-      @for (fair of fairs(); track fair.id) {
+      @for (fair of visibleFairs(); track fair.id) {
         <article class="fair-row">
           <div class="fair-main">
             <h3>{{ fair.name }} · {{ fair.edition || fair.year }}</h3>

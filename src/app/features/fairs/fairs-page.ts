@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FairService, type FairInput } from '../../application/fairs/fair.service';
 import { FairValidationError } from '../../application/fairs/fair.service';
 import { OperationService } from '../../application/operations/operation.service';
@@ -18,6 +19,8 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
   styleUrl: './fairs-page.scss',
 })
 export class FairsPage implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly service = inject(FairService);
   private readonly operationService = inject(OperationService);
   protected readonly fairs = signal<readonly Fair[]>([]);
@@ -31,9 +34,47 @@ export class FairsPage implements OnInit {
   protected readonly successMessage = signal('');
   protected readonly validationIssues = signal<readonly FairValidationIssue[]>([]);
   protected readonly matchedSeries = signal<FairSeries | null>(null);
+  protected readonly yearFilter = signal<number | null>(null);
+  protected readonly fairFilter = signal<'completed' | 'upcoming' | null>(null);
   protected draft: FairInput = this.emptyDraft();
 
-  ngOnInit(): void { void this.load(); void this.loadSeries(); }
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const year = Number(params.get('year'));
+      this.yearFilter.set(Number.isInteger(year) && year > 0 ? year : null);
+      const filter = params.get('fairFilter');
+      this.fairFilter.set(filter === 'completed' || filter === 'upcoming' ? filter : null);
+    });
+    void this.load(); void this.loadSeries();
+  }
+
+  protected visibleFairs(): readonly Fair[] {
+    const year = this.yearFilter();
+    const filter = this.fairFilter();
+    const today = new Date().toISOString().slice(0, 10);
+    return this.fairs().filter((fair) => {
+      if (year && Number(fair.startDate.slice(0, 4)) !== year) return false;
+      if (filter === 'completed' && fair.endDate >= today) return false;
+      if (filter === 'upcoming' && fair.startDate <= today) return false;
+      return true;
+    });
+  }
+
+  protected availableYears(): readonly number[] {
+    return [...new Set([new Date().getFullYear(), ...this.fairs().map((fair) => Number(fair.startDate.slice(0, 4)))])]
+      .filter((year) => Number.isInteger(year) && year > 0)
+      .sort((first, second) => second - first);
+  }
+
+  protected yearFilterOptions(): readonly { readonly value: string; readonly label: string }[] {
+    return [{ value: '', label: 'Tutti' }, ...this.availableYears().map((year) => ({ value: String(year), label: String(year) }))];
+  }
+
+  protected changeYearFilter(value: string): void { this.changeYear(value ? Number(value) : null); }
+
+  protected changeYear(year: number | null): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
+  }
 
   protected startCreating(): void {
     this.resetMessages();

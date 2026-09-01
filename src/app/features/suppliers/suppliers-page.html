@@ -4,7 +4,8 @@
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="toolbar">
+  <div class="list-heading"><h2>Elenco fornitori</h2><div class="list-heading-end"><span>{{ visibleSuppliers().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
+  @if (filtersOpen()) { <div class="toolbar filter-panel">
     <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, email, telefono, sito" /></label>
     <label>Tipo
       <select name="typeFilter" [(ngModel)]="typeFilter">
@@ -16,9 +17,7 @@
         <option value="other">Altri fornitori</option>
       </select>
     </label>
-  </div>
-
-  <div class="list-heading"><h2>Elenco fornitori</h2><span>{{ visibleSuppliers().length }} registrati</span></div>
+  </div> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleSuppliers().length) {

@@ -25,6 +25,7 @@ export class SuppliersPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly typeFilter = signal<'all' | SupplierType>('all');
+  protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: SupplierInput = this.emptyDraft();
@@ -37,6 +38,7 @@ export class SuppliersPage implements OnInit {
     const type = this.typeFilter();
     return type === 'all' ? this.suppliers() : this.suppliers().filter((supplier) => supplier.supplierType === type);
   }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.typeFilter() !== 'all'; }
 
   protected isSupplierUsed(supplier: Party): boolean { return this.purchases().some((purchase) => purchase.supplierId === supplier.id); }
 

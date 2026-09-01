@@ -4,7 +4,8 @@
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="toolbar">
+  <div class="list-heading"><h2>Elenco prodotti</h2><div class="list-heading-end"><span>{{ visibleProducts().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
+  @if (filtersOpen()) { <div class="toolbar filter-panel">
     <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, descrizione, tag" /></label>
     <label>Stato
       <select name="activeFilter" [(ngModel)]="activeFilter">
@@ -13,9 +14,7 @@
         <option value="inactive">Non attivi</option>
       </select>
     </label>
-  </div>
-
-  <div class="list-heading"><h2>Elenco prodotti</h2><span>{{ visibleProducts().length }} registrati</span></div>
+  </div> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleProducts().length) {
@@ -23,15 +22,15 @@
   } @else {
     <div class="product-list">
       @for (product of visibleProducts(); track product.id) {
-        <article class="product-row">
-          <div>
+        <article class="product-row compact-product-row">
+          <div class="product-main">
             <h3>{{ product.name }}</h3>
-            <p>{{ product.active ? 'Attivo' : 'Non attivo' }}</p>
+            <p class="product-status"><em [class.active]="product.active" [class.inactive]="!product.active" [attr.aria-label]="product.active ? 'Attivo' : 'Non attivo'" [attr.title]="product.active ? 'Attivo' : 'Non attivo'"><b aria-hidden="true">{{ product.active ? '●' : '○' }}</b><i>{{ product.active ? 'Attivo' : 'Non attivo' }}</i></em></p>
           </div>
           <div class="context-grid">
-            <span><strong>Prezzo suggerito</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
-            <span><strong>Descrizione</strong>{{ product.description || 'n.d.' }}</span>
-            <span><strong>Tag</strong>{{ product.tags.length ? product.tags.join(', ') : 'n.d.' }}</span>
+            <span class="product-price"><strong>Prezzo suggerito</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span class="product-description"><strong>Descrizione</strong>{{ product.description || 'n.d.' }}</span>
+            <span class="product-tags"><strong>Tag</strong>{{ product.tags.length ? product.tags.join(', ') : 'n.d.' }}</span>
             <button class="linked-info" type="button" (click)="openProductLots(product)"><strong>Acquisti collegati</strong><span>{{ productLots(product.id).length ? productLots(product.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica prodotto" title="Modifica prodotto" (click)="startEditing(product)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina prodotto" [disabled]="isProductUsed(product)" [title]="isProductUsed(product) ? 'Prodotto usato in operazioni o collegamenti' : 'Elimina prodotto'" (click)="remove(product)">🗑</button></div>

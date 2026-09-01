@@ -34,6 +34,7 @@ export class ProductsPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly activeFilter = signal<'all' | 'active' | 'inactive'>('all');
+  protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: ProductInput = this.emptyDraft();
@@ -63,6 +64,7 @@ export class ProductsPage implements OnInit {
     return this.products()
       .filter((product) => active === 'all' || product.active === (active === 'active'));
   }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.activeFilter() !== 'all'; }
 
   protected startCreating(): void {
     this.resetMessages();

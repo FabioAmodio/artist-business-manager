@@ -27,7 +27,7 @@
   z-index: var(--z-sticky);
 }
 
-.topbar-start { align-items: center; display: flex; gap: var(--spacing-4); min-width: 0; }
+.topbar-start { align-items: center; display: flex; flex: 1; gap: var(--spacing-4); min-width: 0; }
 
 .brand {
   display: flex;
@@ -63,9 +63,12 @@
 
 .brand-text { display: inline; }
 
-.page-title { align-items: center; display: flex; gap: .5rem; min-width: 0; }
+.page-title { align-items: center; display: flex; flex: 1; gap: .5rem; min-width: 0; }
 .page-icon { flex-shrink: 0; font-size: 1.2rem; line-height: 1; }
 .page-title h1 { color: inherit; font: 400 clamp(1.1rem, 2.6vw, 1.5rem) var(--font-serif); line-height: 1.1; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-filter { background: var(--color-primary-action-bg); border: 1px solid var(--color-primary-action-bg); border-radius: var(--radius-sm); color: inherit; cursor: pointer; flex-shrink: 0; font: 600 .8rem var(--font-sans); margin-left: auto; padding: .25rem 1.5rem .25rem .45rem; }
+.page-filter:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; }
+.page-filter option { background: var(--color-primary-action-bg); color: var(--color-primary-action-text); }
 
 .page-add { flex-shrink: 0; position: relative; }
 .add-button { align-items: center; background: var(--color-accent); border: 0; border-radius: 999px; color: var(--color-text-inverse); cursor: pointer; display: flex; flex-shrink: 0; font: 700 1.3rem/1 var(--font-sans); height: 2.5rem; justify-content: center; width: 2.5rem; }
@@ -106,6 +109,7 @@
   }
   .page-icon { font-size: 1rem; }
   .page-title h1 { font-size: 1rem; }
+  .page-filter { font-size: .72rem; margin-left: auto; max-width: 5.25rem; padding: .2rem 1.15rem .2rem .35rem; }
 }
 
 .shell-body {
@@ -201,6 +205,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   min-width: 0;

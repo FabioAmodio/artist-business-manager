@@ -31,6 +31,7 @@ export class LotsPage implements OnInit {
   protected readonly creating = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
+  protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: LotInput = this.emptyDraft();
@@ -43,6 +44,7 @@ export class LotsPage implements OnInit {
     if (!normalized) return this.lots();
     return this.lots().filter((lot) => `${lot.name} ${this.productName(lot.productId)} ${this.purchaseLabel(lot.purchaseId)} ${(lot.aliases ?? []).join(' ')} ${lot.notes ?? ''}`.toLowerCase().includes(normalized));
   }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()); }
 
   protected productName(id: string): string {
     return this.products().find((product) => product.id === id)?.name ?? 'Prodotto non trovato';
