@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FairContextService } from '../../core/event/fair-context.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
@@ -15,6 +15,11 @@ export class SettingsPage implements OnInit {
   private readonly fairContext = inject(FairContextService);
   protected readonly persistence = inject(PersistenceService);
   protected readonly settings = this.fairContext.transparencySettings;
+  protected readonly resetStep = signal<0 | 1 | 2>(0);
+  protected readonly resetCode = signal('');
+  protected readonly resetError = signal('');
+  protected readonly resetting = signal(false);
+  protected resetCodeInput = '';
 
   ngOnInit(): void { void this.persistence.initialize(); }
 
@@ -66,6 +71,45 @@ export class SettingsPage implements OnInit {
 
   protected async exportFile(): Promise<void> {
     await this.persistence.exportLocal();
+  }
+
+  protected openFactoryReset(): void {
+    if (this.persistence.source() !== 'none') return;
+    this.resetError.set('');
+    this.resetStep.set(1);
+  }
+
+  protected continueFactoryReset(): void {
+    const random = crypto.getRandomValues(new Uint16Array(1))[0] % 9000 + 1000;
+    this.resetCode.set(String(random));
+    this.resetCodeInput = '';
+    this.resetError.set('');
+    this.resetStep.set(2);
+  }
+
+  protected closeFactoryReset(): void {
+    if (this.resetting()) return;
+    this.resetStep.set(0);
+    this.resetCode.set('');
+    this.resetCodeInput = '';
+    this.resetError.set('');
+  }
+
+  protected async confirmFactoryReset(): Promise<void> {
+    if (this.resetCodeInput !== this.resetCode()) {
+      this.resetError.set('Il codice inserito non corrisponde.');
+      return;
+    }
+    this.resetting.set(true);
+    this.resetError.set('');
+    try {
+      await this.persistence.factoryReset();
+      this.fairContext.updateAiSettings({ enabled: false, consentGiven: false, allowCloudProcessing: false });
+      window.location.reload();
+    } catch (error) {
+      this.resetError.set(error instanceof Error ? error.message : 'Impossibile ripristinare il database locale.');
+      this.resetting.set(false);
+    }
   }
 
   protected toggleEnabled(event: Event): void {

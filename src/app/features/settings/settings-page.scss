@@ -17,3 +17,22 @@ input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem
 .drive-folders { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
 .drive-folders button:first-child { text-align: left; }
 .drive-folders .folder-select { border: 1px solid var(--color-border); color: var(--color-text-primary); }
+.danger-zone { border-color: var(--color-status-error); margin-top: 1.5rem; }
+.factory-reset-button { background: transparent; border: 1px solid var(--color-status-error); border-radius: var(--radius-base); color: var(--color-status-error); cursor: pointer; justify-self: start; padding: .7rem 1rem; }
+.factory-reset-button:disabled { cursor: not-allowed; opacity: .45; }
+.dialog-backdrop { background: rgba(31, 41, 38, .55); inset: 0; position: fixed; z-index: var(--z-modal-backdrop); }
+.reset-dialog { background: var(--color-surface); border: 1px solid var(--color-status-error); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); box-sizing: border-box; left: 50%; max-width: calc(100vw - 2rem); padding: 1.5rem; position: fixed; top: 50%; transform: translate(-50%, -50%); width: 32rem; z-index: var(--z-modal); }
+.reset-dialog h2 { color: var(--color-heading); font: 400 1.5rem var(--font-serif); margin: 0; }
+.reset-dialog p { line-height: 1.5; }
+.reset-code { display: block; font: 500 2rem var(--font-mono); letter-spacing: .15rem; margin: 1rem 0; text-align: center; }
+.reset-code-field { align-items: stretch; display: grid; gap: .4rem; }
+.reset-code-field input { border: 1px solid var(--color-border); border-radius: var(--radius-sm); font: 500 1.2rem var(--font-mono); padding: .7rem; text-align: center; width: 100%; }
+.reset-error { color: var(--color-status-error); }
+.reset-dialog-actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
+.reset-dialog-actions button { border: 1px solid var(--color-border); border-radius: var(--radius-base); cursor: pointer; padding: .7rem 1rem; }
+.reset-dialog-actions button:disabled { cursor: wait; opacity: .5; }
+.first-confirmation { justify-content: flex-end; }
+.continue-button { background: var(--color-primary-action-bg); border-color: var(--color-primary-action-bg) !important; color: var(--color-primary-action-text); }
+.second-confirmation { justify-content: space-between; }
+.confirm-reset-button { background: var(--color-status-error); border-color: var(--color-status-error) !important; color: var(--color-text-inverse); }
+@media (max-width: 480px) { .reset-dialog-actions { align-items: stretch; flex-direction: column; } .second-confirmation { flex-direction: column-reverse; } .reset-dialog-actions button { width: 100%; } }

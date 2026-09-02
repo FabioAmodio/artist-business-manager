@@ -62,6 +62,16 @@ export class IndexedDbProvider implements IStorageProvider {
     if (this.database && this.isSupportedCollection(collection)) await this.database.table(collection).delete(id);
   }
 
+  async clearCollections(collections: readonly string[]): Promise<void> {
+    if (!this.database) return;
+    const supported = collections.filter((collection) => this.isSupportedCollection(collection));
+    const tables = supported.map((collection) => this.database!.table(collection));
+    await this.database.transaction('rw', tables, async () => {
+      await Promise.all(tables.map((table) => table.clear()));
+    });
+    if (supported.some((collection) => collection !== 'appSettings')) this.syncStatus.notifyLocalChange();
+  }
+
   async transaction<T>(_collections: readonly string[], work: () => Promise<T>): Promise<T> {
     return work();
   }

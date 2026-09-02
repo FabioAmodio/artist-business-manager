@@ -35,4 +35,30 @@
     </div>
     @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
   </fieldset>
+
+  <fieldset class="danger-zone">
+    <legend>Ripristino database locale</legend>
+    <p class="status">Elimina tutti i dati locali e ricrea esclusivamente i dati obbligatori di sistema.</p>
+    <button class="factory-reset-button" type="button" [disabled]="persistence.source() !== 'none'" (click)="openFactoryReset()">Ripristina impostazioni di fabbrica</button>
+    @if (persistence.source() !== 'none') { <p class="status">Disponibile solo quando la sorgente dati è impostata su Nessuna.</p> }
+  </fieldset>
+
+  @if (resetStep()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="closeFactoryReset()"></div>
+    <section class="reset-dialog" role="alertdialog" aria-modal="true" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-description">
+      @if (resetStep() === 1) {
+        <h2 id="reset-dialog-title">Ripristinare il database?</h2>
+        <p id="reset-dialog-description">L'operazione è irreversibile. Tutti i dati locali verranno cancellati e l'applicazione tornerà alle impostazioni di fabbrica.</p>
+        <p>Rimarranno soltanto i dati obbligatori, inclusi Contanti e Bancomat.</p>
+        <div class="reset-dialog-actions first-confirmation"><button type="button" (click)="closeFactoryReset()">Annulla</button><button class="continue-button" type="button" (click)="continueFactoryReset()">Continua</button></div>
+      } @else {
+        <h2 id="reset-dialog-title">Conferma cancellazione definitiva</h2>
+        <p id="reset-dialog-description">Per confermare, inserisci il codice a quattro cifre mostrato sotto. Tutti i dati saranno cancellati definitivamente.</p>
+        <strong class="reset-code" aria-label="Codice di verifica">{{ resetCode() }}</strong>
+        <label class="reset-code-field">Codice di verifica <input name="resetCode" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" [(ngModel)]="resetCodeInput" /></label>
+        @if (resetError()) { <p class="reset-error" role="alert">{{ resetError() }}</p> }
+        <div class="reset-dialog-actions second-confirmation"><button class="confirm-reset-button" type="button" [disabled]="resetting() || resetCodeInput.length !== 4" (click)="confirmFactoryReset()">{{ resetting() ? 'Cancellazione...' : 'Cancella tutti i dati' }}</button><button type="button" [disabled]="resetting()" (click)="closeFactoryReset()">Annulla</button></div>
+      }
+    </section>
+  }
 </section>

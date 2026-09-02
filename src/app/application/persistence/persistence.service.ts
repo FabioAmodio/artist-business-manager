@@ -3,6 +3,8 @@ import { APP_ENVIRONMENT, STORAGE_PROVIDER } from '../../core/configuration/envi
 import type { IStorageProvider } from '../../core/storage/storage-provider';
 import type { PersistedDataset, PersistenceSettings } from '../../core/persistence/persistence.models';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
+import { PaymentMethodService } from '../payment-methods/payment-method.service';
+import { ServiceService } from '../services/service.service';
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
@@ -20,6 +22,8 @@ export class PersistenceService {
   private readonly environment = inject(APP_ENVIRONMENT);
   private readonly storage = inject<IStorageProvider>(STORAGE_PROVIDER);
   private readonly syncStatus = inject(SyncStatusService);
+  private readonly paymentMethodService = inject(PaymentMethodService);
+  private readonly serviceService = inject(ServiceService);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly status = signal('');
   readonly driveFolders = signal<readonly DriveFolder[]>([]);
@@ -110,6 +114,18 @@ export class PersistenceService {
     this.directoryHandle = undefined;
     await this.saveSettings('none');
     this.status.set('Nessuna sorgente persistente configurata.');
+  }
+
+  async factoryReset(): Promise<void> {
+    if (this.source() !== 'none') throw new Error('Il ripristino e consentito solo con sorgente dati Nessuna.');
+    await this.syncStatus.suppress(async () => {
+      await this.storage.clearCollections([...DATA_COLLECTIONS, SETTINGS_COLLECTION]);
+      await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source: 'none', updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+      await Promise.all([this.paymentMethodService.list(), this.serviceService.list()]);
+    });
+    this.source.set('none');
+    this.syncStatus.setStatus('local-only');
+    this.status.set('Database locale ripristinato alle impostazioni di fabbrica.');
   }
 
   async synchronize(): Promise<void> {

@@ -55,4 +55,29 @@ describe('IndexedDbProvider', () => {
     expect(putSpy).toHaveBeenCalledWith({ id: 'bundle-1', name: 'Pacchetto' });
     expect(bundles).toEqual([{ id: 'bundle-1', name: 'Pacchetto' }]);
   });
+
+  it('clears multiple collections in one database transaction', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        IndexedDbProvider,
+        { provide: APP_ENVIRONMENT, useValue: {
+          applicationName: 'Artist Business Manager', environmentName: 'test', storagePrefix: 'ABM-TEST', logLevel: 'debug', syncEnabled: false, version: '0.0.0',
+        } satisfies AppEnvironment },
+      ],
+    });
+    const provider = TestBed.inject(IndexedDbProvider);
+    const clearBundles = vi.fn().mockResolvedValue(undefined);
+    const clearOperations = vi.fn().mockResolvedValue(undefined);
+    const transaction = vi.fn(async (_mode, _tables, work) => work());
+    (provider as any).database = {
+      table: (collection: string) => ({ clear: collection === 'bundles' ? clearBundles : clearOperations }),
+      transaction,
+    };
+
+    await provider.clearCollections(['bundles', 'operations']);
+
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(clearBundles).toHaveBeenCalledOnce();
+    expect(clearOperations).toHaveBeenCalledOnce();
+  });
 });
