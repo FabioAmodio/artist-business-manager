@@ -14,6 +14,7 @@ import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 import { isBundleAvailable } from '../../domain/shared/catalog-availability';
+import { completeAmountsToTotal } from '../../domain/shared/money';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
 interface BundleDraftItem {
@@ -163,6 +164,8 @@ export class CatalogPage implements OnInit {
       const hasAmounts = draftItems.some((item) => item.amount !== undefined);
       if (hasAmounts && draftItems.some((item) => item.amount === undefined)) throw new Error('Inserisci un importo per ogni componente oppure usa le percentuali.');
       if (hasAmounts && totalAmount <= 0) throw new Error('La somma degli importi deve essere maggiore di zero.');
+      if (hasAmounts && this.bundleDraft.bundlePrice !== undefined && Math.abs(totalAmount - this.bundleDraft.bundlePrice) > 0.005) throw new Error('La somma degli importi deve coincidere con il prezzo del pacchetto.');
+      const percentageBase = this.bundleDraft.bundlePrice ?? totalAmount;
       const input: BundleInput = {
         name: this.bundleDraft.name,
         description: this.bundleDraft.description,
@@ -173,7 +176,7 @@ export class CatalogPage implements OnInit {
           catalogKind: item.catalogKind,
           catalogId: item.catalogId,
           quantity: item.quantity,
-          percentage: hasAmounts ? ((item.amount ?? 0) / totalAmount) * 100 : item.percentage,
+          percentage: hasAmounts ? ((item.amount ?? 0) / percentageBase) * 100 : item.percentage,
         })),
       };
       if (this.editingId()) await this.bundleService.update(this.editingId()!, input);
@@ -198,6 +201,31 @@ export class CatalogPage implements OnInit {
 
   protected bundleAmountTotal(): number {
     return this.bundleItems().reduce((total, item) => total + (item.amount ?? 0), 0);
+  }
+
+  protected updateBundleItemAmount(id: string, amount: number | null): void {
+    this.bundleItems.update((items) => items.map((item) => item.id === id ? { ...item, amount: amount ?? undefined } : item));
+  }
+
+  protected bundleItemPercentage(item: BundleDraftItem): number | undefined {
+    const total = this.bundleDraft.bundlePrice ?? this.bundleAmountTotal();
+    return item.amount !== undefined && total > 0 ? item.amount / total * 100 : item.percentage;
+  }
+
+  protected canCompleteBundleAmounts(): boolean {
+    return this.bundleItems().some((item) => item.amount == null);
+  }
+
+  protected completeBundleAmounts(): void {
+    const total = this.bundleDraft.bundlePrice;
+    if (total == null) return;
+    this.resetMessages();
+    try {
+      const amounts = completeAmountsToTotal(this.bundleItems().map((item) => item.amount), total);
+      this.bundleItems.update((items) => items.map((item, index) => ({ ...item, amount: amounts[index] })));
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile completare la ripartizione.');
+    }
   }
 
   protected productName(productId?: string): string {

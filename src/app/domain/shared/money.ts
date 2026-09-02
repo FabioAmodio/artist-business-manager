@@ -23,3 +23,19 @@ export function distributeAmountsToCents(rawAmounts: readonly number[], total: n
   }
   return resultCents.map((cents) => cents / 100);
 }
+
+export function completeAmountsToTotal(amounts: readonly (number | null | undefined)[], total: number): number[] {
+  const missingIndexes = amounts.flatMap((amount, index) => amount == null ? [index] : []);
+  const assignedTotal = amounts.reduce<number>((sum, amount) => sum + (amount ?? 0), 0);
+  const remaining = Math.round((total - assignedTotal) * 100) / 100;
+  if (remaining < 0) throw new Error('Gli importi assegnati superano il prezzo del pacchetto.');
+  if (!missingIndexes.length) return amounts.map((amount) => amount ?? 0);
+  const allocations = distributeAmountsToCents(missingIndexes.map(() => remaining / missingIndexes.length), remaining);
+  let allocationIndex = 0;
+  return amounts.map((amount) => {
+    if (amount != null) return amount;
+    const allocation = allocations[allocationIndex];
+    allocationIndex += 1;
+    return allocation;
+  });
+}

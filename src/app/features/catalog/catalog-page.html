@@ -123,7 +123,7 @@
           </div>
 
           <div class="bundle-items">
-            <div class="bundle-items-header"><h3>Componenti</h3><button class="text-button" type="button" (click)="addBundleItem()">+ Aggiungi componente</button></div>
+            <div class="bundle-items-header"><h3>Componenti</h3><div class="bundle-items-actions">@if (bundleDraft.bundlePrice != null) { <button class="text-button" type="button" [disabled]="!canCompleteBundleAmounts()" (click)="completeBundleAmounts()">Completa ripartizione</button> }<button class="text-button" type="button" (click)="addBundleItem()">+ Aggiungi componente</button></div></div>
             @for (item of bundleItems(); track item.id) {
               <div class="bundle-item-row">
                 <label>Tipo
@@ -142,8 +142,8 @@
                   </select>
                 </label>
                 <label>Quantita <input name="qty-{{ item.id }}" type="number" min="1" step="1" [(ngModel)]="item.quantity" /></label>
-                <label>Importo <input name="amount-{{ item.id }}" type="number" min="0" step="0.01" [(ngModel)]="item.amount" /></label>
-                <label>Percentuale <input name="pct-{{ item.id }}" type="number" [value]="item.amount !== undefined && bundleAmountTotal() > 0 ? (item.amount / bundleAmountTotal() * 100 | number:'1.0-2') : (item.percentage ?? '')" readonly /></label>
+                <label>Importo <input name="amount-{{ item.id }}" type="number" min="0" step="0.01" [ngModel]="item.amount" (ngModelChange)="updateBundleItemAmount(item.id, $event)" /></label>
+                <label>Percentuale <input name="pct-{{ item.id }}" type="number" [value]="bundleItemPercentage(item) !== undefined ? (bundleItemPercentage(item) | number:'1.0-2') : ''" readonly /></label>
                 <button class="danger-button list-action" type="button" aria-label="Elimina componente" title="Elimina componente" (click)="removeBundleItem(item.id)">🗑</button>
               </div>
             }
