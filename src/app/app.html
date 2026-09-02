@@ -14,8 +14,8 @@
       <button class="forced-fair-indicator" type="button" [attr.aria-label]="'Modalità fiera forzata su ' + activeFair.forcedFair()!.name + ': esci'" [attr.title]="'Fiera forzata: ' + activeFair.forcedFair()!.name + '. Clicca per uscire'" (click)="leaveForcedFairMode()"><span aria-hidden="true">⚠</span><span>Forzata</span></button>
     }
     @if (pageHeader.actions().length && !pageHeader.hidden()) {
-      <div class="page-add">
-        <button class="add-button" type="button" [attr.aria-label]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.title]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.aria-haspopup]="pageHeader.actions().length > 1 ? 'menu' : null" [attr.aria-expanded]="pageHeader.actions().length > 1 ? menuOpen() : null" (click)="trigger()">+</button>
+      <div class="page-add" [class.mobile-only]="pageHeader.actions().length === 1 && pageHeader.actions()[0].mobileOnly">
+        <button class="add-button" [class.icon-action]="pageHeader.actions().length === 1 && pageHeader.actions()[0].icon" type="button" [attr.aria-label]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.title]="pageHeader.actions().length === 1 ? pageHeader.actions()[0].label : 'Aggiungi'" [attr.aria-haspopup]="pageHeader.actions().length > 1 ? 'menu' : null" [attr.aria-expanded]="pageHeader.actions().length > 1 ? menuOpen() : null" (click)="trigger()">{{ pageHeader.actions().length === 1 && pageHeader.actions()[0].icon ? pageHeader.actions()[0].icon : '+' }}</button>
         @if (pageHeader.actions().length > 1 && menuOpen()) {
           <div class="add-menu-backdrop" (click)="closeMenu()"></div>
           <ul class="add-menu" role="menu">

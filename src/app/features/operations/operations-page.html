@@ -50,10 +50,27 @@
           } @else if (!worksOnly) {
             <div class="badges"><span [class.active]="hasWork(operation)" aria-label="Work" title="Work"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Work</span></span><span [class.active]="hasSale(operation)" aria-label="Sale" title="Sale"><span class="badge-icon" aria-hidden="true">💶</span><span class="badge-label">Sale</span></span></div>
           }
-          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica operazione" title="Modifica operazione" (click)="startEditing(operation)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina operazione" title="Elimina operazione" (click)="remove(operation)">🗑</button></div>
+          <div class="row-actions">@if (canAdvanceWork(operation)) { <button class="work-advance-button list-action" type="button" [disabled]="transitioningWorkId() === operation.id" [attr.aria-label]="workAdvanceLabel(operation)" [attr.title]="workAdvanceLabel(operation)" (click)="advanceWork(operation)">{{ workAdvanceIcon(operation) }}</button> }@if (canQuickPay(operation)) { <button class="quick-payment-button list-action" type="button" aria-label="Registra pagamento rapido" [title]="operation.parentOperationId ? 'Registra pagamento sul pacchetto' : 'Registra pagamento'" (click)="openQuickPayment(operation)">€</button> }<button class="text-button list-action" type="button" aria-label="Modifica operazione" title="Modifica operazione" (click)="startEditing(operation)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina operazione" title="Elimina operazione" (click)="remove(operation)">🗑</button></div>
         </article>
       }
     </div>
+  }
+
+  @if (quickPaymentOperation(); as operation) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="closeQuickPayment()"></div>
+    <section class="operation-dialog quick-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-payment-title">
+      <form class="operation-form" (ngSubmit)="addQuickPayment()" #quickPaymentForm="ngForm">
+        <div class="form-heading"><div><h2 id="quick-payment-title">Registra pagamento</h2><p>{{ operation.parentOperationId ? (quickPaymentTarget(operation)?.title + ' · da ' + operation.title) : operation.title }}</p></div></div>
+        <p class="quick-payment-summary">Residuo{{ operation.parentOperationId ? ' pacchetto' : '' }}: <strong>{{ quickPaymentRemaining(operation).toFixed(2) }} €</strong></p>
+        <div class="form-grid quick-payment-fields">
+          <label>Importo <input name="quickPaymentAmount" type="number" min="0.01" [max]="quickPaymentRemaining(operation)" step="0.01" required [(ngModel)]="paymentDraft.amount" /></label>
+          <label>Data <input name="quickPaymentDate" type="date" required [(ngModel)]="paymentDraft.paymentDate" /></label>
+          <label>Modalita <select name="quickPaymentMethod" required [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label>
+        </div>
+        @if (operation.parentOperationId) { <p class="bundle-child-note">Il pagamento viene registrato sul pacchetto e ripartito proporzionalmente tra i componenti.</p> }
+        <div class="row-actions"><button class="text-button" type="button" [disabled]="savingQuickPayment()" (click)="closeQuickPayment()">Annulla</button><button class="primary-button" type="submit" [disabled]="quickPaymentForm.invalid || savingQuickPayment()">{{ savingQuickPayment() ? 'Salvataggio...' : 'Registra' }}</button></div>
+      </form>
+    </section>
   }
 
   @if (editingId() || creating()) {
@@ -115,7 +132,7 @@
             <label class="full-width">Descrizione <textarea name="description" rows="3" [(ngModel)]="draft.description"></textarea></label>
             <label class="full-width">Fiera <select name="fairEditionId" [(ngModel)]="draft.fairEditionId"><option [ngValue]="undefined">Nessuna fiera</option>@for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }</select></label>
             @if (worksOnly) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
-            @if (worksOnly) { <label>Stato lavorazione <select name="workStatus" [(ngModel)]="draft.workStatus"><option value="requested">Richiesta</option><option value="in-progress">In corso</option><option value="completed">Terminata</option><option value="delivered">Consegnata/Spedita</option><option value="cancelled">Cancellata</option></select></label> }
+            @if (worksOnly) { <fieldset class="work-status-selector full-width"><legend>Stato lavorazione</legend><div>@for (status of workStatusOptions; track status) { <label class="work-status-option" [class.selected]="draft.workStatus === status" [attr.title]="workStatusLabel(status)"><input type="radio" name="workStatus" [value]="status" [(ngModel)]="draft.workStatus" /><span class="work-status-option-icon" aria-hidden="true">{{ workStatusIcon(status) }}</span><span class="work-status-option-label">{{ workStatusLabel(status) }}</span></label> }</div></fieldset> }
             <label class="full-width">Note <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea></label>
           </div>
           }
@@ -126,7 +143,7 @@
           }
           @if (mode() !== 'fair') {
             @if (isBundleChild()) {
-              <p class="bundle-child-note">Importo e pagamento sono gestiti dal pacchetto collegato.</p>
+              <p class="bundle-child-note">Importo e pagamento sono gestiti dal <a routerLink="/sales" [queryParams]="{ open: draft.parentOperationId, returnWork: editingId() }">pacchetto collegato</a>.</p>
             } @else {
             <section class="payments-section">
             <div class="payments-heading"><h3>Pagamenti</h3>@if (editingId()) { <span>{{ paymentTotal(editingId()).toFixed(2) }} € registrati</span> }</div>

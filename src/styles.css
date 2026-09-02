@@ -15,6 +15,9 @@ body {
 }
 
 header.topbar .page-filter.replaces-title { font-size: 1rem; max-width: min(22rem, 45vw); padding: .35rem 1.75rem .35rem .55rem; }
+header.topbar .page-add.mobile-only { display: none; }
+header.topbar .add-button.icon-action { background: #fff; border: 2px solid var(--color-status-success); color: var(--color-status-success); font-size: 1rem; }
+header.topbar .add-button.icon-action:hover, header.topbar .add-button.icon-action:focus-visible { background: color-mix(in srgb, var(--color-status-success) 12%, #fff); }
 
 main.main-content .list-action {
 	display: inline-flex;
@@ -30,6 +33,25 @@ main.main-content .list-action {
 main.main-content .list-action[aria-label^='Modifica'] {
 	color: var(--color-status-success);
 }
+
+main.main-content .quick-payment-button { background: transparent; border: 1px solid var(--color-accent); color: var(--color-accent); cursor: pointer; font-weight: 700; }
+main.main-content .quick-payment-button:hover, main.main-content .quick-payment-button:focus-visible { background: color-mix(in srgb, var(--color-accent) 12%, transparent); outline: none; }
+main.main-content .work-advance-button { background: var(--color-accent); border: 1px solid var(--color-accent); color: var(--color-text-inverse); cursor: pointer; }
+main.main-content .work-advance-button:hover, main.main-content .work-advance-button:focus-visible { background: var(--color-accent-light); outline: none; }
+main.main-content .work-advance-button:disabled { cursor: wait; opacity: .55; }
+main.main-content .quick-payment-dialog { width: 42rem; }
+main.main-content .quick-payment-summary { background: var(--color-surface-secondary); margin: 1rem 0 0; padding: .75rem; }
+main.main-content .quick-payment-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1rem 0; }
+main.main-content .bundle-child-note a { color: var(--color-link); font-weight: 600; }
+main.main-content .work-status-selector { border: 0; margin: 0; min-width: 0; padding: 0; }
+main.main-content .work-status-selector legend { color: var(--color-text-primary); font-weight: 600; margin-bottom: .4rem; padding: 0; }
+main.main-content .work-status-selector > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+main.main-content .work-status-option { align-items: center; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-secondary); cursor: pointer; display: inline-flex; flex-direction: row; font-size: var(--font-size-sm); gap: .4rem; min-height: 2.5rem; padding: .4rem .75rem; }
+main.main-content .work-status-option:hover { border-color: var(--color-accent); }
+main.main-content .work-status-option.selected { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: var(--color-accent); color: var(--color-accent); }
+main.main-content .work-status-option:focus-within { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+main.main-content .work-status-option input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+main.main-content .work-status-option-icon { font-size: 1rem; line-height: 1; }
 
 main.main-content .badge-icon {
 	display: inline-flex;
@@ -84,6 +106,9 @@ main.main-content .annual-work-total strong { color: var(--color-heading); font:
 main.main-content .annual-work-total:hover strong, main.main-content .annual-work-total:focus-visible strong { color: var(--color-accent); }
 main.main-content .force-fair-button { background: transparent; border: 1px solid var(--color-accent); border-radius: var(--radius-base); color: var(--color-accent); cursor: pointer; display: block; font: 600 .9rem var(--font-sans); margin: var(--spacing-6) auto 0; padding: .7rem 1rem; }
 main.main-content .force-fair-button:hover, main.main-content .force-fair-button:focus-visible { background: color-mix(in srgb, var(--color-accent) 10%, transparent); outline: none; }
+main.main-content .dashboard-controls { align-items: center; display: grid; grid-template-columns: 1fr auto 1fr; margin-bottom: var(--spacing-5); }
+main.main-content .dashboard-controls .year-selector { grid-column: 2; }
+main.main-content .dashboard-controls .force-fair-button { grid-column: 3; justify-self: end; margin: 0; }
 main.main-content .force-fair-field { color: var(--color-text-primary); display: grid; font-weight: 600; gap: .4rem; margin-top: 1.25rem; }
 main.main-content .force-fair-field select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; padding: .7rem; width: 100%; }
 
@@ -160,6 +185,13 @@ main.main-content .product-status .inactive { color: var(--color-status-error); 
 
 @media (max-width: 699px) {
 	header.topbar .page-filter.replaces-title { font-size: .9rem; max-width: 100%; min-width: 0; padding: .25rem 1.4rem .25rem .4rem; width: 100%; }
+	header.topbar .page-add.mobile-only { display: block; }
+	main.main-content .dashboard-controls { display: flex; flex-direction: column; gap: var(--spacing-3); }
+	main.main-content .dashboard-controls .force-fair-button { display: none; }
+	main.main-content .quick-payment-fields { grid-template-columns: 1fr; }
+	main.main-content .work-status-selector > div { flex-wrap: nowrap; justify-content: space-between; }
+	main.main-content .work-status-option { height: 2.5rem; justify-content: center; padding: 0; width: 2.5rem; }
+	main.main-content .work-status-option-label { display: none; }
 
 	main.main-content section[class$='-page'] {
 		padding-top: var(--spacing-3);

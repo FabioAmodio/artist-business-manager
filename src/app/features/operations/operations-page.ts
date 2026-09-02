@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OperationService, type OperationInput } from '../../application/operations/operation.service';
 import { PaymentMethodService } from '../../application/payment-methods/payment-method.service';
 import { PaymentService } from '../../application/payments/payment.service';
@@ -49,7 +49,7 @@ interface OfferChoice {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent, RouterLink],
   selector: 'app-operations-page',
   templateUrl: './operations-page.html',
   styleUrl: './operations-page.scss',
@@ -85,6 +85,9 @@ export class OperationsPage implements OnInit {
   protected readonly offerSelection = signal('');
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly savingQuickPayment = signal(false);
+  protected readonly quickPaymentOperation = signal<Operation | null>(null);
+  protected readonly transitioningWorkId = signal<string | null>(null);
   protected readonly creating = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly mode = signal<'fair' | 'backoffice'>('backoffice');
@@ -92,6 +95,7 @@ export class OperationsPage implements OnInit {
   protected readonly typeFilter = signal<OperationType | 'all'>('all');
   protected readonly yearFilter = signal<number | null>(null);
   protected readonly workFilter = signal<'open' | 'requested' | 'in-progress' | 'to-deliver' | 'unpaid' | null>(null);
+  protected readonly workStatusOptions: readonly NonNullable<Operation['workStatus']>[] = ['requested', 'in-progress', 'completed', 'delivered', 'cancelled'];
   protected readonly fairScopeFilter = signal<'fair' | 'non-fair' | null>(null);
   protected readonly offerFilter = signal('');
   protected readonly errorMessage = signal('');
@@ -103,6 +107,7 @@ export class OperationsPage implements OnInit {
   protected readonly customerMode = signal<'none' | 'soft' | 'existing'>('none');
   private pendingCreateTrigger: string | null = null;
   private pendingOpenId: string | null = null;
+  private returnWorkId: string | null = null;
   private returnToDashboardAfterSave = false;
 
   ngOnInit(): void {
@@ -114,6 +119,7 @@ export class OperationsPage implements OnInit {
       const fairScope = params.get('fairScope');
       this.fairScopeFilter.set(fairScope === 'fair' || fairScope === 'non-fair' ? fairScope : null);
       this.offerFilter.set(params.get('offer') ?? '');
+      this.returnWorkId = params.get('returnWork');
     });
     this.route.queryParamMap.subscribe((params) => {
       const trigger = params.get('create');
@@ -192,12 +198,77 @@ export class OperationsPage implements OnInit {
     const parentPaid = this.paymentTotal(parent.id);
     return Math.min(operation.amount ?? 0, parentPaid * (operation.amount ?? 0) / parentAmount);
   }
+  protected quickPaymentTarget(operation: Operation): Operation | null {
+    return operation.parentOperationId ? this.allOperations.find((item) => item.id === operation.parentOperationId) ?? null : operation;
+  }
+  protected quickPaymentRemaining(operation: Operation): number {
+    const target = this.quickPaymentTarget(operation);
+    return target ? Math.max((target.amount ?? 0) - this.paymentTotal(target.id), 0) : 0;
+  }
+  protected canQuickPay(operation: Operation): boolean {
+    return (this.salesOnly || this.worksOnly) && this.quickPaymentRemaining(operation) >= 0.005;
+  }
+  protected openQuickPayment(operation: Operation): void {
+    if (!this.quickPaymentTarget(operation)) {
+      this.errorMessage.set('Pacchetto collegato non trovato.');
+      return;
+    }
+    this.quickPaymentOperation.set(operation);
+    this.paymentDraft = { amount: this.quickPaymentRemaining(operation), paymentDate: this.today(), paymentMethodId: this.defaultPaymentMethodId() };
+    this.resetMessages();
+  }
+  protected closeQuickPayment(): void {
+    if (this.savingQuickPayment()) return;
+    this.quickPaymentOperation.set(null);
+    this.paymentDraft = this.emptyPaymentDraft();
+  }
+  protected async addQuickPayment(): Promise<void> {
+    const operation = this.quickPaymentOperation();
+    const target = operation ? this.quickPaymentTarget(operation) : null;
+    if (!operation || !target || !this.hasPaymentDraft()) return;
+    this.savingQuickPayment.set(true);
+    this.resetMessages();
+    try {
+      this.ensurePaymentDoesNotExceedTotal(target.amount ?? 0, this.paymentTotal(target.id), this.paymentDraft.amount ?? 0);
+      await this.paymentService.create({ operationId: target.id, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
+      this.payments.set(await this.paymentService.list());
+      this.quickPaymentOperation.set(null);
+      this.paymentDraft = this.emptyPaymentDraft();
+      this.successMessage.set(operation.parentOperationId ? 'Pagamento registrato sul pacchetto e ripartito sui componenti.' : 'Pagamento registrato.');
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile registrare il pagamento.');
+    } finally {
+      this.savingQuickPayment.set(false);
+    }
+  }
   protected isEditingFullyPaid(): boolean { return Boolean(this.editingId()) && (this.draft.amount ?? 0) > 0 && this.paymentTotal(this.editingId()) >= (this.draft.amount ?? 0); }
   protected workStatusLabel(status?: Operation['workStatus']): string {
     return ({ requested: 'Richiesta', 'in-progress': 'In corso', completed: 'Terminata', delivered: 'Consegnata/Spedita', cancelled: 'Cancellata' } as Record<string, string>)[status ?? ''] ?? 'Non indicata';
   }
   protected workStatusIcon(status?: Operation['workStatus']): string {
     return ({ requested: '📝', 'in-progress': '🛠️', completed: '✅', delivered: '📦', cancelled: '🚫' } as Record<string, string>)[status ?? ''] ?? '❔';
+  }
+  protected canAdvanceWork(operation: Operation): boolean {
+    return this.worksOnly && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress' || operation.workStatus === 'completed');
+  }
+  protected workAdvanceLabel(operation: Operation): string {
+    return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione';
+  }
+  protected workAdvanceIcon(operation: Operation): string {
+    return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? '📦' : '▶';
+  }
+  protected async advanceWork(operation: Operation): Promise<void> {
+    this.transitioningWorkId.set(operation.id);
+    this.resetMessages();
+    try {
+      const updated = await this.service.advanceWorkStatus(operation.id);
+      this.allOperations = this.allOperations.map((item) => item.id === updated.id ? updated : item);
+      this.operations.update((operations) => operations.map((item) => item.id === updated.id ? updated : item));
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile avanzare la lavorazione.');
+    } finally {
+      this.transitioningWorkId.set(null);
+    }
   }
   protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
   protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
@@ -363,17 +434,25 @@ export class OperationsPage implements OnInit {
     if (operation.type === 'bundle') {
       this.offerSelection.set(`bundle:${operation.bundleId}`);
       this.bundleDetails.set(this.operations().filter((item) => item.parentOperationId === operation.id).map((item) => ({ id: item.id, title: item.title, productId: item.productId, serviceId: item.serviceId, lotId: item.lotId, quantity: item.quantity ?? 1, amount: item.amount ?? 0 })));
-      const remaining = Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0);
-      if (remaining > 0) this.paymentDraft = { amount: remaining, paymentDate: this.today(), paymentMethodId: this.defaultPaymentMethodId() };
     } else {
       this.bundleDetails.set([]);
+    }
+    if (!operation.parentOperationId) {
+      const remaining = Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0);
+      if (remaining > 0) this.paymentDraft = { amount: remaining, paymentDate: this.today(), paymentMethodId: this.defaultPaymentMethodId() };
     }
     this.editingId.set(operation.id);
     this.creating.set(false);
     this.mode.set('backoffice');
   }
   protected isBundleChild(): boolean { return Boolean(this.draft.parentOperationId); }
-  protected cancelForm(): void { this.creating.set(false); this.editingId.set(null); this.returnToDashboardAfterSave = false; }
+  protected async cancelForm(): Promise<void> {
+    const returnWorkId = this.returnWorkId;
+    this.creating.set(false);
+    this.editingId.set(null);
+    this.returnToDashboardAfterSave = false;
+    if (returnWorkId) await this.router.navigate(['/works'], { queryParams: { open: returnWorkId } });
+  }
 
   protected async save(): Promise<void> {
     this.saving.set(true); this.resetMessages();
@@ -390,7 +469,10 @@ export class OperationsPage implements OnInit {
       }
       this.payments.set(await this.paymentService.list());
       const returnToDashboard = this.returnToDashboardAfterSave;
-      this.cancelForm(); this.successMessage.set('Operazione salvata localmente.'); await this.loadOperations();
+      const returnWorkId = this.returnWorkId;
+      await this.cancelForm();
+      if (returnWorkId) return;
+      this.successMessage.set('Operazione salvata localmente.'); await this.loadOperations();
       if (returnToDashboard) await this.router.navigate(['/dashboard']);
     } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare l\'operazione.'); }
     finally { this.saving.set(false); }

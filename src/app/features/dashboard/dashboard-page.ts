@@ -75,7 +75,7 @@ export class DashboardPage implements OnInit {
   private touchStartX: number | null = null;
   protected readonly activeWorks = computed(() => {
     const fairId = this.activeFair()?.id;
-    return fairId ? this.operations().filter((operation) => operation.fairEditionId === fairId && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress')) : [];
+    return fairId ? this.operations().filter((operation) => operation.fairEditionId === fairId && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress' || operation.workStatus === 'completed')) : [];
   });
   protected readonly fairSales = computed(() => {
     const fairId = this.activeFair()?.id;
@@ -131,8 +131,10 @@ export class DashboardPage implements OnInit {
   protected formatDate(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT').format(new Date(`${value.slice(0, 10)}T00:00:00`)) : 'Non indicata'; }
   protected formatDateTime(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Non indicata'; }
   protected customerLabel(operation: Operation): string { return this.parties().find((party) => party.id === operation.partyId)?.displayName ?? operation.customerName ?? 'Cliente non indicato'; }
-  protected workStatusLabel(operation: Operation): string { return operation.workStatus === 'in-progress' ? 'In corso' : 'Richiesta'; }
-  protected workStatusIcon(operation: Operation): string { return operation.workStatus === 'in-progress' ? '🛠️' : '📝'; }
+  protected workStatusLabel(operation: Operation): string { return operation.workStatus === 'completed' ? 'Terminata' : operation.workStatus === 'in-progress' ? 'In corso' : 'Richiesta'; }
+  protected workStatusIcon(operation: Operation): string { return operation.workStatus === 'completed' ? '✅' : operation.workStatus === 'in-progress' ? '🛠️' : '📝'; }
+  protected workAdvanceLabel(operation: Operation): string { return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione'; }
+  protected workAdvanceIcon(operation: Operation): string { return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? '📦' : '▶'; }
   protected paymentTotal(operationId: string): number { return this.payments().filter((payment) => payment.operationId === operationId).reduce((total, payment) => total + payment.amount, 0); }
   protected paymentRemaining(operation: Operation): number { return Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0); }
   protected isFullyPaid(operation: Operation): boolean { return (operation.amount ?? 0) <= 0 || this.paymentRemaining(operation) < 0.005; }
@@ -218,11 +220,10 @@ export class DashboardPage implements OnInit {
   }
 
   protected async advanceWork(operation: Operation): Promise<void> {
-    const status = operation.workStatus === 'requested' ? 'in-progress' : 'delivered';
     this.transitioningId.set(operation.id);
     this.errorMessage.set('');
     try {
-      const updated = await this.operationService.transitionWorkStatus(operation.id, status);
+      const updated = await this.operationService.advanceWorkStatus(operation.id);
       this.operations.update((operations) => operations.map((item) => item.id === updated.id ? updated : item));
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile aggiornare la lavorazione.');

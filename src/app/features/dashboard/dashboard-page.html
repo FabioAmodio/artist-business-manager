@@ -1,5 +1,5 @@
 <section class="dashboard" [attr.aria-label]="displayedFair()?.name ?? 'Riepilogo annuale'" (touchstart)="startYearSwipe($event)" (touchend)="endYearSwipe($event)">
-  <app-page-header [icon]="displayedFair() ? '⚡' : '📊'" [title]="displayedFair()?.name ?? 'Riepilogo'" [filterOptions]="dashboardViewOptions()" [filterValue]="dashboardView()" filterLabel="Vista dashboard" [filterReplacesTitle]="dashboardViewOptions().length > 0" (filterChange)="changeDashboardView($event)" />
+  <app-page-header [icon]="displayedFair() ? '⚡' : '📊'" [title]="displayedFair()?.name ?? 'Riepilogo'" [actions]="activeFairMode.realActiveFair() === null && activeFairMode.isForced() === false && fairs().length ? [{ key: 'force-fair', label: 'Forza modalità fiera', icon: '⚡', mobileOnly: true }] : []" [filterOptions]="dashboardViewOptions()" [filterValue]="dashboardView()" filterLabel="Vista dashboard" [filterReplacesTitle]="dashboardViewOptions().length > 0" (select)="openForceFairDialog()" (filterChange)="changeDashboardView($event)" />
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
@@ -32,7 +32,7 @@
               <div><h3>{{ work.title }}</h3><p>{{ customerLabel(work) }} · {{ formatDateTime(work.operationDate ?? work.createdAt) }}</p></div>
               <div class="row-facts"><span><strong>Consegna</strong>{{ formatDate(work.deliveryDate) }}</span><span><strong>Importo</strong>{{ formatMoney(work.amount) }}</span></div>
               <span class="status-badge" [attr.aria-label]="workStatusLabel(work)" [attr.title]="workStatusLabel(work)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(work) }}</span><span class="badge-label">{{ workStatusLabel(work) }}</span></span>
-              <button class="quick-status" type="button" [disabled]="transitioningId() === work.id" [attr.aria-label]="work.workStatus === 'requested' ? 'Inizia lavorazione' : 'Segna come consegnata'" [attr.title]="work.workStatus === 'requested' ? 'Inizia lavorazione' : 'Segna come consegnata'" (click)="advanceWork(work)"><span aria-hidden="true">{{ work.workStatus === 'requested' ? '▶' : '📦' }}</span><span class="action-label">{{ work.workStatus === 'requested' ? 'Inizia' : 'Consegna' }}</span></button>
+              <button class="quick-status" type="button" [disabled]="transitioningId() === work.id" [attr.aria-label]="workAdvanceLabel(work)" [attr.title]="workAdvanceLabel(work)" (click)="advanceWork(work)"><span aria-hidden="true">{{ workAdvanceIcon(work) }}</span><span class="action-label">{{ work.workStatus === 'requested' ? 'Inizia' : 'Consegna' }}</span></button>
             </article>
           }
         </div>
@@ -56,10 +56,15 @@
 
     <button class="primary-action" type="button" (click)="openFairSale()">+ Nuova vendita fiera</button>
   } @else {
-    <div class="year-selector" aria-label="Anno del riepilogo">
-      <button type="button" aria-label="Anno precedente" title="Anno precedente" [disabled]="selectedYear() <= yearRange().min" (click)="changeYear(-1)">‹</button>
-      <strong>{{ selectedYear() }}</strong>
-      <button type="button" aria-label="Anno successivo" title="Anno successivo" [disabled]="selectedYear() >= yearRange().max" (click)="changeYear(1)">›</button>
+    <div class="dashboard-controls">
+      <div class="year-selector" aria-label="Anno del riepilogo">
+        <button type="button" aria-label="Anno precedente" title="Anno precedente" [disabled]="selectedYear() <= yearRange().min" (click)="changeYear(-1)">‹</button>
+        <strong>{{ selectedYear() }}</strong>
+        <button type="button" aria-label="Anno successivo" title="Anno successivo" [disabled]="selectedYear() >= yearRange().max" (click)="changeYear(1)">›</button>
+      </div>
+      @if (activeFairMode.realActiveFair() === null && activeFairMode.isForced() === false && fairs().length) {
+        <button class="force-fair-button" type="button" (click)="openForceFairDialog()">⚡ Forza modalità fiera</button>
+      }
     </div>
 
     <div class="annual-dashboard">
@@ -102,9 +107,6 @@
         }
       </section>
     </div>
-    @if (activeFairMode.realActiveFair() === null && activeFairMode.isForced() === false && fairs().length) {
-      <button class="force-fair-button" type="button" (click)="openForceFairDialog()">⚡ Forza modalità fiera</button>
-    }
   }
 
   @if (paymentSale(); as sale) {

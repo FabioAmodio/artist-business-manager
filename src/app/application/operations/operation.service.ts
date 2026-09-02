@@ -40,6 +40,16 @@ export class OperationService {
     return this.repository.transition(id, { status });
   }
 
+  async advanceWorkStatus(id: string): Promise<Operation> {
+    const operation = await this.repository.getById(id);
+    if (!operation) throw new Error('Operazione non trovata.');
+    const nextStatus = operation.workStatus === 'requested' ? 'in-progress'
+      : operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? 'delivered'
+        : null;
+    if (!nextStatus) throw new Error('La lavorazione non puo essere avanzata ulteriormente.');
+    return this.repository.transition(id, { status: nextStatus });
+  }
+
   delete(id: string): Promise<void> {
     return this.repository.softDelete(id);
   }

@@ -3,6 +3,8 @@ import { Injectable, signal } from '@angular/core';
 export interface PageHeaderAction {
   readonly key: string;
   readonly label: string;
+  readonly icon?: string;
+  readonly mobileOnly?: boolean;
 }
 
 export interface PageHeaderFilterOption {
