@@ -61,6 +61,12 @@ Angular CLI 22 (standalone) include solo script di default:
 
 ## 4. GitHub Pages Configuration
 
+### Ambiente TEST
+
+Il repository `FabioAmodio/artist-business-manager-test` usa `.github/workflows/deploy-test.yml`: a ogni push su `main` esegue `npm ci`, `npm run build:test` e pubblica `dist/artist-business-manager/browser` su GitHub Pages. La configurazione TEST imposta `<base href="/artist-business-manager-test/">` e pubblica il dataset demo in `assets/artist-business-manager-data-test.json`.
+
+`404.html` ricava dinamicamente il segmento repository dall'URL, quindi il redirect SPA funziona sia per `/artist-business-manager/` sia per `/artist-business-manager-test/`. Il deploy remoto deve essere verificato dopo che il workflow viene presente nel repository TEST.
+
 ### ✅ Configurazione Completa
 
 **angular.json**

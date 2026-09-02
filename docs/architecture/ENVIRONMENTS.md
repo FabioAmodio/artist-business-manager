@@ -6,14 +6,14 @@ Gli ambienti non coincidono necessariamente con i branch. Il branch descrive il 
 
 | Ambiente | Branch di riferimento | Uso | Dati | Stabilita |
 |---|---|---|---|---|
-| TEST | `develop` | sviluppo, prove, demo, validazione e collaborazione | solo fittizi o di test | modificabile |
+| TEST | `main` nel repository `artist-business-manager-test` | sviluppo, prove, demo, validazione e collaborazione | solo fittizi o di test | modificabile |
 | RELEASE | `main` | uso reale, fiere e clienti reali | dati reali | massima possibile |
 
-La pipeline corrente distribuisce solo `main` su GitHub Pages. Il deploy automatico di `develop` su TEST e una decisione target e richiede un workflow dedicato.
+Il repository TEST pubblica automaticamente `main` su GitHub Pages usando `npm run build:test`. Il repository principale continua a pubblicare il build di produzione con `npm run build`.
 
 ## Configurazione compilabile
 
-Prevedere configurazioni distinte, ad esempio `environment.test` e `environment.prod`, con:
+Le configurazioni `environment.test` e `environment.prod` sono selezionate tramite `fileReplacements` Angular:
 
 ```typescript
 interface AppEnvironment {
@@ -44,6 +44,12 @@ Ogni ambiente deve avere:
 - configurazione distinta;
 - indicatori visibili nell'interfaccia quando non si tratta di RELEASE;
 - procedure separate di reset, export e backup.
+
+## Dataset demo e reset TEST
+
+Il build TEST pubblica `docs/business/artist-business-manager-data-test.json` come asset read-only. Al primo avvio, il dataset viene caricato in IndexedDB con il prefisso `ABM-TEST`; un marker in `appSettings` impedisce ricaricamenti alle aperture successive. Le modifiche dell'utente restano esclusivamente nel database locale.
+
+Il ripristino dati in TEST svuota il database locale e ricarica lo stesso dataset demo, restituendo l'applicazione allo stato di una nuova installazione TEST. Il file JSON non viene mai modificato dall'applicazione.
 
 ## Promozione
 

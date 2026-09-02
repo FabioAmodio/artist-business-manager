@@ -10,7 +10,7 @@ Il primo MVP offline e completato. Permette di registrare e consultare persisten
 
 Incrementi completati:
 
-1. environment TEST/RELEASE, `AppEnvironment`, `storagePrefix` e Dependency Injection;
+1. environment TEST/RELEASE, `AppEnvironment`, `storagePrefix`, Dependency Injection, dataset demo read-only e reset TEST;
 2. `IStorageProvider`, `StorageHealth` e `StorageError`;
 3. `IndexedDbProvider` minimale con `open()`, `health()` e test di inizializzazione;
 4. entita `FairSeries`, `FairEdition` e `Operation`;
@@ -62,7 +62,6 @@ Ogni esperimento deve essere isolato, disattivabile, riconoscibile all'utente e 
 - transazioni Dexie reali nel provider astratto;
 - lint e gate CI non configurati;
 - test Safari iOS e quota IndexedDB da aggiungere;
-- pipeline deploy TEST da separare dal deploy RELEASE;
 - riduzione dei warning sui budget SCSS di Dashboard e Operations;
 - gestione avanzata delle edizioni, task, contatti e prenotazioni fieristiche;
 

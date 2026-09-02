@@ -8,6 +8,7 @@ import { ServiceService } from '../services/service.service';
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
+const TEST_DATASET_INITIALIZED_ID = 'test-dataset-initialized';
 const DATA_FILE_NAME = 'artist-business-manager-data.json';
 const DATA_COLLECTIONS = ['bundles', 'fairs', 'fairSeries', 'fairEditions', 'lots', 'operations', 'paymentMethods', 'payments', 'parties', 'products', 'purchases', 'services'];
 const DRIVE_FILE_MIME = 'application/json';
@@ -25,6 +26,7 @@ export class PersistenceService {
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly serviceService = inject(ServiceService);
   readonly source = signal<PersistenceSettings['source']>('none');
+  readonly isTestEnvironment = this.environment.environmentName === 'test';
   readonly status = signal('');
   readonly driveFolders = signal<readonly DriveFolder[]>([]);
   readonly driveFolderPath = signal<readonly DriveFolder[]>([]);
@@ -47,10 +49,11 @@ export class PersistenceService {
 
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
-    this.source.set(settings?.source ?? 'none');
-    this.directoryHandle = settings?.directoryHandle;
+    this.source.set(this.isTestEnvironment ? 'none' : settings?.source ?? 'none');
+    this.directoryHandle = this.isTestEnvironment ? undefined : settings?.directoryHandle;
     this.driveClientId = settings?.driveClientId ?? this.environment.googleDriveClientId ?? '';
-    this.driveFolderId = settings?.driveFolderId;
+    this.driveFolderId = this.isTestEnvironment ? undefined : settings?.driveFolderId;
+    await this.initializeTestDataset();
     this.initialized = true;
     this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
     if (this.source() === 'google-drive' && this.driveFolderId && this.driveClientId) {
@@ -70,6 +73,7 @@ export class PersistenceService {
   }
 
   async chooseFileSystem(): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     const picker = (window as Window & { showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker;
     if (!picker) throw new Error('La selezione diretta della cartella non e supportata da questo browser. Usa importa/esporta file.');
     this.directoryHandle = await picker();
@@ -78,6 +82,7 @@ export class PersistenceService {
   }
 
   async connectDrive(): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     this.driveClientId = this.environment.googleDriveClientId?.trim() ?? '';
     if (!this.driveClientId) throw new Error('Inserisci il Google OAuth Client ID.');
     await this.authorizeDrive(true);
@@ -88,22 +93,26 @@ export class PersistenceService {
   }
 
   async selectDriveFolder(folderId: string): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     if (!folderId) throw new Error('Seleziona una cartella Drive.');
     await this.saveSettings('google-drive', undefined, folderId, this.driveClientId);
     await this.synchronize();
   }
 
   async browseDriveFolder(folder: DriveFolder): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     this.driveFolderPath.update((path) => [...path, folder]);
     this.driveFolders.set(await this.listDriveFolders(folder.id));
   }
 
   async browseDriveRoot(): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     this.driveFolderPath.set([]);
     this.driveFolders.set(await this.listDriveFolders('root'));
   }
 
   async browseDrivePath(folder: DriveFolder): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     const path = this.driveFolderPath();
     const index = path.findIndex((item) => item.id === folder.id);
     this.driveFolderPath.set(index < 0 ? [] : path.slice(0, index + 1));
@@ -120,6 +129,11 @@ export class PersistenceService {
     if (this.source() !== 'none') throw new Error('Il ripristino e consentito solo con sorgente dati Nessuna.');
     await this.syncStatus.suppress(async () => {
       await this.storage.clearCollections([...DATA_COLLECTIONS, SETTINGS_COLLECTION]);
+      if (this.environment.demoDatasetUrl) {
+        await this.writeLocalDataset(await this.readDemoDataset());
+        await this.storage.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
+        return;
+      }
       await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source: 'none', updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
       await Promise.all([this.paymentMethodService.list(), this.serviceService.list()]);
     });
@@ -128,7 +142,25 @@ export class PersistenceService {
     this.status.set('Database locale ripristinato alle impostazioni di fabbrica.');
   }
 
+  private async initializeTestDataset(): Promise<void> {
+    if (!this.environment.demoDatasetUrl) return;
+    const initialized = await this.storage.get<{ id: string }>(SETTINGS_COLLECTION, TEST_DATASET_INITIALIZED_ID);
+    if (initialized) return;
+    await this.syncStatus.suppress(async () => {
+      await this.storage.clearCollections([...DATA_COLLECTIONS, SETTINGS_COLLECTION]);
+      await this.writeLocalDataset(await this.readDemoDataset());
+      await this.storage.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
+    });
+  }
+
+  private async readDemoDataset(): Promise<PersistedDataset> {
+    const response = await fetch(new URL(this.environment.demoDatasetUrl!, document.baseURI));
+    if (!response.ok) throw new Error('Impossibile caricare il dataset demo.');
+    return this.parseDataset(await response.text());
+  }
+
   async synchronize(): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     this.syncStatus.setStatus('syncing');
     try {
       await this.synchronizeInternal();
@@ -162,6 +194,7 @@ export class PersistenceService {
   }
 
   async exportLocal(): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     const dataset = await this.readLocalDataset();
     const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -174,12 +207,14 @@ export class PersistenceService {
   }
 
   async importFile(file: File): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     const dataset = this.parseDataset(await file.text());
     await this.writeLocalDataset(this.merge(await this.readLocalDataset(), dataset));
     this.status.set('Dati importati nel database locale.');
   }
 
   async persistImportedFile(file: File): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
     const dataset = this.parseDataset(await file.text());
     await this.writeLocalDataset(this.merge(await this.readLocalDataset(), dataset));
     if (this.source() === 'file-system' && this.directoryHandle) await this.writeDirectoryDataset(await this.readLocalDataset());
@@ -193,6 +228,10 @@ export class PersistenceService {
       const client = google!.accounts.oauth2.initTokenClient({ client_id: this.driveClientId, scope: DRIVE_SCOPE, callback: (response) => response.error || !response.access_token ? reject(new Error('Autenticazione Google non riuscita.')) : (this.driveAccessToken = response.access_token, this.driveAccessTokenExpiresAt = Date.now() + (response.expires_in ?? 3600) * 1000, resolve()) });
       client.requestAccessToken({ prompt: interactive ? 'consent' : 'none' });
     });
+  }
+
+  private ensureExternalPersistenceAllowed(): void {
+    if (this.isTestEnvironment) throw new Error('Questa funzione non e disponibile nell\'ambiente TEST.');
   }
 
   private async listDriveFolders(parentId: string): Promise<readonly DriveFolder[]> {

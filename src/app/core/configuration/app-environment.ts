@@ -5,6 +5,7 @@ export interface AppEnvironment {
   readonly logLevel: 'debug' | 'info' | 'warn' | 'error';
   readonly syncEnabled: boolean;
   readonly version: string;
+  readonly demoDatasetUrl?: string;
   readonly futureEndpoint?: string;
   readonly googleDriveClientId?: string;
 }

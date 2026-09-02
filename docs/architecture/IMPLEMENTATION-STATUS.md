@@ -11,7 +11,8 @@ Ultimo aggiornamento: 2026-09-01.
 | Area | Stato | Note |
 |---|---|---|
 | Shell e navigazione | Implementata V1 | Topbar globale, sidebar desktop, action bar mobile, 12 voci di menu, header pagina configurabile |
-| Routing GitHub Pages | Implementato | `404.html` e ripristino deep-link tramite query parameter |
+| Routing GitHub Pages | Implementato | `404.html` deriva il base path dal repository e ripristina i deep-link tramite query parameter |
+| Ambiente TEST | Implementato | Build separato, IndexedDB `ABM-TEST`, dataset demo read-only, reset con ricaricamento dataset e servizi esterni disabilitati |
 | Offline first | Implementata V1 | IndexedDB/Dexie come fonte locale, import/export JSON, File System e Google Drive |
 | Sincronizzazione | Implementata V1 | Sync automatico/manuale e risoluzione per `updatedAt`; manca una outbox persistente |
 | Dashboard / Riepilogo | Implementata V1 | Vista annuale e vista fiera operativa con deep-link filtrati |
@@ -115,7 +116,9 @@ Le viste `/sales` e `/works` sono profili dello stesso `OperationsPage`. I bundl
 
 ## Persistenza
 
-Database Dexie: `artist-business-manager`, schema `21`.
+Database Dexie: nome composto da `storagePrefix` e `applicationName`, schema `22`. Produzione usa `ABM-PROD`; TEST usa `ABM-TEST`, quindi i dati restano isolati anche nello stesso browser.
+
+Nel build TEST il dataset `docs/business/artist-business-manager-data-test.json` viene pubblicato come asset e caricato una sola volta al primo avvio. Il reset TEST svuota Dexie e ricarica il dataset; import/export, File System, sincronizzazione e Google Drive sono rifiutati dal servizio e non esposti nelle Impostazioni. La topbar mostra il badge `TEST`.
 
 Collection correnti:
 

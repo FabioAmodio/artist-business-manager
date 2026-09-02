@@ -7,4 +7,5 @@ export const environment: AppEnvironment = {
   logLevel: 'debug',
   syncEnabled: false,
   version: '0.0.0',
+  demoDatasetUrl: 'assets/artist-business-manager-data-test.json',
 };

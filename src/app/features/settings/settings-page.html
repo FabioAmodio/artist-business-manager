@@ -9,6 +9,9 @@
 
   <fieldset>
     <legend>Persistenza dati</legend>
+    @if (environment.environmentName === 'test') {
+      <p class="status">Ambiente TEST: dati demo locali in IndexedDB. Le modifiche restano in questa installazione e il reset ricarica il dataset demo.</p>
+    } @else {
     <label>Sorgente dati
       <select [ngModel]="persistence.source()" (ngModelChange)="selectPersistenceSource($event)">
         <option value="none">Nessuna</option>
@@ -34,11 +37,12 @@
       <button type="button" (click)="exportFile()">Esporta file</button>
     </div>
     @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
+    }
   </fieldset>
 
   <fieldset class="danger-zone">
     <legend>Ripristino database locale</legend>
-    <p class="status">Elimina tutti i dati locali e ricrea esclusivamente i dati obbligatori di sistema.</p>
+    <p class="status">{{ environment.environmentName === 'test' ? 'Elimina i dati locali e ricarica il dataset demo originale.' : 'Elimina tutti i dati locali e ricrea esclusivamente i dati obbligatori di sistema.' }}</p>
     <button class="factory-reset-button" type="button" [disabled]="persistence.source() !== 'none'" (click)="openFactoryReset()">Ripristina impostazioni di fabbrica</button>
     @if (persistence.source() !== 'none') { <p class="status">Disponibile solo quando la sorgente dati è impostata su Nessuna.</p> }
   </fieldset>
@@ -49,7 +53,7 @@
       @if (resetStep() === 1) {
         <h2 id="reset-dialog-title">Ripristinare il database?</h2>
         <p id="reset-dialog-description">L'operazione è irreversibile. Tutti i dati locali verranno cancellati e l'applicazione tornerà alle impostazioni di fabbrica.</p>
-        <p>Rimarranno soltanto i dati obbligatori, inclusi Contanti e Bancomat.</p>
+        <p>{{ environment.environmentName === 'test' ? 'Verrà ricaricato il dataset demo originale.' : 'Rimarranno soltanto i dati obbligatori, inclusi Contanti e Bancomat.' }}</p>
         <div class="reset-dialog-actions first-confirmation"><button type="button" (click)="closeFactoryReset()">Annulla</button><button class="continue-button" type="button" (click)="continueFactoryReset()">Continua</button></div>
       } @else {
         <h2 id="reset-dialog-title">Conferma cancellazione definitiva</h2>

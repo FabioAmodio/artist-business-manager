@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { FairContextService } from '../../core/event/fair-context.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import type { PersistenceSource } from '../../core/persistence/persistence.models';
+import { APP_ENVIRONMENT } from '../../core/configuration/environment.tokens';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -14,6 +15,7 @@ import type { PersistenceSource } from '../../core/persistence/persistence.model
 export class SettingsPage implements OnInit {
   private readonly fairContext = inject(FairContextService);
   protected readonly persistence = inject(PersistenceService);
+  protected readonly environment = inject(APP_ENVIRONMENT);
   protected readonly settings = this.fairContext.transparencySettings;
   protected readonly resetStep = signal<0 | 1 | 2>(0);
   protected readonly resetCode = signal('');

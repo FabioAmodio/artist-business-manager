@@ -6,6 +6,7 @@ import { AppStateService } from './core/state/app-state.service';
 import { SyncStatusService } from './core/synchronization/sync-status.service';
 import { PageHeaderService } from './shared/components/page-header.service';
 import { ActiveFairService } from './core/event/active-fair.service';
+import { APP_ENVIRONMENT } from './core/configuration/environment.tokens';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
@@ -18,6 +19,7 @@ export class App {
   protected readonly syncStatus = inject(SyncStatusService);
   protected readonly pageHeader = inject(PageHeaderService);
   protected readonly activeFair = inject(ActiveFairService);
+  protected readonly environment = inject(APP_ENVIRONMENT);
   protected readonly menuOpen = signal(false);
 
   protected toggleMenu(): void { this.menuOpen.update((open) => !open); }
