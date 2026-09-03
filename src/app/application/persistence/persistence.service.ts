@@ -16,7 +16,7 @@ const SYNC_OPERATIONS_COLLECTION = 'syncOperations';
 const DRIVE_FILE_MIME = 'application/json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
 
-export interface DriveFolder { readonly id: string; readonly name: string; }
+export interface DriveFolder { readonly id: string; readonly name: string; readonly shared?: boolean; }
 interface GoogleTokenClient { requestAccessToken: (options?: { prompt?: string }) => void; }
 interface GoogleApi { accounts: { oauth2: { initTokenClient: (config: { client_id: string; scope: string; callback: (response: { access_token?: string; expires_in?: number; error?: string }) => void }) => GoogleTokenClient } } }
 
@@ -99,7 +99,7 @@ export class PersistenceService {
     if (!this.driveClientId) throw new Error('Inserisci il Google OAuth Client ID.');
     await this.authorizeDrive(true);
     this.driveNeedsAuthentication.set(false);
-    this.driveFolders.set(await this.listDriveFolders('root'));
+    this.driveFolders.set(await this.listDriveRootFolders());
     await this.saveSettings('google-drive', undefined, undefined, this.driveClientId);
     this.status.set('Account Google collegato. Seleziona una cartella.');
   }
@@ -120,7 +120,7 @@ export class PersistenceService {
   async browseDriveRoot(): Promise<void> {
     this.ensureExternalPersistenceAllowed();
     this.driveFolderPath.set([]);
-    this.driveFolders.set(await this.listDriveFolders('root'));
+    this.driveFolders.set(await this.listDriveRootFolders());
   }
 
   async browseDrivePath(folder: DriveFolder): Promise<void> {
@@ -282,9 +282,24 @@ export class PersistenceService {
   }
 
   private async listDriveFolders(parentId: string): Promise<readonly DriveFolder[]> {
-    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' })}`);
+    const query = new URLSearchParams({ q: `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' });
+    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`);
     const data = await response.json() as { files?: DriveFolder[] };
     return data.files ?? [];
+  }
+
+  private async listSharedDriveFolders(): Promise<readonly DriveFolder[]> {
+    const query = new URLSearchParams({ q: `sharedWithMe = true and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' });
+    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`);
+    const data = await response.json() as { files?: DriveFolder[] };
+    return (data.files ?? []).map((folder) => ({ ...folder, shared: true }));
+  }
+
+  private async listDriveRootFolders(): Promise<readonly DriveFolder[]> {
+    const [owned, shared] = await Promise.all([this.listDriveFolders('root'), this.listSharedDriveFolders()]);
+    const folders = new Map<string, DriveFolder>();
+    for (const folder of [...owned, ...shared]) folders.set(folder.id, folder);
+    return [...folders.values()].sort((first, second) => first.name.localeCompare(second.name));
   }
 
   private async readDriveDataset(): Promise<PersistedDataset | null> {
