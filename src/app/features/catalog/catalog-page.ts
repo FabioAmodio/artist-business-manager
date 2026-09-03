@@ -1,5 +1,5 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BundleService } from '../../application/bundles/bundle.service';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
@@ -16,6 +16,7 @@ import type { Service } from '../../domain/models/service';
 import { isBundleAvailable } from '../../domain/shared/catalog-availability';
 import { completeAmountsToTotal } from '../../domain/shared/money';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 
 interface BundleDraftItem {
   id: string;
@@ -40,6 +41,7 @@ export class CatalogPage implements OnInit {
   private readonly lotService = inject(LotService);
   private readonly operationService = inject(OperationService);
   private readonly purchaseService = inject(PurchaseService);
+  private readonly syncStatus = inject(SyncStatusService);
 
   protected readonly products = signal<readonly Product[]>([]);
   protected readonly services = signal<readonly Service[]>([]);
@@ -66,6 +68,18 @@ export class CatalogPage implements OnInit {
   protected bundleItems = signal<BundleDraftItem[]>([]);
   protected lotDraft: LotInput = this.emptyLotDraft();
   protected lotAliasText = '';
+  private handledSyncVersion = 0;
+
+  constructor() {
+    effect(() => {
+      const completedVersion = this.syncStatus.completedVersion();
+      const dialogOpen = this.lotDialogOpen() || this.createMode() !== null || this.editingId() !== null;
+      if (completedVersion > this.handledSyncVersion && !dialogOpen) {
+        this.handledSyncVersion = completedVersion;
+        void this.load();
+      }
+    });
+  }
 
   ngOnInit(): void { void this.load(); }
 

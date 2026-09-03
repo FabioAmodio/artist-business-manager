@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
 import { ProductService, type ProductInput } from '../../application/products/product.service';
@@ -11,6 +11,7 @@ import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +25,7 @@ export class ProductsPage implements OnInit {
   private readonly lotService = inject(LotService);
   private readonly operationService = inject(OperationService);
   private readonly purchaseService = inject(PurchaseService);
+  private readonly syncStatus = inject(SyncStatusService);
   protected readonly products = signal<readonly Product[]>([]);
   protected readonly lots = signal<readonly Lot[]>([]);
   protected readonly operations = signal<readonly Operation[]>([]);
@@ -45,6 +47,18 @@ export class ProductsPage implements OnInit {
   protected readonly lotProductId = signal<string | null>(null);
   protected lotDraft: LotInput = this.emptyLotDraft();
   protected lotAliasText = '';
+  private handledSyncVersion = 0;
+
+  constructor() {
+    effect(() => {
+      const completedVersion = this.syncStatus.completedVersion();
+      const dialogOpen = this.lotDialogOpen() || this.lotListDialogOpen() || this.creating() || this.editingId() !== null;
+      if (completedVersion > this.handledSyncVersion && !dialogOpen) {
+        this.handledSyncVersion = completedVersion;
+        void this.load();
+      }
+    });
+  }
 
   ngOnInit(): void { void this.load(); }
 

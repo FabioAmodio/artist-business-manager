@@ -131,6 +131,21 @@ export class PersistenceService {
     this.driveFolders.set(await this.listDriveFolders(folder.id));
   }
 
+  async createDriveFolder(name: string): Promise<void> {
+    this.ensureExternalPersistenceAllowed();
+    const trimmedName = name.trim();
+    if (!trimmedName) throw new Error('Inserisci il nome della cartella Drive.');
+    const parentId = this.driveFolderPath().at(-1)?.id ?? 'root';
+    const response = await this.driveFetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id,name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmedName, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }),
+    });
+    const folder = await response.json() as DriveFolder;
+    this.driveFolders.set(await (parentId === 'root' ? this.listDriveRootFolders() : this.listDriveFolders(parentId)));
+    this.status.set(`Cartella "${folder.name}" creata. Selezionala con Usa.`);
+  }
+
   async disable(): Promise<void> {
     this.directoryHandle = undefined;
     await this.saveSettings('none');
@@ -201,6 +216,7 @@ export class PersistenceService {
     try {
       await this.synchronizeInternal();
       this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
+      this.syncStatus.notifySyncCompleted();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Errore applicativo di sincronizzazione.';
       if (this.isConflictError(error)) await this.markPendingAsConflict(errorMessage);
@@ -268,7 +284,12 @@ export class PersistenceService {
     await this.loadGoogleIdentityServices();
     const google = (window as Window & { google?: GoogleApi }).google;
     await new Promise<void>((resolve, reject) => {
-      const client = google!.accounts.oauth2.initTokenClient({ client_id: this.driveClientId, scope: DRIVE_SCOPE, callback: (response) => response.error || !response.access_token ? reject(new Error('Autenticazione Google non riuscita.')) : (this.driveAccessToken = response.access_token, this.driveAccessTokenExpiresAt = Date.now() + (response.expires_in ?? 3600) * 1000, resolve()) });
+      const timeout = setTimeout(() => reject(new Error('Autenticazione Google Drive scaduta. Riprova.')), 30_000);
+      const client = google!.accounts.oauth2.initTokenClient({ client_id: this.driveClientId, scope: DRIVE_SCOPE, callback: (response) => {
+        clearTimeout(timeout);
+        if (response.error || !response.access_token) reject(new Error('Autenticazione Google non riuscita.'));
+        else { this.driveAccessToken = response.access_token; this.driveAccessTokenExpiresAt = Date.now() + (response.expires_in ?? 3600) * 1000; resolve(); }
+      } });
       client.requestAccessToken({ prompt: interactive ? 'consent' : 'none' });
     });
   }
@@ -400,16 +421,25 @@ export class PersistenceService {
 
   private async driveFetch(input: string, init: RequestInit = {}): Promise<Response> {
     if (!this.driveAccessToken || Date.now() >= this.driveAccessTokenExpiresAt - 60_000) await this.authorizeDrive(false);
-    const response = await fetch(input, { ...init, headers: { Authorization: `Bearer ${this.driveAccessToken}`, ...(init.headers ?? {}) } });
-    if (!response.ok) {
-      let detail = '';
-      try {
-        const error = await response.json() as { error?: { message?: string; errors?: Array<{ reason?: string }> } };
-        detail = error.error?.message ?? error.error?.errors?.[0]?.reason ?? '';
-      } catch { detail = ''; }
-      throw new Error(`Google Drive ha restituito ${response.status}${detail ? `: ${detail}` : '.'}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetch(input, { ...init, signal: controller.signal, headers: { Authorization: `Bearer ${this.driveAccessToken}`, ...(init.headers ?? {}) } });
+      if (!response.ok) {
+        let detail = '';
+        try {
+          const error = await response.json() as { error?: { message?: string; errors?: Array<{ reason?: string }> } };
+          detail = error.error?.message ?? error.error?.errors?.[0]?.reason ?? '';
+        } catch { detail = ''; }
+        throw new Error(`Google Drive ha restituito ${response.status}${detail ? `: ${detail}` : '.'}`);
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') throw new Error('La sincronizzazione Google Drive ha superato il limite di 30 secondi. Riprova.');
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-    return response;
   }
 
   private async loadGoogleIdentityServices(): Promise<void> {

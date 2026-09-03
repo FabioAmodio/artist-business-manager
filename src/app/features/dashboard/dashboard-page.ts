@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { BundleService } from '../../application/bundles/bundle.service';
@@ -22,6 +22,7 @@ import type { Service } from '../../domain/models/service';
 import { annualDashboardMetrics, availableYearRange } from '../../domain/shared/annual-dashboard';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ActiveFairService } from '../../core/event/active-fair.service';
+import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 
 interface PaymentDraft {
   amount?: number;
@@ -39,6 +40,7 @@ interface PaymentDraft {
 export class DashboardPage implements OnInit {
   private readonly router = inject(Router);
   protected readonly activeFairMode = inject(ActiveFairService);
+  private readonly syncStatus = inject(SyncStatusService);
   private readonly fairService = inject(FairService);
   private readonly bundleService = inject(BundleService);
   private readonly operationService = inject(OperationService);
@@ -73,6 +75,18 @@ export class DashboardPage implements OnInit {
   protected paymentDraft: PaymentDraft = this.emptyPaymentDraft();
   protected readonly fairs = signal<readonly Fair[]>([]);
   private touchStartX: number | null = null;
+  private handledSyncVersion = 0;
+
+  constructor() {
+    effect(() => {
+      const completedVersion = this.syncStatus.completedVersion();
+      const dialogOpen = this.forceFairDialogOpen() || this.paymentSale() !== null;
+      if (completedVersion > this.handledSyncVersion && !dialogOpen) {
+        this.handledSyncVersion = completedVersion;
+        void this.load();
+      }
+    });
+  }
   protected readonly activeWorks = computed(() => {
     const fairId = this.activeFair()?.id;
     return fairId ? this.operations().filter((operation) => operation.fairEditionId === fairId && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress' || operation.workStatus === 'completed')) : [];

@@ -16,6 +16,9 @@ label { color: var(--color-text-primary); display: flex; gap: .75rem; align-item
 input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem; }
 .settings-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .settings-actions button, .file-action { border: 1px solid var(--color-border); border-radius: var(--radius-base); background: var(--color-surface-secondary); color: var(--color-text-primary); cursor: pointer; padding: .65rem .85rem; }
+.sync-button { align-items: center; display: inline-flex; gap: .4rem; }
+.sync-button.syncing { background: var(--color-border-light); border-color: var(--color-border); color: var(--color-text-secondary); cursor: wait; opacity: .8; }
+.sync-button.syncing .sync-icon { animation: drive-loader-spin .8s linear infinite; display: inline-block; }
 .file-action input { max-width: 12rem; }
 .settings-actions .status { flex-basis: 100%; margin: 0; }
 .drive-browser { background: var(--color-surface); border: 1px solid var(--color-border); display: grid; flex-basis: 100%; gap: .75rem; padding: .85rem; }
@@ -30,6 +33,9 @@ input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem
 .drive-folders { display: grid; gap: .45rem; }
 .drive-folders .folder-select { background: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); color: var(--color-text-inverse); font-weight: 700; min-width: 3.25rem; }
 .drive-folders .folder-select:hover, .drive-folders .folder-select:focus-visible { background: var(--color-accent-light); outline: none; }
+.drive-folders .folder-select:disabled { cursor: wait; opacity: .75; }
+.drive-loader { animation: drive-loader-spin .8s linear infinite; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; height: .8rem; vertical-align: -.12rem; width: .8rem; }
+@keyframes drive-loader-spin { to { transform: rotate(360deg); } }
 .danger-zone { border-color: var(--color-status-error); margin-top: 1.5rem; }
 .factory-reset-button { background: transparent; border: 1px solid var(--color-status-error); border-radius: var(--radius-base); color: var(--color-status-error); cursor: pointer; justify-self: start; padding: .7rem 1rem; }
 .factory-reset-button:disabled { cursor: not-allowed; opacity: .45; }
