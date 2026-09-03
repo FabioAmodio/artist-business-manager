@@ -37,6 +37,14 @@
       <button type="button" (click)="exportFile()">Esporta file</button>
     </div>
     @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
+    @if (persistence.pendingSyncOperations().length) {
+      <section class="sync-operations" aria-labelledby="sync-operations-title">
+        <h3 id="sync-operations-title">Operazioni da sincronizzare</h3>
+        @for (operation of persistence.pendingSyncOperations(); track operation.id) {
+          <div class="sync-operation" [class.sync-error]="operation.status !== 'pending'"><span><strong>{{ operation.action }} {{ operation.collection }}</strong> · {{ operation.entityId }}<small>{{ operation.status === 'pending' ? 'In attesa' : operation.status === 'conflict' ? 'Conflitto' : 'Errore' }}{{ operation.errorMessage ? ': ' + operation.errorMessage : '' }}</small></span><button type="button" (click)="retrySyncOperation(operation.id)">Riprova</button><button type="button" (click)="discardSyncOperation(operation.id)">Rimuovi</button></div>
+        }
+      </section>
+    }
     }
   </fieldset>
 

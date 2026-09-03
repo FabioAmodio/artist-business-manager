@@ -9,9 +9,10 @@ import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
+import type { SyncOperation } from '../../domain/models/sync-operation';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 22;
+export const DATABASE_VERSION = 23;
 
 interface LegacyFair {
   readonly id: string;
@@ -50,6 +51,7 @@ export class AppDatabase extends Dexie {
   readonly products!: Table<Product, string>;
   readonly purchases!: Table<Purchase, string>;
   readonly services!: Table<Service, string>;
+  readonly syncOperations!: Table<SyncOperation, string>;
   readonly appSettings!: Table<{ id: string; source: string; directoryHandle?: FileSystemDirectoryHandle; updatedAt: string }, string>;
 
   constructor(databaseName = DATABASE_NAME) {
@@ -221,6 +223,7 @@ export class AppDatabase extends Dexie {
       purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
       services: 'id, code, description, system, updatedAt, deletedAt',
       appSettings: 'id, updatedAt',
+      syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
     }).upgrade(async (transaction) => {
       const operations = await transaction.table('operations').toArray() as Operation[];
       await transaction.table('operations').bulkPut(operations.map((operation) => operation.workStatus && !operation.deliveryDate ? { ...operation, deliveryDate: operation.createdAt.slice(0, 10) } : operation));
@@ -239,6 +242,7 @@ export class AppDatabase extends Dexie {
       purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
       services: 'id, code, description, active, system, updatedAt, deletedAt',
       appSettings: 'id, updatedAt',
+      syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
     }).upgrade(async (transaction) => {
       const services = await transaction.table('services').toArray() as Array<Service & { readonly active?: boolean }>;
       await transaction.table('services').bulkPut(services.map((service) => ({ ...service, active: service.active ?? true })));
