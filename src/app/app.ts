@@ -24,7 +24,7 @@ export class App {
   protected readonly pullDistance = signal(0);
   protected readonly refreshing = signal(false);
   private pullStartY: number | null = null;
-  private readonly pullThreshold = 64;
+  private readonly pullThreshold = 48;
 
   protected toggleMenu(): void { this.menuOpen.update((open) => !open); }
   protected closeMenu(): void { this.menuOpen.set(false); }
@@ -53,7 +53,7 @@ export class App {
       return;
     }
     event.preventDefault();
-    this.pullDistance.set(Math.min(distance * 0.45, 84));
+    this.pullDistance.set(Math.min(distance * 0.65, 84));
   }
   protected handlePullEnd(): void {
     if (this.pullStartY === null) return;
@@ -64,7 +64,7 @@ export class App {
       return;
     }
     this.refreshing.set(true);
-    this.pullDistance.set(64);
+    this.pullDistance.set(48);
     window.location.reload();
   }
   protected async leaveForcedFairMode(): Promise<void> {

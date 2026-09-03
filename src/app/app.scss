@@ -212,6 +212,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   position: relative;
   scrollbar-gutter: stable;
   display: flex;
