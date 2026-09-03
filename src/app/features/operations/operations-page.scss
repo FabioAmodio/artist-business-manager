@@ -58,6 +58,21 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .product-picker { display: grid; gap: 1rem; margin: 1rem 0; }
 .product-picker h3 { font-size: 1rem; }
 .product-grid { display: grid; gap: .55rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.product-grid button { align-items: center; display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); text-align: center; }
+.product-grid button .offer-icon { font-size: 1rem; justify-self: start; line-height: 1; }
+.product-grid button > span:last-child { min-width: 0; }
+.bundle-work-group { background: color-mix(in srgb, var(--color-surface-secondary) 36%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius-base); padding: .75rem; }
+.bundle-work-heading { display: grid; gap: .75rem; grid-template-columns: minmax(12rem, 1fr) auto; }
+.bundle-toggle { align-items: center; background: transparent; border: 0; color: var(--color-heading); cursor: pointer; display: flex; font: inherit; gap: .5rem; min-width: 0; padding: .25rem 0; text-align: left; }
+.bundle-toggle:hover, .bundle-toggle:focus-visible { color: var(--color-accent); outline: none; }
+.bundle-work-count { color: var(--color-text-secondary); font-size: var(--font-size-xs); font-weight: 400; }
+.bundle-toggle-icon { font-size: 1.2rem; margin-left: auto; }
+.bundle-summary-grid { display: grid; gap: .4rem; grid-column: 1 / -1; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.bundle-summary-grid > span { border-top: 2px solid var(--color-border); color: var(--color-text-secondary); display: grid; font-size: var(--font-size-xs); gap: .15rem; padding-top: .35rem; }
+.bundle-summary-grid strong { color: var(--color-text-primary); font-size: var(--font-size-xs); }
+.bundle-summary-status > span { align-items: center; display: inline-flex; gap: .25rem; }
+.bundle-work-heading > .row-actions { align-self: start; }
+@media (max-width: 799px) { .bundle-work-heading { grid-template-columns: 1fr auto; } .bundle-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .selected-product { align-items: center; background: color-mix(in srgb, var(--color-surface-secondary) 48%, transparent); border: 1px solid var(--color-border); color: var(--color-text-primary); cursor: pointer; display: flex; flex-wrap: wrap; font: inherit; gap: .5rem; justify-content: space-between; padding: .75rem; text-align: left; }
 .selected-product:hover, .selected-product:focus-visible { border-color: var(--color-accent); outline: none; }
 .selected-product span { color: var(--color-text-primary); font-weight: 700; }

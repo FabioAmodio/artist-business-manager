@@ -21,6 +21,10 @@ export class App {
   protected readonly activeFair = inject(ActiveFairService);
   protected readonly environment = inject(APP_ENVIRONMENT);
   protected readonly menuOpen = signal(false);
+  protected readonly pullDistance = signal(0);
+  protected readonly refreshing = signal(false);
+  private pullStartY: number | null = null;
+  private readonly pullThreshold = 64;
 
   protected toggleMenu(): void { this.menuOpen.update((open) => !open); }
   protected closeMenu(): void { this.menuOpen.set(false); }
@@ -35,6 +39,33 @@ export class App {
   }
   protected changeHeaderFilter(event: Event): void {
     this.pageHeader.changeFilter((event.target as HTMLSelectElement).value);
+  }
+  protected handlePullStart(event: TouchEvent): void {
+    if (window.innerWidth >= 700 || this.refreshing() || event.touches.length !== 1) return;
+    const content = event.currentTarget as HTMLElement;
+    this.pullStartY = content.scrollTop <= 0 ? event.touches[0].clientY : null;
+  }
+  protected handlePullMove(event: TouchEvent): void {
+    if (this.pullStartY === null || this.refreshing() || event.touches.length !== 1) return;
+    const distance = event.touches[0].clientY - this.pullStartY;
+    if (distance <= 0) {
+      this.pullDistance.set(0);
+      return;
+    }
+    event.preventDefault();
+    this.pullDistance.set(Math.min(distance * 0.45, 84));
+  }
+  protected handlePullEnd(): void {
+    if (this.pullStartY === null) return;
+    const shouldRefresh = this.pullDistance() >= this.pullThreshold;
+    this.pullStartY = null;
+    if (!shouldRefresh) {
+      this.pullDistance.set(0);
+      return;
+    }
+    this.refreshing.set(true);
+    this.pullDistance.set(64);
+    window.location.reload();
   }
   protected async leaveForcedFairMode(): Promise<void> {
     const fair = this.activeFair.forcedFair();

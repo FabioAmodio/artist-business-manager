@@ -15,8 +15,8 @@
     @if (salesOnly) { <label>Prodotto/Servizio/Bundle
       <select name="offerFilter" [ngModel]="offerFilter()" (ngModelChange)="changeOfferFilter($event)">
         <option value="">Tutti</option>
-        @for (offer of availableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }
-        @if (unavailableOfferFilterChoices().length) { <option disabled>──────── Non disponibili ────────</option>@for (offer of unavailableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">⚠ {{ offer.label }} (Non disponibile)</option> } }
+        @for (offer of availableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">{{ offer.icon }} {{ offer.label }}</option> }
+        @if (unavailableOfferFilterChoices().length) { <option disabled>-- N.D. --</option>@for (offer of unavailableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">⚠ {{ offer.icon }} {{ offer.label }} (Non disponibile)</option> } }
       </select>
     </label> }
     @if (salesOnly) { <label>Contesto
@@ -39,7 +39,18 @@
   @else if (!visibleOperations().length) { <div class="empty-state"><h3>{{ salesOnly ? 'Nessuna vendita registrata' : worksOnly ? 'Nessuna lavorazione registrata' : 'Nessuna operazione registrata' }}</h3></div> }
   @else {
     <div class="operation-list">
-      @for (operation of visibleOperations(); track operation.id) {
+      @for (group of displayOperationGroups(); track group.key) {
+        @if (worksOnly && group.parent) {
+          <section class="bundle-work-group" [class.collapsed]="isBundleGroupCollapsed(group)" [attr.aria-label]="'Lavori del pacchetto ' + group.parent.title">
+            <div class="bundle-work-heading">
+              <button class="bundle-toggle" type="button" [attr.aria-expanded]="!isBundleGroupCollapsed(group)" [attr.aria-label]="isBundleGroupCollapsed(group) ? 'Espandi lavori del pacchetto' : 'Comprimi lavori del pacchetto'" (click)="toggleBundleGroup(group)"><span aria-hidden="true">🎁</span><strong>{{ group.parent.title }}</strong><span class="bundle-work-count">{{ group.operations.length }} componenti</span><span class="bundle-toggle-icon" aria-hidden="true">{{ isBundleGroupCollapsed(group) ? '▸' : '▾' }}</span></button>
+              <div class="bundle-summary-grid"><span><strong>Cliente</strong>{{ customerLabel(group.parent) }}</span><span><strong>Fiera</strong>{{ fairName(group.parent.fairEditionId) }}</span><span><strong>Importo</strong>{{ group.parent.amount != null ? (group.parent.amount.toFixed(2) + ' €') : 'n.d.' }}</span><span><strong>Consegna</strong>{{ bundleDeliveryDate(group) }}</span><span><strong>Pagato</strong>{{ bundlePaid(group).toFixed(2) }} €</span><span class="bundle-summary-status"><strong>Stato</strong>@if (bundleWorkStatus(group); as status) { <span [attr.title]="workStatusLabel(status)"><span aria-hidden="true">{{ workStatusIcon(status) }}</span>{{ workStatusLabel(status) }}</span> } @else { Non indicato }</span></div>
+              <div class="row-actions">@if (canQuickPay(group.parent)) { <button class="quick-payment-button list-action" type="button" aria-label="Registra pagamento del pacchetto" title="Registra pagamento del pacchetto" (click)="$event.stopPropagation(); openQuickPayment(group.parent)">€</button> }</div>
+            </div>
+          </section>
+        }
+        @if (!worksOnly || !group.parent || !isBundleGroupCollapsed(group)) {
+        @for (operation of group.operations; track operation.id) {
         <article class="operation-row" [class.works-row]="worksOnly">
           <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p><p>{{ formatDateTime(operation.operationDate ?? operation.createdAt) }}</p></div>
           <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } <span><strong>Pagato</strong>{{ paymentTotalFor(operation).toFixed(2) }} €</span></div>
@@ -52,6 +63,8 @@
           }
           <div class="row-actions">@if (canAdvanceWork(operation)) { <button class="work-advance-button list-action" type="button" [disabled]="transitioningWorkId() === operation.id" [attr.aria-label]="workAdvanceLabel(operation)" [attr.title]="workAdvanceLabel(operation)" (click)="advanceWork(operation)">{{ workAdvanceIcon(operation) }}</button> }@if (canQuickPay(operation)) { <button class="quick-payment-button list-action" type="button" aria-label="Registra pagamento rapido" [title]="operation.parentOperationId ? 'Registra pagamento sul pacchetto' : 'Registra pagamento'" (click)="openQuickPayment(operation)">€</button> }<button class="text-button list-action" type="button" aria-label="Modifica operazione" title="Modifica operazione" (click)="startEditing(operation)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina operazione" title="Elimina operazione" (click)="remove(operation)">🗑</button></div>
         </article>
+        }
+        }
       }
     </div>
   }
@@ -81,7 +94,7 @@
           <div class="form-heading"><div><h2 id="operation-form-title">{{ salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione' }}</h2></div></div>
           <section class="product-picker" aria-label="Selezione prodotto">
             <div class="product-grid">
-              @for (offer of availableOfferChoices(); track offer.key) { <button type="button" (click)="selectOffer(offer.key)">{{ offer.label }}</button> }
+              @for (offer of availableOfferChoices(); track offer.key) { <button type="button" (click)="selectOffer(offer.key)"><span class="offer-icon" aria-hidden="true">{{ offer.icon }}</span><span>{{ offer.label }}</span></button> }
             </div>
           </section>
           <button class="cancel-button" type="button" (click)="cancelForm()">× Annulla</button>
@@ -114,7 +127,7 @@
           <div class="form-grid">
             @if (!salesOnly && !worksOnly) { <label>Tipo <select name="type" required [(ngModel)]="draft.type"><option value="sale">Vendita</option><option value="work">Lavorazione</option></select></label> }
             @if (!salesOnly && !worksOnly) { <label class="wide">Titolo <input name="title" required [(ngModel)]="draft.title" /></label> }
-            @if (draft.type === 'sale' || worksOnly) { <label>{{ worksOnly ? 'Servizio' : 'Elemento' }} <select name="offer" required [ngModel]="offerSelection()" (ngModelChange)="changeOffer($event)"><option value="">{{ worksOnly ? 'Seleziona servizio' : 'Seleziona elemento' }}</option>@for (offer of availableOfferChoices(); track offer.key) { <option [value]="offer.key">{{ offer.label }}</option> }@if (unavailableOfferChoices().length) { <option disabled>──────── Non disponibili ────────</option>@for (offer of unavailableOfferChoices(); track offer.key) { <option [value]="offer.key">⚠ {{ offer.label }} (Non disponibile)</option> } }</select></label> }
+            @if (draft.type === 'sale' || worksOnly) { <label>{{ worksOnly ? 'Servizio' : 'Elemento' }} <select name="offer" required [ngModel]="offerSelection()" (ngModelChange)="changeOffer($event)"><option value="">{{ worksOnly ? 'Seleziona servizio' : 'Seleziona elemento' }}</option>@for (offer of availableOfferChoices(); track offer.key) { <option [value]="offer.key">{{ offer.icon }} {{ offer.label }}</option> }@if (unavailableOfferChoices().length) { <option disabled>-- N.D. --</option>@for (offer of unavailableOfferChoices(); track offer.key) { <option [value]="offer.key">⚠ {{ offer.icon }} {{ offer.label }} (Non disponibile)</option> } }</select></label> }
             @if (!draft.serviceId) { <label>Collegamento <select name="lotId" [(ngModel)]="draft.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }} · {{ productName(lot.productId) }}</option> }</select></label> }
             <div class="customer-box full-width">
               <label>Cliente <input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>

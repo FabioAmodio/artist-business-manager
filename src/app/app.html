@@ -34,8 +34,9 @@
       <app-responsive-nav></app-responsive-nav>
     </aside>
 
-    <main class="main-content">
-      <router-outlet />
+    <main class="main-content" [style.--pull-distance.px]="pullDistance()" (touchstart)="handlePullStart($event)" (touchmove)="handlePullMove($event)" (touchend)="handlePullEnd()" (touchcancel)="handlePullEnd()">
+      <div class="pull-refresh-indicator" [class.visible]="pullDistance() > 0" [class.ready]="pullDistance() >= 64" [class.refreshing]="refreshing()" role="status" aria-live="polite"><span class="pull-refresh-icon" aria-hidden="true">↻</span><span class="pull-refresh-label">{{ refreshing() ? 'Aggiornamento in corso' : pullDistance() >= 64 ? 'Rilascia per aggiornare' : 'Trascina per aggiornare' }}</span></div>
+      <div class="pull-content"><router-outlet /></div>
     </main>
   </div>
 

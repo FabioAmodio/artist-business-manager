@@ -44,7 +44,15 @@ interface BundleDetailDraft {
 interface OfferChoice {
   readonly key: string;
   readonly label: string;
+  readonly icon: string;
   readonly available: boolean;
+}
+
+interface WorkGroup {
+  readonly key: string;
+  readonly title?: string;
+  readonly parent?: Operation;
+  operations: Operation[];
 }
 
 @Component({
@@ -95,6 +103,7 @@ export class OperationsPage implements OnInit {
   protected readonly typeFilter = signal<OperationType | 'all'>('all');
   protected readonly yearFilter = signal<number | null>(null);
   protected readonly workFilter = signal<'open' | 'requested' | 'in-progress' | 'to-deliver' | 'unpaid' | null>(null);
+  protected readonly collapsedBundleGroups = signal<ReadonlySet<string>>(new Set());
   protected readonly workStatusOptions: readonly NonNullable<Operation['workStatus']>[] = ['requested', 'in-progress', 'completed', 'delivered', 'cancelled'];
   protected readonly fairScopeFilter = signal<'fair' | 'non-fair' | null>(null);
   protected readonly offerFilter = signal('');
@@ -160,9 +169,9 @@ export class OperationsPage implements OnInit {
   }
   private offerFilterChoices(): readonly OfferChoice[] {
     return [
-      ...this.products().map((product) => ({ key: `product:${product.id}`, label: `Prodotto · ${product.name}`, available: product.active })),
-      ...this.services().map((service) => ({ key: `service:${service.id}`, label: `Servizio · ${service.description}`, available: service.active })),
-      ...this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: `Bundle · ${bundle.name}`, available: isBundleAvailable(bundle, this.products(), this.services()) })),
+      ...this.products().map((product) => ({ key: `product:${product.id}`, label: `Prodotto · ${product.name}`, icon: '🏷️', available: product.active })),
+      ...this.services().map((service) => ({ key: `service:${service.id}`, label: `Servizio · ${service.description}`, icon: '🛠️', available: service.active })),
+      ...this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: `Bundle · ${bundle.name}`, icon: '🎁', available: isBundleAvailable(bundle, this.products(), this.services()) })),
     ].sort((first, second) => first.label.localeCompare(second.label));
   }
   protected changeOfferFilter(offer: string): void {
@@ -248,6 +257,21 @@ export class OperationsPage implements OnInit {
   protected workStatusIcon(status?: Operation['workStatus']): string {
     return ({ requested: '📝', 'in-progress': '🛠️', completed: '✅', delivered: '📦', cancelled: '🚫' } as Record<string, string>)[status ?? ''] ?? '❔';
   }
+  protected isBundleGroupCollapsed(group: WorkGroup): boolean { return Boolean(group.parent && this.collapsedBundleGroups().has(group.key)); }
+  protected toggleBundleGroup(group: WorkGroup): void {
+    if (!group.parent) return;
+    const collapsed = new Set(this.collapsedBundleGroups());
+    if (collapsed.has(group.key)) collapsed.delete(group.key); else collapsed.add(group.key);
+    this.collapsedBundleGroups.set(collapsed);
+  }
+  protected bundleDeliveryDate(group: WorkGroup): string {
+    const dates = group.operations.map((operation) => operation.deliveryDate).filter((date): date is string => Boolean(date)).sort();
+    return this.formatDate(dates[0] ?? group.parent?.deliveryDate);
+  }
+  protected bundleWorkStatus(group: WorkGroup): NonNullable<Operation['workStatus']> | undefined {
+    return this.workStatusOptions.find((status) => group.operations.some((operation) => operation.workStatus === status));
+  }
+  protected bundlePaid(group: WorkGroup): number { return group.parent ? this.paymentTotal(group.parent.id) : 0; }
   protected canAdvanceWork(operation: Operation): boolean {
     return this.worksOnly && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress' || operation.workStatus === 'completed');
   }
@@ -282,6 +306,28 @@ export class OperationsPage implements OnInit {
     return this.offerChoices().filter((offer) => !offer.available);
   }
 
+  protected workGroups(): readonly WorkGroup[] {
+    const groups: WorkGroup[] = [];
+    const grouped = new Map<string, WorkGroup>();
+    for (const operation of this.visibleOperations()) {
+      const parent = operation.parentOperationId ? this.allOperations.find((item) => item.id === operation.parentOperationId && item.type === 'bundle') : undefined;
+      const key = parent ? parent.id : operation.id;
+      const existing = grouped.get(key);
+      if (existing) {
+        existing.operations = [...existing.operations, operation];
+      } else {
+        const group: WorkGroup = { key, title: parent?.title, parent, operations: [operation] };
+        grouped.set(key, group);
+        groups.push(group);
+      }
+    }
+    return groups;
+  }
+
+  protected displayOperationGroups(): readonly WorkGroup[] {
+    return this.worksOnly ? this.workGroups() : [{ key: 'all', operations: [...this.visibleOperations()] }];
+  }
+
   private offerChoices(): readonly OfferChoice[] {
     const concludedFairIds = this.fairs()
       .filter((fair) => fair.endDate < new Date().toISOString().slice(0, 10))
@@ -295,9 +341,9 @@ export class OperationsPage implements OnInit {
       if (key) usage.set(key, (usage.get(key) ?? 0) + 1);
     }
     return [
-      ...(!this.worksOnly ? this.products().map((product) => ({ key: `product:${product.id}`, label: product.name, available: product.active })) : []),
-      ...this.services().map((service) => ({ key: `service:${service.id}`, label: service.description, available: service.active })),
-      ...(!this.worksOnly ? this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: bundle.name, available: isBundleAvailable(bundle, this.products(), this.services()) })) : []),
+      ...(!this.worksOnly ? this.products().map((product) => ({ key: `product:${product.id}`, label: product.name, icon: '🏷️', available: product.active })) : []),
+      ...this.services().map((service) => ({ key: `service:${service.id}`, label: service.description, icon: '🛠️', available: service.active })),
+      ...(!this.worksOnly ? this.bundles().map((bundle) => ({ key: `bundle:${bundle.id}`, label: bundle.name, icon: '🎁', available: isBundleAvailable(bundle, this.products(), this.services()) })) : []),
     ].sort((first, second) => (usage.get(second.key) ?? 0) - (usage.get(first.key) ?? 0) || first.label.localeCompare(second.label));
   }
 
