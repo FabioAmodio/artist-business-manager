@@ -59,6 +59,13 @@ export function annualDashboardMetrics(source: AnnualDashboardSource, year: numb
   const openWorks = workOperations.filter((operation) => operation.workStatus !== 'delivered' && operation.workStatus !== 'cancelled');
   const paymentTotals = paymentTotalsByOperation(source.payments);
   const operationById = new Map(source.operations.map((operation) => [operation.id, operation]));
+  const unpaidWorkTargets = new Set<string>();
+  for (const operation of openWorks) {
+    const paymentTarget = operation.parentOperationId && operationById.has(operation.parentOperationId)
+      ? operationById.get(operation.parentOperationId)!
+      : operation;
+    if ((paymentTotals.get(paymentTarget.id) ?? 0) + 0.005 < (paymentTarget.amount ?? 0)) unpaidWorkTargets.add(paymentTarget.id);
+  }
   const yearFairs = source.fairs.filter((fair) => yearOf(fair.startDate) === year);
   const parentSales = yearOperations.filter((operation) => !operation.parentOperationId && (operation.type === 'sale' || operation.type === 'bundle'));
   const fairSales = parentSales.filter((operation) => operation.fairEditionId);
@@ -77,7 +84,7 @@ export function annualDashboardMetrics(source: AnnualDashboardSource, year: numb
       requested: openWorks.filter((operation) => operation.workStatus === 'requested').length,
       inProgress: openWorks.filter((operation) => operation.workStatus === 'in-progress').length,
       toDeliver: openWorks.filter((operation) => operation.workStatus === 'completed').length,
-      unpaid: openWorks.filter((operation) => effectivePaid(operation, operationById, paymentTotals) + 0.005 < (operation.amount ?? 0)).length,
+      unpaid: unpaidWorkTargets.size,
       annualTotal: yearOperations.filter((operation) => operation.workStatus !== undefined).length,
     },
     fairs: {
@@ -113,13 +120,6 @@ function revenueDetails(operations: readonly Operation[], products: readonly Pro
     totals.set(key, { label: labels.get(key) ?? (operation.type === 'bundle' ? operation.title || 'Pacchetto' : 'Altro'), amount: (current?.amount ?? 0) + (operation.amount ?? 0) });
   }
   return [...totals.entries()].map(([key, detail]) => ({ key, ...detail })).sort((first, second) => second.amount - first.amount);
-}
-
-function effectivePaid(operation: Operation, operationById: ReadonlyMap<string, Operation>, paymentTotals: ReadonlyMap<string, number>): number {
-  if (!operation.parentOperationId) return paymentTotals.get(operation.id) ?? 0;
-  const parent = operationById.get(operation.parentOperationId);
-  if (!parent || (parent.amount ?? 0) <= 0) return paymentTotals.get(operation.id) ?? 0;
-  return Math.min(operation.amount ?? 0, (paymentTotals.get(parent.id) ?? 0) * (operation.amount ?? 0) / parent.amount!);
 }
 
 function paymentTotalsByOperation(payments: readonly Payment[]): ReadonlyMap<string, number> {
