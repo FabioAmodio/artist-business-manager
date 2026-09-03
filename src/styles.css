@@ -16,6 +16,7 @@ body {
 
 header.topbar .page-filter.replaces-title { font-size: 1rem; max-width: min(22rem, 45vw); padding: .35rem 1.75rem .35rem .55rem; }
 header.topbar .test-environment-badge { background: #fff; border: 1px solid #fff; border-radius: var(--radius-sm); color: var(--color-status-error); font: 700 .7rem var(--font-mono); padding: .2rem .4rem; }
+header.topbar .demo-environment-badge { color: var(--color-accent); }
 header.topbar .page-add.mobile-only { display: none; }
 header.topbar .add-button.icon-action { background: #fff; border: 2px solid var(--color-status-success); color: var(--color-status-success); font-size: 1rem; }
 header.topbar .add-button.icon-action:hover, header.topbar .add-button.icon-action:focus-visible { background: color-mix(in srgb, var(--color-status-success) 12%, #fff); }

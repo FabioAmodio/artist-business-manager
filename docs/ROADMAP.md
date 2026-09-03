@@ -10,7 +10,7 @@ Il primo MVP offline e completato. Permette di registrare e consultare persisten
 
 Incrementi completati:
 
-1. environment TEST/RELEASE, `AppEnvironment`, `storagePrefix`, Dependency Injection, dataset demo read-only e reset TEST;
+1. environment TEST/DEMO/RELEASE, `AppEnvironment`, `storagePrefix`, capability flags, Dependency Injection, dataset demo read-only e reset dedicati;
 2. `IStorageProvider`, `StorageHealth` e `StorageError`;
 3. `IndexedDbProvider` minimale con `open()`, `health()` e test di inizializzazione;
 4. entita `FairSeries`, `FairEdition` e `Operation`;

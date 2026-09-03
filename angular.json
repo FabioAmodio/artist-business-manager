@@ -61,6 +61,19 @@
                 { "glob": "**/*", "input": "public" },
                 { "glob": "artist-business-manager-data-test.json", "input": "docs/business", "output": "assets" }
               ]
+            },
+            "demo": {
+              "baseHref": "/artist-business-manager-demo/",
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/configuration/environment.providers.ts",
+                  "with": "src/app/core/configuration/environment.providers.demo.ts"
+                }
+              ],
+              "assets": [
+                { "glob": "**/*", "input": "public" },
+                { "glob": "artist-business-manager-data-test.json", "input": "docs/business", "output": "assets" }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -76,6 +89,9 @@
             },
             "test": {
               "buildTarget": "artist-business-manager:build:test"
+            },
+            "demo": {
+              "buildTarget": "artist-business-manager:build:demo"
             }
           },
           "defaultConfiguration": "development"

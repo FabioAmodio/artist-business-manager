@@ -26,7 +26,7 @@ export class PersistenceService {
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly serviceService = inject(ServiceService);
   readonly source = signal<PersistenceSettings['source']>('none');
-  readonly isTestEnvironment = this.environment.environmentName === 'test';
+  readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
   readonly status = signal('');
   readonly driveFolders = signal<readonly DriveFolder[]>([]);
   readonly driveFolderPath = signal<readonly DriveFolder[]>([]);
@@ -49,10 +49,10 @@ export class PersistenceService {
 
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
-    this.source.set(this.isTestEnvironment ? 'none' : settings?.source ?? 'none');
-    this.directoryHandle = this.isTestEnvironment ? undefined : settings?.directoryHandle;
+    this.source.set(this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
+    this.directoryHandle = this.isDemoEnvironment ? undefined : settings?.directoryHandle;
     this.driveClientId = settings?.driveClientId ?? this.environment.googleDriveClientId ?? '';
-    this.driveFolderId = this.isTestEnvironment ? undefined : settings?.driveFolderId;
+    this.driveFolderId = this.isDemoEnvironment ? undefined : settings?.driveFolderId;
     await this.initializeTestDataset();
     this.initialized = true;
     this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
@@ -160,7 +160,7 @@ export class PersistenceService {
   }
 
   async synchronize(): Promise<void> {
-    this.ensureExternalPersistenceAllowed();
+    this.ensureCapabilityAllowed('allowCloudSync');
     this.syncStatus.setStatus('syncing');
     try {
       await this.synchronizeInternal();
@@ -194,7 +194,7 @@ export class PersistenceService {
   }
 
   async exportLocal(): Promise<void> {
-    this.ensureExternalPersistenceAllowed();
+    this.ensureCapabilityAllowed('allowImportExport');
     const dataset = await this.readLocalDataset();
     const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -207,14 +207,14 @@ export class PersistenceService {
   }
 
   async importFile(file: File): Promise<void> {
-    this.ensureExternalPersistenceAllowed();
+    this.ensureCapabilityAllowed('allowImportExport');
     const dataset = this.parseDataset(await file.text());
     await this.writeLocalDataset(this.merge(await this.readLocalDataset(), dataset));
     this.status.set('Dati importati nel database locale.');
   }
 
   async persistImportedFile(file: File): Promise<void> {
-    this.ensureExternalPersistenceAllowed();
+    this.ensureCapabilityAllowed('allowImportExport');
     const dataset = this.parseDataset(await file.text());
     await this.writeLocalDataset(this.merge(await this.readLocalDataset(), dataset));
     if (this.source() === 'file-system' && this.directoryHandle) await this.writeDirectoryDataset(await this.readLocalDataset());
@@ -231,7 +231,11 @@ export class PersistenceService {
   }
 
   private ensureExternalPersistenceAllowed(): void {
-    if (this.isTestEnvironment) throw new Error('Questa funzione non e disponibile nell\'ambiente TEST.');
+    this.ensureCapabilityAllowed('allowExternalPersistence');
+  }
+
+  private ensureCapabilityAllowed(capability: 'allowExternalPersistence' | 'allowImportExport' | 'allowCloudSync'): void {
+    if (!this.environment[capability]) throw new Error(`Questa funzione non e disponibile nell'ambiente ${this.environment.environmentName.toUpperCase()}.`);
   }
 
   private async listDriveFolders(parentId: string): Promise<readonly DriveFolder[]> {

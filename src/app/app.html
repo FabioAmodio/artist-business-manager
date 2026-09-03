@@ -5,7 +5,7 @@
         <span class="brand-mark"><img src="icons/logo.svg" alt="" /></span>
         <span class="brand-text">Artist Business Manager</span>
       </a>
-      @if (environment.environmentName === 'test') { <span class="test-environment-badge">TEST</span> }
+      @if (environment.environmentName !== 'release') { <span class="test-environment-badge" [class.demo-environment-badge]="environment.environmentName === 'demo'">{{ environment.environmentName.toUpperCase() }}</span> }
       @if (pageHeader.title()) {
         <span class="brand-divider" aria-hidden="true"></span>
         <span class="page-title"><span class="page-icon" aria-hidden="true">{{ pageHeader.icon() }}</span>@if (!pageHeader.filterReplacesTitle()) { <h1>{{ pageHeader.title() }}</h1> } @if (pageHeader.filterOptions().length) { <select class="page-filter" [class.replaces-title]="pageHeader.filterReplacesTitle()" [attr.aria-label]="pageHeader.filterLabel()" [value]="pageHeader.filterValue()" (change)="changeHeaderFilter($event)">@for (option of pageHeader.filterOptions(); track option.value) { <option [value]="option.value" [selected]="option.value === pageHeader.filterValue()">{{ option.label }}</option> }</select> }</span>

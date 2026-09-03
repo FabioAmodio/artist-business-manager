@@ -2,9 +2,9 @@ import type { AppEnvironment } from '../app/core/configuration/app-environment';
 
 export const environment: AppEnvironment = {
   applicationName: 'Artist Business Manager',
-  environmentName: 'test',
-  storagePrefix: 'ABM-TEST',
-  logLevel: 'debug',
+  environmentName: 'demo',
+  storagePrefix: 'ABM-DEMO',
+  logLevel: 'info',
   syncEnabled: false,
   allowExternalPersistence: false,
   allowImportExport: false,

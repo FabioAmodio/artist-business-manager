@@ -6,6 +6,9 @@ export const environment: AppEnvironment = {
   storagePrefix: 'ABM-PROD',
   logLevel: 'warn',
   syncEnabled: false,
+  allowExternalPersistence: true,
+  allowImportExport: true,
+  allowCloudSync: true,
   version: '0.0.0',
   googleDriveClientId: '194726361871-r9bacqitdheihqql0ndgat7qo1it66gu.apps.googleusercontent.com',
 };

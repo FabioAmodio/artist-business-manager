@@ -1,4 +1,4 @@
-# Ambienti TEST e RELEASE
+# Ambienti TEST, DEMO e RELEASE
 
 ## Distinzione
 
@@ -6,29 +6,33 @@ Gli ambienti non coincidono necessariamente con i branch. Il branch descrive il 
 
 | Ambiente | Branch di riferimento | Uso | Dati | Stabilita |
 |---|---|---|---|---|
-| TEST | `main` nel repository `artist-business-manager-test` | sviluppo, prove, demo, validazione e collaborazione | solo fittizi o di test | modificabile |
+| TEST | configurazione `test` | sviluppo, prove, regressione e collaborazione | dataset sintetico | modificabile |
+| DEMO | configurazione `demo` | presentazioni e dimostrazioni | dataset sintetico | modificabile |
 | RELEASE | `main` | uso reale, fiere e clienti reali | dati reali | massima possibile |
 
-Il repository TEST pubblica automaticamente `main` su GitHub Pages usando `npm run build:test`. Il repository principale continua a pubblicare il build di produzione con `npm run build`.
+TEST e DEMO sono configurazioni di rilascio indipendenti. La pubblicazione DEMO e opzionale e non e una conseguenza automatica di ogni deploy RELEASE. Il repository o il progetto Pages usato per ospitarla e una decisione infrastrutturale, non un vincolo del modello applicativo.
 
 ## Configurazione compilabile
 
-Le configurazioni `environment.test` e `environment.prod` sono selezionate tramite `fileReplacements` Angular:
+Le configurazioni `environment.test`, `environment.demo` e `environment.prod` sono selezionate tramite `fileReplacements` Angular:
 
 ```typescript
 interface AppEnvironment {
-  name: 'test' | 'release';
+  environmentName: 'test' | 'demo' | 'release';
   storagePrefix: string;
-  futureEndpoint?: string;
-  debug: boolean;
+  allowExternalPersistence: boolean;
+  allowImportExport: boolean;
+  allowCloudSync: boolean;
+  demoDatasetUrl?: string;
 }
 ```
 
 Valori iniziali:
 
 ```text
-TEST:    name=test,    storagePrefix=ABM-TEST, debug=true
-RELEASE: name=release, storagePrefix=ABM-PROD, debug=false
+TEST:    environmentName=test,    storagePrefix=ABM-TEST,  dataset demo, capability esterne disabilitate
+DEMO:    environmentName=demo,    storagePrefix=ABM-DEMO,  dataset demo, capability esterne disabilitate
+RELEASE: environmentName=release, storagePrefix=ABM-PROD, capability esterne abilitate
 ```
 
 Il prefisso deve essere iniettato dalla configurazione e usato nella costruzione del nome IndexedDB. Non deve essere scritto nei repository o duplicato nei componenti.
@@ -45,11 +49,11 @@ Ogni ambiente deve avere:
 - indicatori visibili nell'interfaccia quando non si tratta di RELEASE;
 - procedure separate di reset, export e backup.
 
-## Dataset demo e reset TEST
+## Dataset demo e reset TEST/DEMO
 
-Il build TEST pubblica `docs/business/artist-business-manager-data-test.json` come asset read-only. Al primo avvio, il dataset viene caricato in IndexedDB con il prefisso `ABM-TEST`; un marker in `appSettings` impedisce ricaricamenti alle aperture successive. Le modifiche dell'utente restano esclusivamente nel database locale.
+I build TEST e DEMO pubblicano `docs/business/artist-business-manager-data-test.json` come asset read-only. Al primo avvio, il dataset viene caricato in IndexedDB con il prefisso dell'ambiente (`ABM-TEST` o `ABM-DEMO`); un marker in `appSettings` impedisce ricaricamenti alle aperture successive. Le modifiche dell'utente restano esclusivamente nel database locale.
 
-Il ripristino dati in TEST svuota il database locale e ricarica lo stesso dataset demo, restituendo l'applicazione allo stato di una nuova installazione TEST. Il file JSON non viene mai modificato dall'applicazione.
+Il ripristino dati in TEST o DEMO svuota il database locale e ricarica lo stesso dataset demo, restituendo l'applicazione allo stato di una nuova installazione dell'ambiente. Il file JSON non viene mai modificato dall'applicazione.
 
 ## Promozione
 

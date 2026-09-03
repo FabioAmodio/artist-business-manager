@@ -12,7 +12,7 @@ Ultimo aggiornamento: 2026-09-01.
 |---|---|---|
 | Shell e navigazione | Implementata V1 | Topbar globale, sidebar desktop, action bar mobile, 12 voci di menu, header pagina configurabile |
 | Routing GitHub Pages | Implementato | `404.html` deriva il base path dal repository e ripristina i deep-link tramite query parameter |
-| Ambiente TEST | Implementato | Build separato, IndexedDB `ABM-TEST`, dataset demo read-only, reset con ricaricamento dataset e servizi esterni disabilitati |
+| Ambienti TEST/DEMO | Implementati | Build separati, IndexedDB `ABM-TEST`/`ABM-DEMO`, dataset demo read-only, reset con ricaricamento dataset, capability flags e servizi esterni disabilitati |
 | Offline first | Implementata V1 | IndexedDB/Dexie come fonte locale, import/export JSON, File System e Google Drive |
 | Sincronizzazione | Implementata V1 | Sync automatico/manuale e risoluzione per `updatedAt`; manca una outbox persistente |
 | Dashboard / Riepilogo | Implementata V1 | Vista annuale e vista fiera operativa con deep-link filtrati |
