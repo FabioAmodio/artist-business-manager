@@ -1,9 +1,9 @@
-name: Deploy Angular to GitHub Pages
+name: Deploy Production and DEMO
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,40 +11,64 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: production-pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-production:
     if: github.repository == 'FabioAmodio/artist-business-manager'
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
-
       - run: npm ci
-
       - run: npm run build
-
       - uses: actions/configure-pages@v5
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/artist-business-manager/browser
 
-  deploy:
+  deploy-production:
     if: github.repository == 'FabioAmodio/artist-business-manager'
+    needs: build-production
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
-    runs-on: ubuntu-latest
-    needs: build
-
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  build-demo:
+    if: github.repository == 'FabioAmodio/artist-business-manager' && vars.PUBLISH_DEMO != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+      - run: npm ci
+      - run: npm run build:demo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-build
+          path: dist/artist-business-manager/browser
+
+  publish-demo:
+    if: github.repository == 'FabioAmodio/artist-business-manager' && vars.PUBLISH_DEMO != 'false'
+    needs: build-demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: demo-build
+          path: demo-build
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.CROSS_REPO_TOKEN }}
+          external_repository: FabioAmodio/artist-business-manager-demo
+          publish_branch: gh-pages
+          publish_dir: ./demo-build
+          force_orphan: true

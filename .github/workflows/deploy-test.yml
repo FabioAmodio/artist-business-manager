@@ -1,8 +1,8 @@
-name: Deploy TEST to GitHub Pages
+name: Deploy TEST cross repository
 
 on:
   push:
-    branches: [main]
+    branches: [test]
   workflow_dispatch:
 
 permissions:
@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    if: github.repository == 'FabioAmodio/artist-business-manager-test'
+  build-test:
+    if: github.repository == 'FabioAmodio/artist-business-manager'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,18 +25,24 @@ jobs:
           node-version: 22.22.3
       - run: npm ci
       - run: npm run build:test
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: test-build
           path: dist/artist-business-manager/browser
 
-  deploy:
-    if: github.repository == 'FabioAmodio/artist-business-manager-test'
-    needs: build
+  publish-test:
+    if: github.repository == 'FabioAmodio/artist-business-manager'
+    needs: build-test
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-build
+          path: test-build
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.CROSS_REPO_TOKEN }}
+          external_repository: FabioAmodio/artist-business-manager-test
+          publish_branch: gh-pages
+          publish_dir: ./test-build
+          force_orphan: true
