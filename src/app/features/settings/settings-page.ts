@@ -4,6 +4,7 @@ import { FairContextService } from '../../core/event/fair-context.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import type { PersistenceSource } from '../../core/persistence/persistence.models';
 import { APP_ENVIRONMENT } from '../../core/configuration/environment.tokens';
+import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -15,12 +16,15 @@ import { APP_ENVIRONMENT } from '../../core/configuration/environment.tokens';
 export class SettingsPage implements OnInit {
   private readonly fairContext = inject(FairContextService);
   protected readonly persistence = inject(PersistenceService);
+  protected readonly syncStatus = inject(SyncStatusService);
   protected readonly environment = inject(APP_ENVIRONMENT);
   protected readonly settings = this.fairContext.transparencySettings;
   protected readonly resetStep = signal<0 | 1 | 2>(0);
   protected readonly resetCode = signal('');
   protected readonly resetError = signal('');
   protected readonly resetting = signal(false);
+  protected readonly selectingDriveFolderId = signal<string | null>(null);
+  protected readonly synchronizing = signal(false);
   protected resetCodeInput = '';
 
   ngOnInit(): void { void this.persistence.initialize(); }
@@ -39,8 +43,11 @@ export class SettingsPage implements OnInit {
   }
 
   protected async selectDriveFolder(folderId: string): Promise<void> {
+    if (this.selectingDriveFolderId()) return;
+    this.selectingDriveFolderId.set(folderId);
     try { await this.persistence.selectDriveFolder(folderId); }
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile selezionare la cartella Drive.'); }
+    finally { this.selectingDriveFolderId.set(null); }
   }
 
   protected async browseDriveFolder(folder: { id: string; name: string }): Promise<void> {
@@ -58,9 +65,19 @@ export class SettingsPage implements OnInit {
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile aprire la cartella Drive.'); }
   }
 
+  protected async createDriveFolder(): Promise<void> {
+    const name = window.prompt('Nome della nuova cartella Drive');
+    if (name === null) return;
+    try { await this.persistence.createDriveFolder(name); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile creare la cartella Drive.'); }
+  }
+
   protected async synchronizePersistence(): Promise<void> {
+    if (this.synchronizing()) return;
+    this.synchronizing.set(true);
     try { await this.persistence.synchronize(); }
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile sincronizzare i dati.'); }
+    finally { this.synchronizing.set(false); }
   }
 
   protected async retrySyncOperation(id: string): Promise<void> {

@@ -6,6 +6,7 @@ export type SyncStatus = 'local-only' | 'pending' | 'syncing' | 'synced' | 'erro
 export class SyncStatusService {
   readonly status = signal<SyncStatus>('local-only');
   readonly changeVersion = signal(0);
+  readonly completedVersion = signal(0);
   private suppressionDepth = 0;
 
   notifyLocalChange(): void {
@@ -15,6 +16,7 @@ export class SyncStatusService {
   }
 
   setStatus(status: SyncStatus): void { this.status.set(status); }
+  notifySyncCompleted(): void { this.completedVersion.update((version) => version + 1); }
   isSuppressed(): boolean { return this.suppressionDepth > 0; }
 
   async suppress<T>(work: () => Promise<T>): Promise<T> {

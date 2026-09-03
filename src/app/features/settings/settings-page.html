@@ -28,11 +28,12 @@
       @if (persistence.driveFolders().length || persistence.driveFolderPath().length) {
         <div class="drive-browser" aria-label="Navigazione cartelle Drive">
           <div class="drive-breadcrumbs"><button type="button" (click)="browseDriveRoot()">Drive</button>@for (folder of persistence.driveFolderPath(); track folder.id) { <span>/</span><button type="button" (click)="browseDrivePath(folder)">{{ folder.name }}</button> }</div>
-          <div class="drive-folders">@for (folder of persistence.driveFolders(); track folder.id) { <div class="drive-folder-row"><button type="button" (click)="browseDriveFolder(folder)"><span class="folder-icon" aria-hidden="true">📁</span><span>{{ folder.name }}</span>@if (folder.shared) { <small>Condivisa</small> }</button><button class="folder-select" type="button" (click)="selectDriveFolder(folder.id)">Usa</button></div> }</div>
+          <button type="button" (click)="createDriveFolder()">+ Nuova cartella</button>
+          <div class="drive-folders">@for (folder of persistence.driveFolders(); track folder.id) { <div class="drive-folder-row"><button type="button" (click)="browseDriveFolder(folder)"><span class="folder-icon" aria-hidden="true">📁</span><span>{{ folder.name }}</span>@if (folder.shared) { <small>Condivisa</small> }</button><button class="folder-select" type="button" [disabled]="selectingDriveFolderId() !== null" [attr.aria-busy]="selectingDriveFolderId() === folder.id" (click)="selectDriveFolder(folder.id)">@if (selectingDriveFolderId() === folder.id) { <span class="drive-loader" aria-hidden="true"></span> Salvataggio... } @else { Usa }</button></div> }</div>
           @if (!persistence.driveFolders().length) { <p class="status">Nessuna sottocartella in questa posizione.</p> }
         </div>
       }
-      <button type="button" [disabled]="persistence.source() === 'none'" (click)="synchronizePersistence()">Sincronizza</button>
+      <button class="sync-button" [class.syncing]="synchronizing() || syncStatus.status() === 'syncing'" type="button" [disabled]="persistence.source() === 'none' || synchronizing() || syncStatus.status() === 'syncing'" [attr.aria-busy]="synchronizing() || syncStatus.status() === 'syncing'" (click)="synchronizePersistence()">@if (synchronizing() || syncStatus.status() === 'syncing') { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizzazione... } @else { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizza }</button>
       <label class="file-action">Importa file <input type="file" accept="application/json" (change)="importFile($event)" /></label>
       <button type="button" (click)="exportFile()">Esporta file</button>
     </div>
