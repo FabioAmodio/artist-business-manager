@@ -240,6 +240,9 @@
   color: var(--color-text-secondary);
 }
 
+.update-banner { align-items: center; background: var(--color-primary-action-bg); bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); color: var(--color-primary-action-text); display: flex; gap: 1rem; justify-content: space-between; left: 50%; max-width: min(32rem, calc(100vw - 2rem)); padding: .75rem 1rem; position: fixed; transform: translateX(-50%); width: max-content; z-index: var(--z-toast); }
+.update-banner button { background: var(--color-accent); border: 0; border-radius: var(--radius-sm); color: var(--color-text-inverse); cursor: pointer; font: 700 .85rem var(--font-sans); padding: .5rem .75rem; }
+
 .footer-content {
   display: flex;
   align-items: center;

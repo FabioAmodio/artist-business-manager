@@ -4,8 +4,10 @@ import {
   inject,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
+  isDevMode,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 import { AppStateService } from './core/state/app-state.service';
 import { AppNavigationService } from './core/navigation/app-navigation.service';
 import { AppErrorHandler } from './core/error/error-handler';
@@ -19,6 +21,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
     AppStateService,
     AppNavigationService,
     {

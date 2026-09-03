@@ -1,4 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
+import { SwUpdate } from '@angular/service-worker';
 import { RouterLink, RouterOutlet, ActivatedRoute, Router } from '@angular/router';
 import { ResponsiveNavComponent } from './core/navigation/responsive-nav.component';
 import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.component';
@@ -23,8 +24,11 @@ export class App {
   protected readonly menuOpen = signal(false);
   protected readonly pullDistance = signal(0);
   protected readonly refreshing = signal(false);
+  protected readonly updateAvailable = signal(false);
   private pullStartY: number | null = null;
   private readonly pullThreshold = 48;
+
+  private readonly swUpdate = inject(SwUpdate);
 
   protected toggleMenu(): void { this.menuOpen.update((open) => !open); }
   protected closeMenu(): void { this.menuOpen.set(false); }
@@ -72,10 +76,20 @@ export class App {
     if (!fair || !window.confirm(`Uscire dalla modalità fiera forzata "${fair.name}"?`)) return;
     await this.activeFair.clearForcedFair();
   }
+  protected async updateApp(): Promise<void> {
+    if (!this.swUpdate.isEnabled) return;
+    await this.swUpdate.activateUpdate();
+    window.location.reload();
+  }
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates.subscribe((event) => {
+        if (event.type === 'VERSION_READY') this.updateAvailable.set(true);
+      });
+    }
     // Handle GitHub Pages SPA redirect from 404.html
     effect(() => {
       const queryParams = this.route.snapshot.queryParams;

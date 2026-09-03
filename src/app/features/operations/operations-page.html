@@ -1,7 +1,7 @@
 <section class="operations-page" aria-labelledby="operations-title">
   <app-page-header [icon]="salesOnly ? '💰' : worksOnly ? '✓' : '📋'" [title]="salesOnly ? 'Vendite' : worksOnly ? 'Lavori' : 'Operazioni'" [actions]="[{ key: 'new', label: salesOnly ? '+ Nuova vendita' : worksOnly ? '+ Nuova lavorazione' : '+ Nuova operazione' }]" [hidden]="!!editingId()" (select)="startNewOperation()" />
 
-  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (errorMessage() && !editingId() && !creating() && !quickPaymentOperation()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
   <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><div class="list-heading-end"><span>{{ visibleOperations().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
@@ -73,6 +73,7 @@
     <div class="dialog-backdrop" aria-hidden="true" (click)="closeQuickPayment()"></div>
     <section class="operation-dialog quick-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-payment-title">
       <form class="operation-form" (ngSubmit)="addQuickPayment()" #quickPaymentForm="ngForm">
+        @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
         <div class="form-heading"><div><h2 id="quick-payment-title">Registra pagamento</h2><p>{{ operation.parentOperationId ? (quickPaymentTarget(operation)?.title + ' · da ' + operation.title) : operation.title }}</p></div></div>
         <p class="quick-payment-summary">Residuo{{ operation.parentOperationId ? ' pacchetto' : '' }}: <strong>{{ quickPaymentRemaining(operation).toFixed(2) }} €</strong></p>
         <div class="form-grid quick-payment-fields">
@@ -101,6 +102,7 @@
         </div>
       } @else {
         <form class="operation-form" (ngSubmit)="save()" #operationForm="ngForm">
+          @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
           <div class="form-heading"><div><h2 id="operation-form-title">{{ editingId() ? (salesOnly ? 'Modifica vendita' : worksOnly ? 'Modifica lavorazione' : 'Modifica operazione') : (salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione') }}</h2></div></div>
 
           @if (mode() === 'fair') {

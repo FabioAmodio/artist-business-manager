@@ -40,6 +40,8 @@
     </main>
   </div>
 
+  @if (updateAvailable()) { <aside class="update-banner" role="status" aria-live="polite"><span>È disponibile un aggiornamento</span><button type="button" (click)="updateApp()">Aggiorna</button></aside> }
+
   <footer class="footer" aria-label="Footer applicativo">
     <div class="footer-content">
       <div class="footer-status" aria-live="polite">
