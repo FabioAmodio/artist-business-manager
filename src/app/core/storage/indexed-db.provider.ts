@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import type { Table } from 'dexie';
 import { AppDatabase, DATABASE_VERSION } from '../persistence/app-database';
 import { APP_ENVIRONMENT } from '../configuration/environment.tokens';
 import type { EntityId } from '../../domain/shared/types';
@@ -30,7 +31,7 @@ export class IndexedDbProvider implements IStorageProvider {
 
   async get<T>(_collection: string, _id: EntityId): Promise<T | null> {
     if (!this.database || !this.isSupportedCollection(_collection)) return null;
-    const table = this.database.table(_collection);
+    const table = this.database.table(_collection) as Table<Record<string, unknown>, string>;
     return (await table.get(_id) as T | undefined) ?? null;
   }
 
@@ -43,10 +44,10 @@ export class IndexedDbProvider implements IStorageProvider {
     if (this.database && this.isSupportedCollection(_collection)) {
       const previous = _collection === 'appSettings' || _collection === 'syncOperations' ? undefined : await this.database.table(_collection).get((_value as { id: EntityId }).id) as Record<string, unknown> | undefined;
       if (_collection !== 'appSettings' && _collection !== 'syncOperations') {
-        const table = this.database.table(_collection);
-        const queue = this.database.table('syncOperations');
+        const table = this.database.table(_collection) as Table<Record<string, unknown>, string>;
+        const queue = this.database.table('syncOperations') as Table<SyncOperation, string>;
         await this.database.transaction('rw', [table, queue], async () => {
-          await table.put(_value);
+          await table.put(_value as Record<string, unknown>);
           await this.recordSyncOperation(_collection, _value as Record<string, unknown>, previous);
         });
         this.syncStatus.notifyLocalChange();
@@ -58,15 +59,15 @@ export class IndexedDbProvider implements IStorageProvider {
 
   async deleteLogical(_collection: string, _id: EntityId, _metadata?: DeleteMetadata): Promise<void> {
     if (!this.database || !this.isSupportedCollection(_collection)) return;
-    const table = this.database.table(_collection);
+    const table = this.database.table(_collection) as Table<Record<string, unknown>, string>;
     const value = await table.get(_id) as (DeleteMetadata & { readonly id: EntityId }) | undefined;
     if (value) {
       if (_collection !== 'appSettings' && _collection !== 'syncOperations') {
         const next = { ...value, deletedAt: _metadata?.deletedAt ?? new Date().toISOString() };
-        const queue = this.database.table('syncOperations');
+        const queue = this.database.table('syncOperations') as Table<SyncOperation, string>;
         await this.database.transaction('rw', [table, queue], async () => {
-          await table.put(next);
-          await this.recordSyncOperation(_collection, next, value);
+          await table.put(next as Record<string, unknown>);
+          await this.recordSyncOperation(_collection, next as Record<string, unknown>, value as unknown as Record<string, unknown>);
         });
         this.syncStatus.notifyLocalChange();
       } else {
