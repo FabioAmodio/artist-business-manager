@@ -38,13 +38,20 @@ export class PersistenceService {
   private driveClientId = '';
   private initialized = false;
   private syncTimer: ReturnType<typeof setTimeout> | undefined;
+  private synchronizePromise: Promise<void> | undefined;
 
   constructor() {
     effect(() => {
       this.syncStatus.changeVersion();
       if (this.initialized && this.source() !== 'none') this.scheduleAutomaticSync();
     });
-    if (typeof window !== 'undefined') window.addEventListener('online', () => this.scheduleAutomaticSync());
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.scheduleAutomaticSync());
+      window.addEventListener('focus', () => this.scheduleAutomaticSync());
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.scheduleAutomaticSync();
+      });
+    }
   }
 
   async initialize(): Promise<void> {
@@ -160,6 +167,16 @@ export class PersistenceService {
   }
 
   async synchronize(): Promise<void> {
+    if (this.synchronizePromise) return this.synchronizePromise;
+    this.synchronizePromise = this.synchronizeInternalWithStatus();
+    try {
+      await this.synchronizePromise;
+    } finally {
+      this.synchronizePromise = undefined;
+    }
+  }
+
+  private async synchronizeInternalWithStatus(): Promise<void> {
     this.ensureCapabilityAllowed('allowCloudSync');
     this.syncStatus.setStatus('syncing');
     try {
