@@ -50,6 +50,7 @@
               "sourceMap": true
             },
             "test": {
+              "index": { "input": "src/index.test.html", "output": "index.html" },
               "baseHref": "/artist-business-manager-test/",
               "fileReplacements": [
                 {
@@ -63,6 +64,7 @@
               ]
             },
             "demo": {
+              "index": { "input": "src/index.demo.html", "output": "index.html" },
               "baseHref": "/artist-business-manager-demo/",
               "fileReplacements": [
                 {
