@@ -1,3 +1,10 @@
+.sync-operations { border-top: 1px solid var(--color-border); display: grid; gap: .6rem; margin-top: 1rem; padding-top: 1rem; }
+.sync-operations h3 { font: 600 1rem var(--font-sans); margin: 0; }
+.sync-operation { align-items: center; border: 1px solid var(--color-border); display: grid; gap: .6rem; grid-template-columns: minmax(0, 1fr) auto auto; padding: .6rem; }
+.sync-operation span { min-width: 0; overflow-wrap: anywhere; }
+.sync-operation small { color: var(--color-text-secondary); display: block; margin-top: .2rem; }
+.sync-operation.sync-error { border-color: var(--color-status-error); }
+@media (max-width: 699px) { .sync-operation { grid-template-columns: 1fr; } }
 .settings { max-width: 48rem; padding: clamp(1.5rem, 4vw, 3.5rem); }
 .eyebrow { color: var(--color-accent); font: 600 .72rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 h1 { color: var(--color-heading); font: 400 clamp(2rem, 5vw, 3.5rem) var(--font-serif); margin: 0 0 1rem; }
@@ -11,12 +18,18 @@ input { accent-color: var(--color-accent); min-width: 1.1rem; min-height: 1.1rem
 .settings-actions button, .file-action { border: 1px solid var(--color-border); border-radius: var(--radius-base); background: var(--color-surface-secondary); color: var(--color-text-primary); cursor: pointer; padding: .65rem .85rem; }
 .file-action input { max-width: 12rem; }
 .settings-actions .status { flex-basis: 100%; margin: 0; }
-.drive-browser { border: 1px solid var(--color-border); display: grid; flex-basis: 100%; gap: .75rem; padding: .75rem; }
+.drive-browser { background: var(--color-surface); border: 1px solid var(--color-border); display: grid; flex-basis: 100%; gap: .75rem; padding: .85rem; }
 .drive-breadcrumbs, .drive-folders { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem; }
+.drive-breadcrumbs { background: var(--color-surface-secondary); border-radius: var(--radius-sm); padding: .4rem .55rem; }
 .drive-breadcrumbs button, .drive-folders button { background: transparent; border: 0; color: var(--color-link); cursor: pointer; padding: .35rem; }
-.drive-folders { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-.drive-folders button:first-child { text-align: left; }
-.drive-folders .folder-select { border: 1px solid var(--color-border); color: var(--color-text-primary); }
+.drive-folder-row { align-items: center; background: var(--color-surface-secondary); border: 1px solid var(--color-border-light); display: grid; gap: .5rem; grid-template-columns: minmax(0, 1fr) auto; padding: .25rem .35rem .25rem .55rem; }
+.drive-folder-row > button:first-child { align-items: center; display: flex; gap: .5rem; min-width: 0; text-align: left; }
+.drive-folder-row > button:first-child span:not(.folder-icon) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-icon { flex-shrink: 0; }
+.drive-folder-row small { color: var(--color-text-secondary); font-size: var(--font-size-xs); margin-left: auto; white-space: nowrap; }
+.drive-folders { display: grid; gap: .45rem; }
+.drive-folders .folder-select { background: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); color: var(--color-text-inverse); font-weight: 700; min-width: 3.25rem; }
+.drive-folders .folder-select:hover, .drive-folders .folder-select:focus-visible { background: var(--color-accent-light); outline: none; }
 .danger-zone { border-color: var(--color-status-error); margin-top: 1.5rem; }
 .factory-reset-button { background: transparent; border: 1px solid var(--color-status-error); border-radius: var(--radius-base); color: var(--color-status-error); cursor: pointer; justify-self: start; padding: .7rem 1rem; }
 .factory-reset-button:disabled { cursor: not-allowed; opacity: .45; }

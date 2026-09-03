@@ -19,7 +19,7 @@
         <option value="google-drive">Google Drive</option>
       </select>
     </label>
-    <p class="status">{{ persistence.source() === 'file-system' ? 'File System configurato' : 'Solo database locale' }}</p>
+    <p class="status">{{ persistence.source() === 'file-system' ? 'File System configurato' : persistence.source() === 'google-drive' ? 'Google Drive configurato' : 'Solo database locale' }}</p>
     <div class="settings-actions">
       <button type="button" (click)="selectPersistenceSource('file-system')">Seleziona cartella</button>
       <button type="button" [disabled]="!persistence.driveConfigured" (click)="connectDrive()">Collega Google Drive</button>
@@ -28,7 +28,7 @@
       @if (persistence.driveFolders().length || persistence.driveFolderPath().length) {
         <div class="drive-browser" aria-label="Navigazione cartelle Drive">
           <div class="drive-breadcrumbs"><button type="button" (click)="browseDriveRoot()">Drive</button>@for (folder of persistence.driveFolderPath(); track folder.id) { <span>/</span><button type="button" (click)="browseDrivePath(folder)">{{ folder.name }}</button> }</div>
-          <div class="drive-folders">@for (folder of persistence.driveFolders(); track folder.id) { <button type="button" (click)="browseDriveFolder(folder)">📁 {{ folder.name }}</button><button class="folder-select" type="button" (click)="selectDriveFolder(folder.id)">Usa</button> }</div>
+          <div class="drive-folders">@for (folder of persistence.driveFolders(); track folder.id) { <div class="drive-folder-row"><button type="button" (click)="browseDriveFolder(folder)"><span class="folder-icon" aria-hidden="true">📁</span><span>{{ folder.name }}</span>@if (folder.shared) { <small>Condivisa</small> }</button><button class="folder-select" type="button" (click)="selectDriveFolder(folder.id)">Usa</button></div> }</div>
           @if (!persistence.driveFolders().length) { <p class="status">Nessuna sottocartella in questa posizione.</p> }
         </div>
       }
@@ -37,6 +37,14 @@
       <button type="button" (click)="exportFile()">Esporta file</button>
     </div>
     @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
+    @if (persistence.pendingSyncOperations().length) {
+      <section class="sync-operations" aria-labelledby="sync-operations-title">
+        <h3 id="sync-operations-title">Operazioni da sincronizzare</h3>
+        @for (operation of persistence.pendingSyncOperations(); track operation.id) {
+          <div class="sync-operation" [class.sync-error]="operation.status !== 'pending'"><span><strong>{{ operation.action }} {{ operation.collection }}</strong> · {{ operation.entityId }}<small>{{ operation.status === 'pending' ? 'In attesa' : operation.status === 'conflict' ? 'Conflitto' : 'Errore' }}{{ operation.errorMessage ? ': ' + operation.errorMessage : '' }}</small></span><button type="button" (click)="retrySyncOperation(operation.id)">Riprova</button><button type="button" (click)="discardSyncOperation(operation.id)">Rimuovi</button></div>
+        }
+      </section>
+    }
     }
   </fieldset>
 

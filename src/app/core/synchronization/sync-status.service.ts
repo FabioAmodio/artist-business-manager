@@ -15,6 +15,7 @@ export class SyncStatusService {
   }
 
   setStatus(status: SyncStatus): void { this.status.set(status); }
+  isSuppressed(): boolean { return this.suppressionDepth > 0; }
 
   async suppress<T>(work: () => Promise<T>): Promise<T> {
     this.suppressionDepth += 1;

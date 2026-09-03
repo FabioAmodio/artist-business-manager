@@ -63,6 +63,14 @@ export class SettingsPage implements OnInit {
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile sincronizzare i dati.'); }
   }
 
+  protected async retrySyncOperation(id: string): Promise<void> {
+    await this.persistence.retrySyncOperation(id);
+  }
+
+  protected async discardSyncOperation(id: string): Promise<void> {
+    await this.persistence.discardSyncOperation(id);
+  }
+
   protected async importFile(event: Event): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;

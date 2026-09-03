@@ -5,16 +5,18 @@ import type { PersistedDataset, PersistenceSettings } from '../../core/persisten
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { PaymentMethodService } from '../payment-methods/payment-method.service';
 import { ServiceService } from '../services/service.service';
+import type { SyncOperation } from '../../domain/models/sync-operation';
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
 const TEST_DATASET_INITIALIZED_ID = 'test-dataset-initialized';
 const DATA_FILE_NAME = 'artist-business-manager-data.json';
 const DATA_COLLECTIONS = ['bundles', 'fairs', 'fairSeries', 'fairEditions', 'lots', 'operations', 'paymentMethods', 'payments', 'parties', 'products', 'purchases', 'services'];
+const SYNC_OPERATIONS_COLLECTION = 'syncOperations';
 const DRIVE_FILE_MIME = 'application/json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
 
-export interface DriveFolder { readonly id: string; readonly name: string; }
+export interface DriveFolder { readonly id: string; readonly name: string; readonly shared?: boolean; }
 interface GoogleTokenClient { requestAccessToken: (options?: { prompt?: string }) => void; }
 interface GoogleApi { accounts: { oauth2: { initTokenClient: (config: { client_id: string; scope: string; callback: (response: { access_token?: string; expires_in?: number; error?: string }) => void }) => GoogleTokenClient } } }
 
@@ -32,19 +34,28 @@ export class PersistenceService {
   readonly driveFolderPath = signal<readonly DriveFolder[]>([]);
   readonly driveConfigured = Boolean(this.environment.googleDriveClientId?.trim());
   readonly driveNeedsAuthentication = signal(false);
+  readonly pendingSyncOperations = signal<readonly SyncOperation[]>([]);
   private directoryHandle: FileSystemDirectoryHandle | undefined;
   private driveAccessToken: string | undefined;
   private driveAccessTokenExpiresAt = 0;
   private driveClientId = '';
   private initialized = false;
   private syncTimer: ReturnType<typeof setTimeout> | undefined;
+  private synchronizePromise: Promise<void> | undefined;
+  private driveReadModifiedTime: string | undefined;
 
   constructor() {
     effect(() => {
       this.syncStatus.changeVersion();
       if (this.initialized && this.source() !== 'none') this.scheduleAutomaticSync();
     });
-    if (typeof window !== 'undefined') window.addEventListener('online', () => this.scheduleAutomaticSync());
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.scheduleAutomaticSync());
+      window.addEventListener('focus', () => this.scheduleAutomaticSync());
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.scheduleAutomaticSync();
+      });
+    }
   }
 
   async initialize(): Promise<void> {
@@ -56,6 +67,7 @@ export class PersistenceService {
     await this.initializeTestDataset();
     this.initialized = true;
     this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
+    await this.refreshSyncOperations();
     if (this.source() === 'google-drive' && this.driveFolderId && this.driveClientId) {
       void this.restoreDriveSession();
     }
@@ -87,7 +99,7 @@ export class PersistenceService {
     if (!this.driveClientId) throw new Error('Inserisci il Google OAuth Client ID.');
     await this.authorizeDrive(true);
     this.driveNeedsAuthentication.set(false);
-    this.driveFolders.set(await this.listDriveFolders('root'));
+    this.driveFolders.set(await this.listDriveRootFolders());
     await this.saveSettings('google-drive', undefined, undefined, this.driveClientId);
     this.status.set('Account Google collegato. Seleziona una cartella.');
   }
@@ -108,7 +120,7 @@ export class PersistenceService {
   async browseDriveRoot(): Promise<void> {
     this.ensureExternalPersistenceAllowed();
     this.driveFolderPath.set([]);
-    this.driveFolders.set(await this.listDriveFolders('root'));
+    this.driveFolders.set(await this.listDriveRootFolders());
   }
 
   async browseDrivePath(folder: DriveFolder): Promise<void> {
@@ -128,7 +140,7 @@ export class PersistenceService {
   async factoryReset(): Promise<void> {
     if (this.source() !== 'none') throw new Error('Il ripristino e consentito solo con sorgente dati Nessuna.');
     await this.syncStatus.suppress(async () => {
-      await this.storage.clearCollections([...DATA_COLLECTIONS, SETTINGS_COLLECTION]);
+      await this.storage.clearCollections([...DATA_COLLECTIONS, SYNC_OPERATIONS_COLLECTION, SETTINGS_COLLECTION]);
       if (this.environment.demoDatasetUrl) {
         await this.writeLocalDataset(await this.readDemoDataset());
         await this.storage.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
@@ -147,7 +159,7 @@ export class PersistenceService {
     const initialized = await this.storage.get<{ id: string }>(SETTINGS_COLLECTION, TEST_DATASET_INITIALIZED_ID);
     if (initialized) return;
     await this.syncStatus.suppress(async () => {
-      await this.storage.clearCollections([...DATA_COLLECTIONS, SETTINGS_COLLECTION]);
+      await this.storage.clearCollections([...DATA_COLLECTIONS, SYNC_OPERATIONS_COLLECTION, SETTINGS_COLLECTION]);
       await this.writeLocalDataset(await this.readDemoDataset());
       await this.storage.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
     });
@@ -160,12 +172,40 @@ export class PersistenceService {
   }
 
   async synchronize(): Promise<void> {
+    if (this.synchronizePromise) return this.synchronizePromise;
+    this.synchronizePromise = this.synchronizeInternalWithStatus();
+    try {
+      await this.synchronizePromise;
+    } finally {
+      this.synchronizePromise = undefined;
+    }
+  }
+
+  async retrySyncOperation(id: string): Promise<void> {
+    const operation = await this.storage.get<SyncOperation>(SYNC_OPERATIONS_COLLECTION, id);
+    if (!operation) return;
+    await this.storage.put(SYNC_OPERATIONS_COLLECTION, { ...operation, status: 'pending', errorMessage: undefined, updatedAt: new Date().toISOString() });
+    if (operation.after) await this.syncStatus.suppress(() => this.storage.put(operation.collection, operation.after));
+    await this.refreshSyncOperations();
+    this.scheduleAutomaticSync();
+  }
+
+  async discardSyncOperation(id: string): Promise<void> {
+    await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, id);
+    await this.refreshSyncOperations();
+  }
+
+  private async synchronizeInternalWithStatus(): Promise<void> {
     this.ensureCapabilityAllowed('allowCloudSync');
     this.syncStatus.setStatus('syncing');
     try {
       await this.synchronizeInternal();
       this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Errore applicativo di sincronizzazione.';
+      if (this.isConflictError(error)) await this.markPendingAsConflict(errorMessage);
+      else if (this.isPermanentSyncError(error)) await this.markPendingAsError(errorMessage);
+      await this.refreshSyncOperations();
       this.syncStatus.setStatus('error');
       throw error;
     }
@@ -178,10 +218,13 @@ export class PersistenceService {
       : this.source() === 'google-drive' ? await this.readDriveDataset() : null;
     if (this.source() === 'file-system' && !this.directoryHandle) throw new Error('La cartella persistente non e disponibile. Selezionala nuovamente.');
     if (this.source() === 'google-drive' && !this.getDriveFolderId()) throw new Error('Seleziona prima una cartella Drive.');
-    const merged = remote ? this.merge(local, remote) : local;
+    if (remote && this.source() === 'google-drive') await this.createDailyDriveBackup(remote);
+    const merged = remote ? await this.mergePendingChanges(this.merge(local, remote), remote) : local;
     await this.syncStatus.suppress(() => this.writeLocalDataset(merged));
     if (this.source() === 'file-system') await this.writeDirectoryDataset(merged);
     if (this.source() === 'google-drive') await this.writeDriveDataset(merged);
+    await this.acknowledgePendingChanges(remote, merged);
+    await this.refreshSyncOperations();
     this.status.set(remote ? 'Dati locali e persistenti allineati.' : 'Dati locali copiati nella cartella persistente.');
   }
 
@@ -239,31 +282,120 @@ export class PersistenceService {
   }
 
   private async listDriveFolders(parentId: string): Promise<readonly DriveFolder[]> {
-    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' })}`);
+    const query = new URLSearchParams({ q: `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' });
+    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`);
     const data = await response.json() as { files?: DriveFolder[] };
     return data.files ?? [];
+  }
+
+  private async listSharedDriveFolders(): Promise<readonly DriveFolder[]> {
+    const query = new URLSearchParams({ q: `sharedWithMe = true and mimeType = 'application/vnd.google-apps.folder' and trashed = false`, fields: 'files(id,name)', orderBy: 'name', pageSize: '1000', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'user' });
+    const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`);
+    const data = await response.json() as { files?: DriveFolder[] };
+    return (data.files ?? []).map((folder) => ({ ...folder, shared: true }));
+  }
+
+  private async listDriveRootFolders(): Promise<readonly DriveFolder[]> {
+    const [owned, shared] = await Promise.all([this.listDriveFolders('root'), this.listSharedDriveFolders()]);
+    const folders = new Map<string, DriveFolder>();
+    for (const folder of [...owned, ...shared]) folders.set(folder.id, folder);
+    return [...folders.values()].sort((first, second) => first.name.localeCompare(second.name));
   }
 
   private async readDriveDataset(): Promise<PersistedDataset | null> {
     const folderId = this.getDriveFolderId();
     const response = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${folderId}' in parents and name = '${DATA_FILE_NAME}' and trashed = false`, fields: 'files(id,modifiedTime)', orderBy: 'modifiedTime desc', pageSize: '1' })}`);
-    const data = await response.json() as { files?: Array<{ id: string }> };
+    const data = await response.json() as { files?: Array<{ id: string; modifiedTime?: string }> };
     if (!data.files?.length) return null;
+    this.driveReadModifiedTime = data.files[0].modifiedTime;
     return this.parseDataset(await (await this.driveFetch(`https://www.googleapis.com/drive/v3/files/${data.files[0].id}?alt=media`)).text());
   }
 
   private async writeDriveDataset(dataset: PersistedDataset): Promise<void> {
     const folderId = this.getDriveFolderId();
-    const search = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${folderId}' in parents and name = '${DATA_FILE_NAME}' and trashed = false`, fields: 'files(id)', pageSize: '1' })}`);
-    const files = await search.json() as { files?: Array<{ id: string }> };
+    const search = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${folderId}' in parents and name = '${DATA_FILE_NAME}' and trashed = false`, fields: 'files(id,modifiedTime)', pageSize: '1' })}`);
+    const files = await search.json() as { files?: Array<{ id: string; modifiedTime?: string }> };
     const metadata = JSON.stringify(files.files?.[0]
       ? { name: DATA_FILE_NAME, mimeType: DRIVE_FILE_MIME }
       : { name: DATA_FILE_NAME, mimeType: DRIVE_FILE_MIME, parents: [folderId] });
+    if (files.files?.[0]?.modifiedTime && this.driveReadModifiedTime && files.files[0].modifiedTime !== this.driveReadModifiedTime) {
+      throw new Error('Il file Drive è cambiato su un altro dispositivo durante la sincronizzazione. Riprova.');
+    }
     const body = JSON.stringify(dataset);
     const url = files.files?.[0] ? `https://www.googleapis.com/upload/drive/v3/files/${files.files[0].id}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
     const boundary = `abm-${Date.now()}`;
     const payload = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${DRIVE_FILE_MIME}\r\n\r\n${body}\r\n--${boundary}--`;
     await this.driveFetch(url, { method: files.files?.[0] ? 'PATCH' : 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: payload });
+  }
+
+  private async createDailyDriveBackup(dataset: PersistedDataset): Promise<void> {
+    const folderId = this.getDriveFolderId();
+    if (!folderId) return;
+    const date = new Date().toISOString().slice(0, 10);
+    const name = `artist-business-manager-data-backup-${date}.json`;
+    const search = await this.driveFetch(`https://www.googleapis.com/drive/v3/files?${new URLSearchParams({ q: `'${folderId}' in parents and name = '${name}' and trashed = false`, fields: 'files(id)', pageSize: '1' })}`);
+    const files = await search.json() as { files?: Array<{ id: string }> };
+    if (files.files?.length) return;
+    const metadata = JSON.stringify({ name, mimeType: DRIVE_FILE_MIME, parents: [folderId] });
+    const boundary = `abm-backup-${Date.now()}`;
+    const payload = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${DRIVE_FILE_MIME}\r\n\r\n${JSON.stringify(dataset)}\r\n--${boundary}--`;
+    await this.driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: payload });
+  }
+
+  private async mergePendingChanges(merged: PersistedDataset, remote: PersistedDataset): Promise<PersistedDataset> {
+    const pending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    const collections = Object.fromEntries(Object.entries(merged.collections).map(([collection, records]) => [collection, [...records]])) as Record<string, Record<string, unknown>[]>;
+    for (const operation of pending) {
+      const remoteRecord = (remote.collections[operation.collection] ?? []).find((record) => String(record['id']) === operation.entityId);
+      const remoteUpdatedAt = String(remoteRecord?.['updatedAt'] ?? remoteRecord?.['createdAt'] ?? '');
+      const baseUpdatedAt = String(operation.before?.['updatedAt'] ?? operation.before?.['createdAt'] ?? '');
+      if (remoteRecord && remoteUpdatedAt > baseUpdatedAt && JSON.stringify(remoteRecord) !== JSON.stringify(operation.after)) {
+        await this.markSyncOperation(operation, 'conflict', 'Il record è stato modificato anche su un altro dispositivo.');
+        continue;
+      }
+      const records = collections[operation.collection] ?? [];
+      const index = records.findIndex((record) => String(record['id']) === operation.entityId);
+      if (operation.after) {
+        if (index >= 0) records[index] = operation.after;
+        else records.push(operation.after);
+      }
+      collections[operation.collection] = records;
+    }
+    return { ...merged, collections };
+  }
+
+  private async acknowledgePendingChanges(remote: PersistedDataset | null, merged: PersistedDataset): Promise<void> {
+    const pending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    for (const operation of pending) {
+      const localRecord = (merged.collections[operation.collection] ?? []).find((record) => String(record['id']) === operation.entityId);
+      if (JSON.stringify(localRecord) === JSON.stringify(operation.after)) await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, operation.id);
+    }
+  }
+
+  private async markSyncOperation(operation: SyncOperation, status: SyncOperation['status'], errorMessage: string): Promise<void> {
+    await this.storage.put(SYNC_OPERATIONS_COLLECTION, { ...operation, status, errorMessage, updatedAt: new Date().toISOString() });
+  }
+
+  private async markPendingAsError(errorMessage: string): Promise<void> {
+    const pending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    for (const operation of pending) await this.markSyncOperation(operation, 'error', errorMessage);
+  }
+
+  private async markPendingAsConflict(errorMessage: string): Promise<void> {
+    const pending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    for (const operation of pending) await this.markSyncOperation(operation, 'conflict', errorMessage);
+  }
+
+  private isPermanentSyncError(error: unknown): boolean {
+    return error instanceof Error && /^Google Drive ha restituito 4\d\d/.test(error.message);
+  }
+
+  private isConflictError(error: unknown): boolean {
+    return error instanceof Error && error.message.includes('file Drive è cambiato su un altro dispositivo');
+  }
+
+  private async refreshSyncOperations(): Promise<void> {
+    this.pendingSyncOperations.set(await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION));
   }
 
   private async driveFetch(input: string, init: RequestInit = {}): Promise<Response> {
