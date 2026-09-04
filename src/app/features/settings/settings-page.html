@@ -1,17 +1,48 @@
 <section class="settings" aria-labelledby="settings-title">
-  <h1 id="settings-title">Trasparenza AI</h1>
-  <fieldset>
-    <legend>Preferenze future</legend>
-    <label><input type="checkbox" [checked]="settings().enabled" (change)="toggleEnabled($event)" /> Abilita funzionalita assistite da AI</label>
-    <label><input type="checkbox" [checked]="settings().allowCloudProcessing" (change)="toggleCloud($event)" /> Consenti elaborazione su servizi cloud</label>
-  </fieldset>
-  <p class="status">Stato consenso: <strong>{{ settings().consentGiven ? 'concesso' : 'non concesso' }}</strong></p>
+  <h1 id="settings-title">Impostazioni</h1>
 
   <fieldset>
     <legend>Persistenza dati</legend>
+    <label>Modalità dati
+      <select [ngModel]="persistence.mode()" (ngModelChange)="selectPersistenceMode($event)">
+        <option value="offline">Solo offline</option>
+        <option value="firestore">Firebase</option>
+      </select>
+    </label>
+    @if (persistence.mode() === 'firestore') {
+      <p class="status">Firebase collegato. I dati utilizzano il workspace remoto selezionato.</p>
+      @if (firebaseAuth.user(); as user) {
+        <p class="status">Account Firebase: <strong>{{ user.email || user.displayName || user.uid }}</strong></p>
+        @if (workspace.error()) { <p class="status error" role="alert">{{ workspace.error() }}</p> }
+        @if (workspace.workspaces().length) {
+          <label>Workspace
+            <select [ngModel]="workspace.activeWorkspaceId()" (ngModelChange)="selectWorkspace($event)">
+              @for (availableWorkspace of workspace.workspaces(); track availableWorkspace.id) { <option [value]="availableWorkspace.id">{{ availableWorkspace.name }}</option> }
+            </select>
+          </label>
+          @if (workspace.isActiveOwner()) {
+            <button type="button" (click)="addMember()">Aggiungi collaboratore</button>
+            @if (workspace.pendingInvites().length) {
+              <section class="pending-invites" aria-labelledby="pending-invites-title">
+                <h3 id="pending-invites-title">Inviti in attesa</h3>
+                @for (invite of workspace.pendingInvites(); track invite.id) { <p><strong>{{ invite.email }}</strong> · {{ invite.role }}</p> }
+              </section>
+            }
+          }
+          <button type="button" [disabled]="seedingFirestore()" [attr.aria-busy]="seedingFirestore()" (click)="seedFirestoreFromOffline()">{{ seedingFirestore() ? 'Copia dati in corso...' : 'Copia dati locali in Firebase' }}</button>
+          <button type="button" [disabled]="mergingFirestore()" [attr.aria-busy]="mergingFirestore()" (click)="mergeOfflineIntoFirestore()">{{ mergingFirestore() ? 'Merge in corso...' : 'Unisci dati locali in Firebase' }}</button>
+        } @else {
+          <p class="status">Nessun workspace autorizzato per questo account.</p>
+          <button type="button" (click)="createWorkspace()">Crea workspace</button>
+        }
+        <button type="button" (click)="signOutFromFirebase()">Disconnetti account Google</button>
+      } @else {
+        <button type="button" [disabled]="authenticating()" (click)="signInWithGoogle()">{{ authenticating() ? 'Accesso in corso...' : 'Accedi con Google' }}</button>
+      }
+    }
     @if (!environment.allowExternalPersistence) {
       <p class="status">Ambiente {{ environment.environmentName.toUpperCase() }}: dati demo locali in IndexedDB. Le modifiche restano in questa installazione e il reset ricarica il dataset demo.</p>
-    } @else {
+    } @else if (environment.environmentName !== 'release') {
     <label>Sorgente dati
       <select [ngModel]="persistence.source()" (ngModelChange)="selectPersistenceSource($event)">
         <option value="none">Nessuna</option>
@@ -34,10 +65,7 @@
         </div>
       }
       <button class="sync-button" [class.syncing]="synchronizing() || syncStatus.status() === 'syncing'" type="button" [disabled]="persistence.source() === 'none' || synchronizing() || syncStatus.status() === 'syncing'" [attr.aria-busy]="synchronizing() || syncStatus.status() === 'syncing'" (click)="synchronizePersistence()">@if (synchronizing() || syncStatus.status() === 'syncing') { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizzazione... } @else { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizza }</button>
-      <label class="file-action">Importa file <input type="file" accept="application/json" (change)="importFile($event)" /></label>
-      <button type="button" (click)="exportFile()">Esporta file</button>
     </div>
-    @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
     @if (persistence.pendingSyncOperations().length) {
       <section class="sync-operations" aria-labelledby="sync-operations-title">
         <h3 id="sync-operations-title">Operazioni da sincronizzare</h3>
@@ -47,26 +75,55 @@
       </section>
     }
     }
+    <div class="settings-actions file-actions">
+      <label class="file-action">Importa file <input type="file" accept="application/json" (change)="importFile($event)" /></label>
+      <button type="button" (click)="exportFile()">Esporta file</button>
+    </div>
+    @if (persistence.status()) { <p class="status" role="status">{{ persistence.status() }}</p> }
   </fieldset>
 
   <fieldset class="danger-zone">
-    <legend>Ripristino database locale</legend>
-    <p class="status">{{ !environment.allowExternalPersistence ? 'Elimina i dati locali e ricarica il dataset demo originale.' : 'Elimina tutti i dati locali e ricrea esclusivamente i dati obbligatori di sistema.' }}</p>
-    <button class="factory-reset-button" type="button" [disabled]="persistence.source() !== 'none'" (click)="openFactoryReset()">Ripristina impostazioni di fabbrica</button>
-    @if (persistence.source() !== 'none') { <p class="status">Disponibile solo quando la sorgente dati è impostata su Nessuna.</p> }
+    <legend>Ripristino dati</legend>
+    <p class="status">Scegli se ripristinare i dati locali, quelli Firebase o entrambi.</p>
+    @if (!(environment.environmentName === 'release' && persistence.mode() === 'firestore' && firebaseAuth.user() && !workspace.isActiveOwner())) {
+      <button class="factory-reset-button" type="button" (click)="openFactoryReset()">Ripristina dati</button>
+    }
   </fieldset>
+
+  @if (inviteDialogOpen()) {
+    <div class="dialog-backdrop" aria-hidden="true" (click)="closeInviteDialog()"></div>
+    <section class="reset-dialog invite-dialog" role="dialog" aria-modal="true" aria-labelledby="invite-dialog-title">
+      <h2 id="invite-dialog-title">Aggiungi collaboratore</h2>
+      <label>Email <input name="inviteEmail" type="email" required [(ngModel)]="inviteEmail" /></label>
+      <label>Ruolo
+        <select name="inviteRole" [(ngModel)]="inviteRole">
+          <option value="editor">Editor</option>
+          <option value="viewer">Visualizzatore</option>
+        </select>
+      </label>
+      @if (inviteError()) { <p class="status error" role="alert">{{ inviteError() }}</p> }
+      <div class="reset-dialog-actions first-confirmation">
+        <button type="button" [disabled]="inviting()" (click)="closeInviteDialog()">Annulla</button>
+        <button class="continue-button" type="button" [disabled]="inviting() || !inviteEmail" [attr.aria-busy]="inviting()" (click)="sendInvite()">{{ inviting() ? 'Invio in corso...' : 'Invia invito' }}</button>
+      </div>
+    </section>
+  }
 
   @if (resetStep()) {
     <div class="dialog-backdrop" aria-hidden="true" (click)="closeFactoryReset()"></div>
     <section class="reset-dialog" role="alertdialog" aria-modal="true" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-description">
       @if (resetStep() === 1) {
-        <h2 id="reset-dialog-title">Ripristinare il database?</h2>
-        <p id="reset-dialog-description">L'operazione è irreversibile. Tutti i dati locali verranno cancellati e l'applicazione tornerà alle impostazioni di fabbrica.</p>
-        <p>{{ !environment.allowExternalPersistence ? 'Verrà ricaricato il dataset demo originale.' : 'Rimarranno soltanto i dati obbligatori, inclusi Contanti e Bancomat.' }}</p>
+        <h2 id="reset-dialog-title">Ripristinare i dati?</h2>
+        <p id="reset-dialog-description">Scegli l'origine da ripristinare.</p>
+        <label class="reset-target"><input type="radio" name="resetTarget" value="local" [checked]="resetTarget() === 'local'" (change)="resetTarget.set('local')" /> Solo locale</label>
+        @if (persistence.mode() === 'firestore' && workspace.activeWorkspaceId() && (environment.environmentName !== 'release' || workspace.isActiveOwner())) {
+          <label class="reset-target"><input type="radio" name="resetTarget" value="remote" [checked]="resetTarget() === 'remote'" (change)="resetTarget.set('remote')" /> Solo remoto</label>
+          <label class="reset-target"><input type="radio" name="resetTarget" value="both" [checked]="resetTarget() === 'both'" (change)="resetTarget.set('both')" /> Locale e remoto</label>
+        }
         <div class="reset-dialog-actions first-confirmation"><button type="button" (click)="closeFactoryReset()">Annulla</button><button class="continue-button" type="button" (click)="continueFactoryReset()">Continua</button></div>
       } @else {
-        <h2 id="reset-dialog-title">Conferma cancellazione definitiva</h2>
-        <p id="reset-dialog-description">Per confermare, inserisci il codice a quattro cifre mostrato sotto. Tutti i dati saranno cancellati definitivamente.</p>
+        <h2 id="reset-dialog-title">Conferma ripristino definitivo</h2>
+        <p id="reset-dialog-description">Per confermare, inserisci il codice a quattro cifre mostrato sotto. I dati selezionati saranno cancellati definitivamente.</p>
         <strong class="reset-code" aria-label="Codice di verifica">{{ resetCode() }}</strong>
         <label class="reset-code-field">Codice di verifica <input name="resetCode" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" [(ngModel)]="resetCodeInput" /></label>
         @if (resetError()) { <p class="reset-error" role="alert">{{ resetError() }}</p> }

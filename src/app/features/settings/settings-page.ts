@@ -1,10 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FairContextService } from '../../core/event/fair-context.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
-import type { PersistenceSource } from '../../core/persistence/persistence.models';
+import type { PersistenceMode, PersistenceSource } from '../../core/persistence/persistence.models';
+import type { WorkspaceRole } from '../../domain/models/workspace';
 import { APP_ENVIRONMENT } from '../../core/configuration/environment.tokens';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
+import { FirebaseAuthService } from '../../core/firebase/firebase-auth.service';
+import { WorkspaceService } from '../../core/firebase/workspace.service';
+
+type ResetTarget = 'local' | 'remote' | 'both';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -14,20 +18,43 @@ import { SyncStatusService } from '../../core/synchronization/sync-status.servic
   styleUrl: './settings-page.scss',
 })
 export class SettingsPage implements OnInit {
-  private readonly fairContext = inject(FairContextService);
   protected readonly persistence = inject(PersistenceService);
   protected readonly syncStatus = inject(SyncStatusService);
+  protected readonly firebaseAuth = inject(FirebaseAuthService);
+  protected readonly workspace = inject(WorkspaceService);
   protected readonly environment = inject(APP_ENVIRONMENT);
-  protected readonly settings = this.fairContext.transparencySettings;
   protected readonly resetStep = signal<0 | 1 | 2>(0);
   protected readonly resetCode = signal('');
   protected readonly resetError = signal('');
   protected readonly resetting = signal(false);
   protected readonly selectingDriveFolderId = signal<string | null>(null);
   protected readonly synchronizing = signal(false);
+  protected readonly authenticating = signal(false);
+  protected readonly seedingFirestore = signal(false);
+  protected readonly mergingFirestore = signal(false);
+  protected readonly resetTarget = signal<ResetTarget>('local');
+  protected readonly inviteDialogOpen = signal(false);
+  protected readonly inviteError = signal('');
+  protected readonly inviting = signal(false);
+  protected inviteEmail = '';
+  protected inviteRole: Exclude<WorkspaceRole, 'owner'> = 'editor';
   protected resetCodeInput = '';
 
-  ngOnInit(): void { void this.persistence.initialize(); }
+  constructor() {
+    effect(() => {
+      if (this.persistence.mode() === 'firestore' && this.firebaseAuth.initialized() && this.firebaseAuth.user()) void this.workspace.loadForCurrentUser();
+      else if (!this.firebaseAuth.user()) this.workspace.loadForCurrentUser();
+    });
+  }
+
+  ngOnInit(): void {
+    void this.initializePersistenceSettings();
+  }
+
+  private async initializePersistenceSettings(): Promise<void> {
+    await this.persistence.initialize();
+    if (this.persistence.mode() === 'firestore') this.firebaseAuth.start();
+  }
 
   protected async selectPersistenceSource(source: PersistenceSource): Promise<void> {
     try {
@@ -35,6 +62,81 @@ export class SettingsPage implements OnInit {
       else if (source === 'file-system') await this.persistence.chooseFileSystem();
       else this.persistence.status.set('Inserisci il Client ID e collega Google Drive.');
     } catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile configurare la persistenza.'); }
+  }
+
+  protected async selectPersistenceMode(mode: PersistenceMode): Promise<void> {
+    try { await this.persistence.setMode(mode); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile cambiare modalità di persistenza.'); }
+  }
+
+  protected async signInWithGoogle(): Promise<void> {
+    if (this.authenticating()) return;
+    this.authenticating.set(true);
+    try { await this.firebaseAuth.signInWithGoogle(); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile accedere con Google.'); }
+    finally { this.authenticating.set(false); }
+  }
+
+  protected async signOutFromFirebase(): Promise<void> {
+    try { await this.firebaseAuth.signOut(); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile disconnettere l\'account Google.'); }
+  }
+
+  protected async seedFirestoreFromOffline(): Promise<void> {
+    if (this.seedingFirestore()) return;
+    this.seedingFirestore.set(true);
+    try { await this.persistence.seedFirestoreFromOffline(); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile copiare i dati locali in Firebase.'); }
+    finally { this.seedingFirestore.set(false); }
+  }
+
+  protected async mergeOfflineIntoFirestore(): Promise<void> {
+    if (this.mergingFirestore()) return;
+    this.mergingFirestore.set(true);
+    try { await this.persistence.mergeOfflineIntoFirestore(); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile unire i dati locali in Firebase.'); }
+    finally { this.mergingFirestore.set(false); }
+  }
+
+  protected selectWorkspace(workspaceId: string): void { this.workspace.selectWorkspace(workspaceId); }
+
+  protected async createWorkspace(): Promise<void> {
+    const name = window.prompt('Nome del workspace');
+    if (name === null) return;
+    try { await this.workspace.createWorkspace(name); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile creare il workspace.'); }
+  }
+
+  protected async addMember(): Promise<void> {
+    this.inviteEmail = '';
+    this.inviteRole = 'editor';
+    this.inviteError.set('');
+    this.inviteDialogOpen.set(true);
+  }
+
+  protected closeInviteDialog(): void {
+    if (this.inviting()) return;
+    this.inviteDialogOpen.set(false);
+  }
+
+  protected async sendInvite(): Promise<void> {
+    if (this.inviting() || !this.inviteEmail.trim()) return;
+    this.inviting.set(true);
+    this.inviteError.set('');
+    try {
+      const invite = await this.workspace.createInvite(this.inviteEmail, this.inviteRole);
+      const inviteUrl = new URL('invite', document.baseURI);
+      inviteUrl.searchParams.set('workspaceId', invite.workspaceId);
+      inviteUrl.searchParams.set('inviteId', invite.id);
+      await this.firebaseAuth.sendEmailLink(invite.email, inviteUrl.toString());
+      this.persistence.status.set(`Invito inviato a ${invite.email}.`);
+      this.inviteDialogOpen.set(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Impossibile inviare l\'invito.';
+      this.inviteError.set(message);
+      this.persistence.status.set(message);
+    }
+    finally { this.inviting.set(false); }
   }
 
   protected async connectDrive(): Promise<void> {
@@ -101,8 +203,8 @@ export class SettingsPage implements OnInit {
   }
 
   protected openFactoryReset(): void {
-    if (this.persistence.source() !== 'none') return;
     this.resetError.set('');
+    this.resetTarget.set('local');
     this.resetStep.set(1);
   }
 
@@ -130,8 +232,9 @@ export class SettingsPage implements OnInit {
     this.resetting.set(true);
     this.resetError.set('');
     try {
-      await this.persistence.factoryReset();
-      this.fairContext.updateAiSettings({ enabled: false, consentGiven: false, allowCloudProcessing: false });
+      const target = this.resetTarget();
+      if (target === 'remote' || target === 'both') await this.persistence.resetFirestoreWorkspace();
+      if (target === 'local' || target === 'both') await this.persistence.factoryReset();
       window.location.reload();
     } catch (error) {
       this.resetError.set(error instanceof Error ? error.message : 'Impossibile ripristinare il database locale.');
@@ -139,13 +242,4 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  protected toggleEnabled(event: Event): void {
-    const enabled = (event.target as HTMLInputElement).checked;
-    this.fairContext.updateAiSettings({ ...this.settings(), enabled, consentGiven: enabled });
-  }
-
-  protected toggleCloud(event: Event): void {
-    const allowCloudProcessing = (event.target as HTMLInputElement).checked;
-    this.fairContext.updateAiSettings({ ...this.settings(), allowCloudProcessing });
-  }
 }

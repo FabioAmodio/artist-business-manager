@@ -77,6 +77,11 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/settings/settings-page').then((m) => m.SettingsPage),
 	},
 	{
+		path: 'invite',
+		data: { title: 'Invito workspace' },
+		loadComponent: () => import('./features/workspace-invite/workspace-invite-page').then((m) => m.WorkspaceInvitePage),
+	},
+	{
 		path: 'trash',
 		data: { title: 'Cestino' },
 		loadComponent: () => import('./features/trash/trash-page').then((m) => m.TrashPage),

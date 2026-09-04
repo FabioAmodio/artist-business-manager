@@ -1,0 +1,8 @@
+<main class="workspace-invite" aria-labelledby="invite-title">
+  <h1 id="invite-title">Invito workspace</h1>
+  <p>{{ message() }}</p>
+  @if (!authUser()) {
+    <label>Email <input type="email" name="inviteEmail" required [(ngModel)]="email" /></label>
+    <button type="button" [disabled]="busy() || !email" (click)="completeSignIn()">{{ busy() ? 'Accesso in corso...' : 'Accedi e accetta invito' }}</button>
+  }
+</main>

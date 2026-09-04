@@ -46,8 +46,8 @@
     <div class="footer-content">
       <div class="footer-status" aria-live="polite">
         <span class="status-dot" [class.online]="appState.isOnline()"></span>
-        <span class="status-text">{{ appState.isOnline() ? 'Connesso' : 'Non connesso' }}</span>
-        <span class="sync-status">{{ syncStatus.status() === 'pending' ? 'Da sincronizzare' : syncStatus.status() === 'syncing' ? 'Sincronizzazione in corso' : syncStatus.status() === 'synced' ? 'Allineato' : syncStatus.status() === 'error' ? 'Errore sincronizzazione' : 'Solo locale' }}</span>
+        <span class="status-text">{{ appState.isOnline() ? 'Rete disponibile' : 'Offline' }}</span>
+        <span class="sync-status">{{ persistence.mode() === 'offline' ? 'Solo locale' : !firebaseAuth.initialized() ? 'Connessione Firebase in verifica' : !firebaseAuth.user() ? 'Firebase non autenticato' : syncStatus.status() === 'pending' ? 'Modifiche in attesa' : syncStatus.status() === 'syncing' ? 'Sincronizzazione in corso' : syncStatus.status() === 'synced' ? 'Firebase allineato' : syncStatus.status() === 'error' ? 'Errore sincronizzazione' : 'Firebase pronto' }}</span>
       </div>
     </div>
   </footer>

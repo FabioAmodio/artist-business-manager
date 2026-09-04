@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "test": "artist-business-manager-test",
+    "demo": "artist-business-manager-demo",
+    "prod": "artist-business-manager-prod"
+  }
+}

@@ -22,6 +22,7 @@ export interface DeleteMetadata {
 }
 
 export interface IStorageProvider {
+  setMode?(mode: 'offline' | 'firestore'): void;
   open(): Promise<void>;
   close(): Promise<void>;
   get<T>(collection: string, id: EntityId): Promise<T | null>;

@@ -1,7 +1,9 @@
+export type PersistenceMode = 'offline' | 'firestore';
 export type PersistenceSource = 'none' | 'file-system' | 'google-drive';
 
 export interface PersistenceSettings {
   readonly id: 'current';
+  readonly mode?: PersistenceMode;
   readonly source: PersistenceSource;
   readonly directoryHandle?: FileSystemDirectoryHandle;
   readonly driveFolderId?: string;

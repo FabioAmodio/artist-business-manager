@@ -1,20 +1,30 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
 import { APP_ENVIRONMENT, STORAGE_PROVIDER } from '../../core/configuration/environment.tokens';
 import type { IStorageProvider } from '../../core/storage/storage-provider';
-import type { PersistedDataset, PersistenceSettings } from '../../core/persistence/persistence.models';
+import type { PersistedDataset, PersistenceMode, PersistenceSettings } from '../../core/persistence/persistence.models';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { PaymentMethodService } from '../payment-methods/payment-method.service';
 import { ServiceService } from '../services/service.service';
 import type { SyncOperation } from '../../domain/models/sync-operation';
+import { IndexedDbProvider } from '../../core/storage/indexed-db.provider';
+import { WorkspaceService } from '../../core/firebase/workspace.service';
+import { FirebaseAuthService } from '../../core/firebase/firebase-auth.service';
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
 const TEST_DATASET_INITIALIZED_ID = 'test-dataset-initialized';
 const DATA_FILE_NAME = 'artist-business-manager-data.json';
 const DATA_COLLECTIONS = ['bundles', 'fairs', 'fairSeries', 'fairEditions', 'lots', 'operations', 'paymentMethods', 'payments', 'parties', 'products', 'purchases', 'services'];
+const SYSTEM_COLLECTIONS = new Set(['paymentMethods', 'services']);
 const SYNC_OPERATIONS_COLLECTION = 'syncOperations';
 const DRIVE_FILE_MIME = 'application/json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
+
+export interface FirestoreMergeResult {
+  readonly created: number;
+  readonly unchanged: number;
+  readonly conflicts: number;
+}
 
 export interface DriveFolder { readonly id: string; readonly name: string; readonly shared?: boolean; }
 interface GoogleTokenClient { requestAccessToken: (options?: { prompt?: string }) => void; }
@@ -27,6 +37,10 @@ export class PersistenceService {
   private readonly syncStatus = inject(SyncStatusService);
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly serviceService = inject(ServiceService);
+  private readonly offlineStorage = inject(IndexedDbProvider, { optional: true });
+  private readonly workspace = inject(WorkspaceService);
+  private readonly firebaseAuth = inject(FirebaseAuthService);
+  readonly mode = signal<PersistenceMode>(this.environment.defaultPersistenceMode);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
   readonly status = signal('');
@@ -60,10 +74,12 @@ export class PersistenceService {
 
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
-    this.source.set(this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
-    this.directoryHandle = this.isDemoEnvironment ? undefined : settings?.directoryHandle;
-    this.driveClientId = settings?.driveClientId ?? this.environment.googleDriveClientId ?? '';
-    this.driveFolderId = this.isDemoEnvironment ? undefined : settings?.driveFolderId;
+    this.mode.set(settings?.mode ?? this.environment.defaultPersistenceMode);
+    this.storage.setMode?.(this.mode());
+    this.source.set(this.environment.environmentName === 'release' || this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
+    this.directoryHandle = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.directoryHandle;
+    this.driveClientId = this.environment.environmentName === 'release' ? '' : settings?.driveClientId ?? this.environment.googleDriveClientId ?? '';
+    this.driveFolderId = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.driveFolderId;
     await this.initializeTestDataset();
     this.initialized = true;
     this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
@@ -71,6 +87,99 @@ export class PersistenceService {
     if (this.source() === 'google-drive' && this.driveFolderId && this.driveClientId) {
       void this.restoreDriveSession();
     }
+  }
+
+  async setMode(mode: PersistenceMode): Promise<void> {
+    if (mode === 'firestore') {
+      await this.storage.put(SETTINGS_COLLECTION, {
+        id: SETTINGS_ID,
+        mode,
+        source: 'none',
+        updatedAt: new Date().toISOString(),
+      } satisfies PersistenceSettings);
+      this.storage.setMode?.(mode);
+      this.mode.set(mode);
+      this.source.set('none');
+      this.firebaseAuth.start();
+      this.status.set('Firebase selezionato. Accedi per utilizzare il workspace remoto.');
+      return;
+    }
+    await this.disable();
+    this.storage.setMode?.('offline');
+    this.mode.set('offline');
+  }
+
+  async seedFirestoreFromOffline(): Promise<void> {
+    if (this.mode() !== 'firestore') throw new Error('Seleziona prima la modalità Firebase.');
+    if (!this.offlineStorage) throw new Error('Database locale non disponibile.');
+    const remoteRecords = (await Promise.all(DATA_COLLECTIONS.map(async (collection) => {
+      const records = await this.storage.list<Record<string, unknown>>(collection);
+      return SYSTEM_COLLECTIONS.has(collection) ? records.filter((record) => record['system'] !== true) : records;
+    }))).flat();
+    if (remoteRecords.length) throw new Error('Il workspace Firebase contiene già dati. Il caricamento iniziale è consentito solo su un workspace vuoto.');
+    const localDataset = await this.readDataset(this.offlineStorage);
+    for (const collection of DATA_COLLECTIONS) {
+      for (const record of localDataset.collections[collection] ?? []) await this.storage.put(collection, record);
+    }
+    this.status.set('Dati locali copiati nel workspace Firebase.');
+  }
+
+  async mergeOfflineIntoFirestore(): Promise<FirestoreMergeResult> {
+    if (this.mode() !== 'firestore') throw new Error('Seleziona prima la modalità Firebase.');
+    if (!this.offlineStorage) throw new Error('Database locale non disponibile.');
+    const localDataset = await this.readDataset(this.offlineStorage);
+    for (const collection of DATA_COLLECTIONS) {
+      const invalidIndex = (localDataset.collections[collection] ?? []).findIndex((record) => !record['id']);
+      if (invalidIndex >= 0) throw new Error(`Record senza id nella collection ${collection}, posizione ${invalidIndex + 1}. Correggi il file importato e riprova.`);
+    }
+    let created = 0;
+    let unchanged = 0;
+    let conflicts = 0;
+    for (const collection of DATA_COLLECTIONS) {
+      const [localRecords, remoteRecords] = await Promise.all([
+        this.offlineStorage.list<Record<string, unknown>>(collection),
+        this.storage.list<Record<string, unknown>>(collection),
+      ]);
+      const remoteById = new Map(remoteRecords.map((record) => [String(record['id']), record]));
+      for (const localRecord of localDataset.collections[collection] ?? []) {
+        const remoteRecord = remoteById.get(String(localRecord['id']));
+        if (!remoteRecord) {
+          await this.storage.put(collection, localRecord);
+          created += 1;
+        } else if (this.sameData(localRecord, remoteRecord)) {
+          unchanged += 1;
+        } else {
+          conflicts += 1;
+        }
+      }
+    }
+    const result: FirestoreMergeResult = { created, unchanged, conflicts };
+    this.status.set(`Merge completato: ${result.created} creati, ${result.unchanged} invariati, ${result.conflicts} conflitti non sovrascritti.`);
+    return result;
+  }
+
+  async resetFirestoreWorkspace(): Promise<number> {
+    if (this.mode() !== 'firestore') throw new Error('Seleziona prima la modalità Firebase.');
+    if (this.environment.environmentName === 'release' && !this.workspace.isActiveOwner()) throw new Error('Solo il proprietario del workspace può eseguire il ripristino remoto PROD.');
+    const backup = await this.readDataset(this.storage);
+    if (this.environment.environmentName === 'release') this.downloadDataset(backup, 'artist-business-manager-firestore-backup.json');
+    let deleted = 0;
+    for (const collection of DATA_COLLECTIONS) {
+      const records = await this.storage.list<Record<string, unknown>>(collection);
+      const removable = records.filter((record) => !(SYSTEM_COLLECTIONS.has(collection) && record['system'] === true));
+      for (const record of removable) {
+        await this.storage.deletePermanent(collection, String(record['id']));
+        deleted += 1;
+      }
+    }
+    if (this.environment.demoDatasetUrl) {
+      const demoDataset = await this.readDemoDataset();
+      await this.writeLocalDataset(this.storage, demoDataset);
+    } else {
+      await Promise.all([this.paymentMethodService.list(), this.serviceService.list()]);
+    }
+    this.status.set(`Ripristino remoto completato: ${deleted} record rimossi e dati iniziali ripristinati.`);
+    return deleted;
   }
 
   private async restoreDriveSession(): Promise<void> {
@@ -153,17 +262,19 @@ export class PersistenceService {
   }
 
   async factoryReset(): Promise<void> {
-    if (this.source() !== 'none') throw new Error('Il ripristino e consentito solo con sorgente dati Nessuna.');
+    if (!this.offlineStorage) throw new Error('Database locale non disponibile.');
     await this.syncStatus.suppress(async () => {
-      await this.storage.clearCollections([...DATA_COLLECTIONS, SYNC_OPERATIONS_COLLECTION, SETTINGS_COLLECTION]);
+      this.storage.setMode?.('offline');
+      await this.offlineStorage!.clearCollections([...DATA_COLLECTIONS, SYNC_OPERATIONS_COLLECTION, SETTINGS_COLLECTION]);
       if (this.environment.demoDatasetUrl) {
-        await this.writeLocalDataset(await this.readDemoDataset());
-        await this.storage.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
+        await this.writeLocalDataset(this.offlineStorage!, await this.readDemoDataset());
+        await this.offlineStorage!.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
         return;
       }
-      await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source: 'none', updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+      await this.offlineStorage!.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source: 'none', updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
       await Promise.all([this.paymentMethodService.list(), this.serviceService.list()]);
     });
+    this.mode.set('offline');
     this.source.set('none');
     this.syncStatus.setStatus('local-only');
     this.status.set('Database locale ripristinato alle impostazioni di fabbrica.');
@@ -175,7 +286,7 @@ export class PersistenceService {
     if (initialized) return;
     await this.syncStatus.suppress(async () => {
       await this.storage.clearCollections([...DATA_COLLECTIONS, SYNC_OPERATIONS_COLLECTION, SETTINGS_COLLECTION]);
-      await this.writeLocalDataset(await this.readDemoDataset());
+      await this.writeLocalDataset(this.storage, await this.readDemoDataset());
       await this.storage.put(SETTINGS_COLLECTION, { id: TEST_DATASET_INITIALIZED_ID, source: 'test-dataset', updatedAt: new Date().toISOString() });
     });
   }
@@ -236,7 +347,7 @@ export class PersistenceService {
     if (this.source() === 'google-drive' && !this.getDriveFolderId()) throw new Error('Seleziona prima una cartella Drive.');
     if (remote && this.source() === 'google-drive') await this.createDailyDriveBackup(remote);
     const merged = remote ? await this.mergePendingChanges(this.merge(local, remote), remote) : local;
-    await this.syncStatus.suppress(() => this.writeLocalDataset(merged));
+    await this.syncStatus.suppress(() => this.writeLocalDataset(this.storage, merged));
     if (this.source() === 'file-system') await this.writeDirectoryDataset(merged);
     if (this.source() === 'google-drive') await this.writeDriveDataset(merged);
     await this.acknowledgePendingChanges(remote, merged);
@@ -268,14 +379,14 @@ export class PersistenceService {
   async importFile(file: File): Promise<void> {
     this.ensureCapabilityAllowed('allowImportExport');
     const dataset = this.parseDataset(await file.text());
-    await this.writeLocalDataset(this.merge(await this.readLocalDataset(), dataset));
+    await this.writeLocalDataset(this.storage, this.merge(await this.readLocalDataset(), dataset));
     this.status.set('Dati importati nel database locale.');
   }
 
   async persistImportedFile(file: File): Promise<void> {
     this.ensureCapabilityAllowed('allowImportExport');
     const dataset = this.parseDataset(await file.text());
-    await this.writeLocalDataset(this.merge(await this.readLocalDataset(), dataset));
+    await this.writeLocalDataset(this.storage, this.merge(await this.readLocalDataset(), dataset));
     if (this.source() === 'file-system' && this.directoryHandle) await this.writeDirectoryDataset(await this.readLocalDataset());
     this.status.set('Dati importati e allineati.');
   }
@@ -452,13 +563,33 @@ export class PersistenceService {
   private getDriveFolderId(): string | undefined { return this.driveFolderId; }
 
   private async readLocalDataset(): Promise<PersistedDataset> {
-    const collections: Record<string, readonly Record<string, unknown>[]> = {};
-    for (const collection of DATA_COLLECTIONS) collections[collection] = await this.storage.list<Record<string, unknown>>(collection);
-    return { format: 'artist-business-manager', version: 1, exportedAt: new Date().toISOString(), collections };
+    return this.readDataset(this.storage);
   }
 
-  private async writeLocalDataset(dataset: PersistedDataset): Promise<void> {
-    for (const collection of DATA_COLLECTIONS) for (const record of dataset.collections[collection] ?? []) await this.storage.put(collection, record);
+  private async readDataset(provider: IStorageProvider): Promise<PersistedDataset> {
+    const collections: Record<string, readonly Record<string, unknown>[]> = {};
+    for (const collection of DATA_COLLECTIONS) collections[collection] = await provider.list<Record<string, unknown>>(collection);
+    return this.repairDatasetIds({ format: 'artist-business-manager', version: 1, exportedAt: new Date().toISOString(), collections });
+  }
+
+  private sameData(first: Record<string, unknown>, second: Record<string, unknown>): boolean {
+    const ignoredFields = new Set(['createdBy', 'updatedBy', 'version']);
+    const normalize = (record: Record<string, unknown>) => Object.fromEntries(Object.entries(record).filter(([key]) => !ignoredFields.has(key)));
+    return JSON.stringify(normalize(first)) === JSON.stringify(normalize(second));
+  }
+
+  private async writeLocalDataset(provider: IStorageProvider, dataset: PersistedDataset): Promise<void> {
+    for (const collection of DATA_COLLECTIONS) for (const record of dataset.collections[collection] ?? []) await provider.put(collection, record);
+  }
+
+  private downloadDataset(dataset: PersistedDataset, fileName: string): void {
+    const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   private async readDirectoryDataset(): Promise<PersistedDataset | null> {
@@ -494,7 +625,24 @@ export class PersistenceService {
   private parseDataset(value: string): PersistedDataset {
     const parsed = JSON.parse(value) as Partial<PersistedDataset>;
     if (parsed.format !== 'artist-business-manager' || parsed.version !== 1 || !parsed.collections) throw new Error('File dati non valido.');
-    return parsed as PersistedDataset;
+    return this.repairDatasetIds(parsed as PersistedDataset);
+  }
+
+  private repairDatasetIds(dataset: PersistedDataset): PersistedDataset {
+    const collections: Record<string, readonly Record<string, unknown>[]> = {};
+    for (const [collection, records] of Object.entries(dataset.collections)) {
+      collections[collection] = records.map((record, index) => ({
+        ...record,
+        id: record['id'] || `legacy-${collection}-${index + 1}-${this.stableRecordHash(record)}`,
+      }));
+    }
+    return { ...dataset, collections };
+  }
+
+  private stableRecordHash(record: Record<string, unknown>): string {
+    let hash = 0;
+    for (const character of JSON.stringify(record)) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+    return hash.toString(36);
   }
 
   private driveFolderId: string | undefined;

@@ -16,6 +16,8 @@ import { environmentProviders } from './core/configuration/environment.providers
 import { STORAGE_PROVIDER } from './core/configuration/environment.tokens';
 import { PersistenceService } from './application/persistence/persistence.service';
 import { ActiveFairService } from './core/event/active-fair.service';
+import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
+import { WorkspaceService } from './core/firebase/workspace.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,10 +38,16 @@ export const appConfig: ApplicationConfig = {
       const storage = inject(STORAGE_PROVIDER);
       const persistence = inject(PersistenceService);
       const activeFair = inject(ActiveFairService);
+      const firebaseAuth = inject(FirebaseAuthService);
+      const workspace = inject(WorkspaceService);
 
       return storage.open().then(
         async () => {
           await persistence.initialize();
+          if (persistence.mode() === 'firestore') {
+            const user = await firebaseAuth.whenInitialized();
+            if (user) await workspace.loadForCurrentUser();
+          }
           await activeFair.initialize();
           appState.notifyDatabaseReady();
         },

@@ -9,6 +9,8 @@ import { SyncStatusService } from './core/synchronization/sync-status.service';
 import { PageHeaderService } from './shared/components/page-header.service';
 import { ActiveFairService } from './core/event/active-fair.service';
 import { APP_ENVIRONMENT } from './core/configuration/environment.tokens';
+import { PersistenceService } from './application/persistence/persistence.service';
+import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
@@ -22,6 +24,8 @@ export class App {
   protected readonly pageHeader = inject(PageHeaderService);
   protected readonly activeFair = inject(ActiveFairService);
   protected readonly environment = inject(APP_ENVIRONMENT);
+  protected readonly persistence = inject(PersistenceService);
+  protected readonly firebaseAuth = inject(FirebaseAuthService);
   protected readonly menuOpen = signal(false);
   protected readonly pullDistance = signal(0);
   protected readonly refreshing = signal(false);

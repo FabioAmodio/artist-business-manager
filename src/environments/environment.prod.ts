@@ -10,5 +10,13 @@ export const environment: AppEnvironment = {
   allowImportExport: true,
   allowCloudSync: true,
   version: '0.0.0',
-  googleDriveClientId: '194726361871-r9bacqitdheihqql0ndgat7qo1it66gu.apps.googleusercontent.com',
+  defaultPersistenceMode: 'offline',
+  firebase: {
+    apiKey: 'AIzaSyD_W3Kx5oSd34pZ3ceXHhM_bjQ5fNMaaG0',
+    authDomain: 'artist-business-manager-prod.firebaseapp.com',
+    projectId: 'artist-business-manager-prod',
+    storageBucket: 'artist-business-manager-prod.firebasestorage.app',
+    messagingSenderId: '787192121257',
+    appId: '1:787192121257:web:08fdb6f530cf5f5526e6b8',
+  },
 };
