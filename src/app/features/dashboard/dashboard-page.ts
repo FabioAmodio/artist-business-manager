@@ -190,9 +190,12 @@ export class DashboardPage implements OnInit {
     }
   }
 
-  protected startYearSwipe(event: TouchEvent): void { this.touchStartX = this.displayedFair() ? null : event.changedTouches[0]?.clientX ?? null; }
+  protected startYearSwipe(event: TouchEvent): void { this.touchStartX = this.displayedFair() || document.querySelector('[role="dialog"]') ? null : event.changedTouches[0]?.clientX ?? null; }
   protected endYearSwipe(event: TouchEvent): void {
-    if (this.touchStartX === null) return;
+    if (this.touchStartX === null || document.querySelector('[role="dialog"]')) {
+      this.touchStartX = null;
+      return;
+    }
     const distance = (event.changedTouches[0]?.clientX ?? this.touchStartX) - this.touchStartX;
     this.touchStartX = null;
     if (Math.abs(distance) < 50) return;
