@@ -1,5 +1,6 @@
-import { Component, effect, inject, signal } from '@angular/core';
-import { RouterLink, RouterOutlet, ActivatedRoute, Router } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { NavigationEnd, RouterLink, RouterOutlet, Router } from '@angular/router';
+import { filter, take } from 'rxjs';
 import { ResponsiveNavComponent } from './core/navigation/responsive-nav.component';
 import { MobileActionBarComponent } from './core/navigation/mobile-action-bar.component';
 import { AppStateService } from './core/state/app-state.service';
@@ -41,12 +42,12 @@ export class App {
     this.pageHeader.changeFilter((event.target as HTMLSelectElement).value);
   }
   protected handlePullStart(event: TouchEvent): void {
-    if (window.innerWidth >= 700 || this.refreshing() || event.touches.length !== 1) return;
+    if (window.innerWidth >= 700 || this.refreshing() || this.isDialogOpen() || event.touches.length !== 1) return;
     const content = event.currentTarget as HTMLElement;
     this.pullStartY = content.scrollTop <= 0 ? event.touches[0].clientY : null;
   }
   protected handlePullMove(event: TouchEvent): void {
-    if (this.pullStartY === null || this.refreshing() || event.touches.length !== 1) return;
+    if (this.pullStartY === null || this.refreshing() || this.isDialogOpen() || event.touches.length !== 1) return;
     const distance = event.touches[0].clientY - this.pullStartY;
     if (distance <= 0) {
       this.pullDistance.set(0);
@@ -59,6 +60,10 @@ export class App {
     if (this.pullStartY === null) return;
     const shouldRefresh = this.pullDistance() >= this.pullThreshold;
     this.pullStartY = null;
+    if (this.isDialogOpen()) {
+      this.pullDistance.set(0);
+      return;
+    }
     if (!shouldRefresh) {
       this.pullDistance.set(0);
       return;
@@ -72,18 +77,17 @@ export class App {
     if (!fair || !window.confirm(`Uscire dalla modalità fiera forzata "${fair.name}"?`)) return;
     await this.activeFair.clearForcedFair();
   }
+
+  private isDialogOpen(): boolean { return document.querySelector('[role="dialog"]') !== null; }
+
   constructor(
-    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
     // Handle GitHub Pages SPA redirect from 404.html
-    effect(() => {
-      const queryParams = this.route.snapshot.queryParams;
-      if (queryParams['redirect']) {
-        const redirectPath = queryParams['redirect'];
-        // Remove redirect param and navigate to the requested path
-        this.router.navigateByUrl(redirectPath);
-      }
+    this.router.events.pipe(filter((event) => event instanceof NavigationEnd), take(1)).subscribe((event) => {
+      const queryParams = this.router.parseUrl(event.urlAfterRedirects).queryParams;
+      const redirectPath = queryParams['redirect'];
+      if (typeof redirectPath === 'string' && redirectPath) this.router.navigateByUrl(redirectPath, { replaceUrl: true });
     });
   }
 }
