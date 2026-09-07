@@ -145,6 +145,12 @@ export class DashboardPage implements OnInit {
   protected formatDate(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT').format(new Date(`${value.slice(0, 10)}T00:00:00`)) : 'Non indicata'; }
   protected formatDateTime(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Non indicata'; }
   protected customerLabel(operation: Operation): string { return this.parties().find((party) => party.id === operation.partyId)?.displayName ?? operation.customerName ?? 'Cliente non indicato'; }
+  protected operationDisplayName(operation: Operation): string {
+    if (operation.bundleId) return this.bundles().find((bundle) => bundle.id === operation.bundleId)?.name ?? operation.title;
+    if (operation.serviceId) return this.services().find((service) => service.id === operation.serviceId)?.description ?? operation.title;
+    if (operation.productId) return this.products().find((product) => product.id === operation.productId)?.name ?? operation.title;
+    return operation.title;
+  }
   protected workStatusLabel(operation: Operation): string { return operation.workStatus === 'completed' ? 'Terminata' : operation.workStatus === 'in-progress' ? 'In corso' : 'Richiesta'; }
   protected workStatusIcon(operation: Operation): string { return operation.workStatus === 'completed' ? '✅' : operation.workStatus === 'in-progress' ? '🛠️' : '📝'; }
   protected workAdvanceLabel(operation: Operation): string { return operation.workStatus === 'in-progress' ? 'Segna come terminata' : operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione'; }

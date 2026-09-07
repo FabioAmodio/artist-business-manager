@@ -193,6 +193,12 @@ export class OperationsPage implements OnInit {
   protected serviceName(id?: string): string { return this.services().find((service) => service.id === id)?.description ?? 'Servizio non indicato'; }
   protected bundleName(id?: string): string { return this.bundles().find((bundle) => bundle.id === id)?.name ?? 'Pacchetto non indicato'; }
   protected offerName(operation: Operation): string { return operation.bundleId ? this.bundleName(operation.bundleId) : operation.serviceId ? this.serviceName(operation.serviceId) : this.productName(operation.productId); }
+  protected operationDisplayName(operation: Operation): string {
+    if (operation.bundleId && this.bundles().some((bundle) => bundle.id === operation.bundleId)) return this.bundleName(operation.bundleId);
+    if (operation.serviceId && this.services().some((service) => service.id === operation.serviceId)) return this.serviceName(operation.serviceId);
+    if (operation.productId && this.products().some((product) => product.id === operation.productId)) return this.productName(operation.productId);
+    return operation.title;
+  }
   protected paymentMethodName(id?: string): string { return this.paymentMethods().find((paymentMethod) => paymentMethod.id === id)?.name ?? 'Non indicata'; }
   protected operationPayments(operationId: string | null): readonly Payment[] { return operationId ? this.payments().filter((payment) => payment.operationId === operationId) : []; }
   protected paymentTotal(operationId: string | null): number { return this.operationPayments(operationId).reduce((total, payment) => total + payment.amount, 0); }

@@ -52,7 +52,7 @@
         @if (!worksOnly || !group.parent || !isBundleGroupCollapsed(group)) {
         @for (operation of group.operations; track operation.id) {
         <article class="operation-row" [class.works-row]="worksOnly">
-          <div><h3>{{ operation.title }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p><p>{{ formatDateTime(operation.operationDate ?? operation.createdAt) }}</p></div>
+          <div><h3>{{ operationDisplayName(operation) }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p><p>{{ formatDateTime(operation.operationDate ?? operation.createdAt) }}</p></div>
           <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } <span><strong>Pagato</strong>{{ paymentTotalFor(operation).toFixed(2) }} €</span></div>
           @if (salesOnly) {
             <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" aria-label="Lavorazione" title="Lavorazione" (click)="openWork(operation)"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Lavorazione</span></button> }</div>
