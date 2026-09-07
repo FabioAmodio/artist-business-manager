@@ -478,7 +478,7 @@ export class OperationsPage implements OnInit {
   protected startEditing(operation: Operation): void {
     this.resetMessages();
     this.customerMode.set(operation.partyId ? 'existing' : (operation.customerName ? 'soft' : 'none'));
-    this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, operationDate: this.dateTimeInputValue(operation.operationDate ?? operation.createdAt), type: this.salesOnly ? 'sale' : operation.type };
+    this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, customerName: operation.partyId ? this.partyName(operation.partyId) : operation.customerName, operationDate: this.dateTimeInputValue(operation.operationDate ?? operation.createdAt), type: this.salesOnly ? 'sale' : operation.type };
     this.paymentDraft = this.emptyPaymentDraft();
     this.fairPaymentManuallyEdited = false;
     this.offerSelection.set(operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : '');
