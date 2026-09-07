@@ -504,13 +504,13 @@ export class OperationsPage implements OnInit {
     this.saving.set(true); this.resetMessages();
     const input = this.prepareInput();
     try {
-      const fairPaymentAmount = this.paymentDraft.amount ?? 0;
+      const fairPaymentAmount = this.mode() === 'fair' && this.fairPaymentManuallyEdited ? this.paymentDraft.amount ?? 0 : 0;
       const paymentAmount = this.mode() === 'fair' ? fairPaymentAmount : (this.paymentDraft.amount ?? 0);
       if (paymentAmount > 0) this.ensurePaymentDoesNotExceedTotal(input.amount ?? 0, this.paymentTotal(this.editingId()), paymentAmount);
       const operation = (input.bundleId && this.bundleParentMode()) ? await this.saveBundleSale(input) : this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
       if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > 0) {
         await this.paymentService.create({ operationId: operation.id, amount: fairPaymentAmount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId || this.defaultPaymentMethodId() });
-      } else if (this.mode() !== 'fair' && this.hasPaymentDraft()) {
+      } else if (this.mode() !== 'fair' && this.hasPaymentDraft() && !this.editingId()) {
         await this.paymentService.create({ operationId: operation.id, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       }
       this.payments.set(await this.paymentService.list());
