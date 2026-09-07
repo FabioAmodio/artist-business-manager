@@ -44,7 +44,7 @@
           <section class="bundle-work-group" [class.collapsed]="isBundleGroupCollapsed(group)" [attr.aria-label]="'Lavori del pacchetto ' + group.parent.title">
             <div class="bundle-work-heading">
               <button class="bundle-toggle" type="button" [attr.aria-expanded]="!isBundleGroupCollapsed(group)" [attr.aria-label]="isBundleGroupCollapsed(group) ? 'Espandi lavori del pacchetto' : 'Comprimi lavori del pacchetto'" (click)="toggleBundleGroup(group)"><span aria-hidden="true">🎁</span><strong>{{ group.parent.title }}</strong><span class="bundle-work-count">{{ group.operations.length }} componenti</span><span class="bundle-toggle-icon" aria-hidden="true">{{ isBundleGroupCollapsed(group) ? '▸' : '▾' }}</span></button>
-              <div class="bundle-summary-grid"><span><strong>Cliente</strong>{{ customerLabel(group.parent) }}</span><span><strong>Fiera</strong>{{ fairName(group.parent.fairEditionId) }}</span><span><strong>Importo</strong>{{ group.parent.amount != null ? (group.parent.amount.toFixed(2) + ' €') : 'n.d.' }}</span><span><strong>Consegna</strong>{{ bundleDeliveryDate(group) }}</span><span><strong>Pagato</strong>{{ bundlePaid(group).toFixed(2) }} €</span><span class="bundle-summary-status"><strong>Stato</strong>@if (bundleWorkStatus(group); as status) { <span [attr.title]="workStatusLabel(status)"><span aria-hidden="true">{{ workStatusIcon(status) }}</span>{{ workStatusLabel(status) }}</span> } @else { Non indicato }</span></div>
+              <div class="bundle-summary-grid"><span><strong>Cliente</strong>{{ customerLabel(group.parent) }}</span><span><strong>Fiera</strong>{{ fairName(group.parent.fairEditionId) }}</span><span><strong>Importo</strong>{{ group.parent.amount != null ? (group.parent.amount.toFixed(2) + ' €') : 'n.d.' }}</span><span><strong>Consegna</strong>{{ bundleDeliveryDate(group) }}</span><span><strong>Pagato</strong>{{ bundlePaid(group).toFixed(2) }} €</span><span class="bundle-summary-status"><strong>Stato</strong>@if (bundleWorkStatus(group); as status) { <span [class.status-completed]="status === 'completed'" [attr.title]="workStatusLabel(status)"><span aria-hidden="true">{{ workStatusIcon(status) }}</span>{{ workStatusLabel(status) }}</span> } @else { Non indicato }</span></div>
               <div class="row-actions">@if (canQuickPay(group.parent)) { <button class="quick-payment-button list-action" type="button" aria-label="Registra pagamento del pacchetto" title="Registra pagamento del pacchetto" (click)="$event.stopPropagation(); openQuickPayment(group.parent)">€</button> }</div>
             </div>
           </section>
@@ -57,7 +57,7 @@
           @if (salesOnly) {
             <div class="badges sales-badges">@if (hasWork(operation)) { <button class="active" type="button" aria-label="Lavorazione" title="Lavorazione" (click)="openWork(operation)"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Lavorazione</span></button> }</div>
           } @else if (worksOnly && operation.workStatus) {
-            <div class="badges work-badges"><span [attr.aria-label]="workStatusLabel(operation.workStatus)" [attr.title]="workStatusLabel(operation.workStatus)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(operation.workStatus) }}</span><span class="badge-label">{{ workStatusLabel(operation.workStatus) }}</span></span></div>
+            <div class="badges work-badges"><span [class.status-completed]="operation.workStatus === 'completed'" [attr.aria-label]="workStatusLabel(operation.workStatus)" [attr.title]="workStatusLabel(operation.workStatus)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(operation.workStatus) }}</span><span class="badge-label">{{ workStatusLabel(operation.workStatus) }}</span></span></div>
           } @else if (!worksOnly) {
             <div class="badges"><span [class.active]="hasWork(operation)" aria-label="Work" title="Work"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Work</span></span><span [class.active]="hasSale(operation)" aria-label="Sale" title="Sale"><span class="badge-icon" aria-hidden="true">💶</span><span class="badge-label">Sale</span></span></div>
           }
@@ -71,18 +71,23 @@
 
   @if (quickPaymentOperation(); as operation) {
     <div class="dialog-backdrop" aria-hidden="true"></div>
-    <section class="operation-dialog quick-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-payment-title">
-      <form class="operation-form" (ngSubmit)="addQuickPayment()" #quickPaymentForm="ngForm">
+    <section class="payment-dialog quick-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-payment-title">
+      <form (ngSubmit)="addQuickPayment()" #quickPaymentForm="ngForm">
         @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
-        <div class="form-heading"><div><h2 id="quick-payment-title">Registra pagamento</h2><p>{{ operation.parentOperationId ? (quickPaymentTarget(operation)?.title + ' · da ' + operation.title) : operation.title }}</p></div></div>
-        <p class="quick-payment-summary">Residuo{{ operation.parentOperationId ? ' pacchetto' : '' }}: <strong>{{ quickPaymentRemaining(operation).toFixed(2) }} €</strong></p>
-        <div class="form-grid quick-payment-fields">
+        <div class="dialog-heading"><div><h2 id="quick-payment-title">Registra pagamento</h2><p>{{ operation.parentOperationId ? (quickPaymentTarget(operation)?.title + ' · da ' + operation.title) : operation.title }}</p></div><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingQuickPayment()" (click)="closeQuickPayment()">×</button></div>
+        <p class="payment-summary">Residuo{{ operation.parentOperationId ? ' pacchetto' : '' }}: <strong>{{ quickPaymentRemaining(operation).toFixed(2) }} €</strong></p>
+        @if (quickPaymentTarget(operation); as target) {
+          @if (operationPayments(target.id).length) {
+            <section class="payment-history" aria-labelledby="quick-payment-history-title"><h3 id="quick-payment-history-title">Pagamenti già effettuati</h3><div class="payment-history-list">@for (payment of operationPayments(target.id); track payment.id) { <div><span>{{ payment.paymentDate }}</span><span>{{ paymentMethodName(payment.paymentMethodId) }}</span><strong>{{ payment.amount.toFixed(2) }} €</strong></div> }</div></section>
+          }
+        }
+        <div class="payment-form-grid">
           <label>Importo <input name="quickPaymentAmount" type="number" min="0.01" [max]="quickPaymentRemaining(operation)" step="0.01" required [(ngModel)]="paymentDraft.amount" /></label>
           <label>Data <input name="quickPaymentDate" type="date" required [(ngModel)]="paymentDraft.paymentDate" /></label>
-          <label>Modalita <select name="quickPaymentMethod" required [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label>
+          <label>Modalità <select name="quickPaymentMethod" required [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label>
         </div>
         @if (operation.parentOperationId) { <p class="bundle-child-note">Il pagamento viene registrato sul pacchetto e ripartito proporzionalmente tra i componenti.</p> }
-        <div class="row-actions"><button class="text-button" type="button" [disabled]="savingQuickPayment()" (click)="closeQuickPayment()">Annulla</button><button class="primary-button" type="submit" [disabled]="quickPaymentForm.invalid || savingQuickPayment()">{{ savingQuickPayment() ? 'Salvataggio...' : 'Registra' }}</button></div>
+        <div class="dialog-actions"><button class="cancel-button" type="button" [disabled]="savingQuickPayment()" (click)="closeQuickPayment()">Annulla</button><button class="save-button" type="submit" [disabled]="quickPaymentForm.invalid || savingQuickPayment()">{{ savingQuickPayment() ? 'Salvataggio...' : 'Registra' }}</button></div>
       </form>
     </section>
   }
@@ -147,7 +152,7 @@
             <label class="full-width">Descrizione <textarea name="description" rows="3" [(ngModel)]="draft.description"></textarea></label>
             <label class="full-width">Fiera <select name="fairEditionId" [(ngModel)]="draft.fairEditionId"><option [ngValue]="undefined">Nessuna fiera</option>@for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }</select></label>
             @if (worksOnly) { <label>Data consegna <input name="deliveryDate" type="date" [(ngModel)]="draft.deliveryDate" /></label> }
-            @if (worksOnly) { <fieldset class="work-status-selector full-width"><legend>Stato lavorazione</legend><div>@for (status of workStatusOptions; track status) { <label class="work-status-option" [class.selected]="draft.workStatus === status" [attr.title]="workStatusLabel(status)"><input type="radio" name="workStatus" [value]="status" [(ngModel)]="draft.workStatus" /><span class="work-status-option-icon" aria-hidden="true">{{ workStatusIcon(status) }}</span><span class="work-status-option-label">{{ workStatusLabel(status) }}</span></label> }</div></fieldset> }
+            @if (worksOnly) { <fieldset class="work-status-selector full-width"><legend>Stato lavorazione</legend><div>@for (status of workStatusOptions; track status) { <label class="work-status-option" [class.selected]="draft.workStatus === status" [class.status-completed]="status === 'completed'" [attr.title]="workStatusLabel(status)"><input type="radio" name="workStatus" [value]="status" [(ngModel)]="draft.workStatus" /><span class="work-status-option-icon" aria-hidden="true">{{ workStatusIcon(status) }}</span><span class="work-status-option-label">{{ workStatusLabel(status) }}</span></label> }</div></fieldset> }
             <label class="full-width">Note <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea></label>
           </div>
           }

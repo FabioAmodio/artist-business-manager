@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { BundleService } from '../../application/bundles/bundle.service';
@@ -38,6 +38,7 @@ interface PaymentDraft {
   styleUrl: './dashboard-page.scss',
 })
 export class DashboardPage implements OnInit {
+  @ViewChild('fairEconomicsDialog') private fairEconomicsDialog?: ElementRef<HTMLDialogElement>;
   private readonly router = inject(Router);
   protected readonly activeFairMode = inject(ActiveFairService);
   private readonly syncStatus = inject(SyncStatusService);
@@ -66,6 +67,13 @@ export class DashboardPage implements OnInit {
   protected readonly paymentSale = signal<Operation | null>(null);
   protected readonly savingPayment = signal(false);
   protected readonly forceFairDialogOpen = signal(false);
+  protected readonly fairEconomicsDialogOpen = signal(false);
+  protected readonly expandedWorks = signal<ReadonlySet<string>>(new Set());
+  protected readonly expandedSales = signal<ReadonlySet<string>>(new Set());
+  protected readonly statusDragX = signal(0);
+  protected statusDragOperationId: string | null = null;
+  private statusDragStartX = 0;
+  private statusDragConsumed = false;
   protected readonly forcingFair = signal(false);
   protected readonly dashboardView = signal<'fair' | 'annual'>('fair');
   protected forcedFairSelection = '';
@@ -125,6 +133,20 @@ export class DashboardPage implements OnInit {
     return (revenue ?? 0) - (costs ?? 0);
   }
 
+  protected fairSalesTotal(fair: Fair): number { return this.operations().filter((operation) => operation.fairEditionId === fair.id && !operation.parentOperationId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
+  protected openFairEconomics(fair: Fair): void {
+    this.fairEconomicsDialogOpen.set(true);
+    setTimeout(() => {
+      const dialog = this.fairEconomicsDialog?.nativeElement;
+      if (dialog && !dialog.open) dialog.showModal();
+    });
+  }
+  protected closeFairEconomics(): void {
+    const dialog = this.fairEconomicsDialog?.nativeElement;
+    if (dialog?.open) dialog.close();
+    this.fairEconomicsDialogOpen.set(false);
+  }
+
   protected isCostCovered(fair: Fair, cost: 'stand' | 'travel' | 'hotel' | 'other'): boolean {
     let available = this.fairRevenue(fair) ?? 0;
     for (const currentCost of ['stand', 'travel', 'hotel', 'other'] as const) {
@@ -152,11 +174,62 @@ export class DashboardPage implements OnInit {
     return operation.title;
   }
   protected workStatusLabel(operation: Operation): string { return operation.workStatus === 'completed' ? 'Terminata' : operation.workStatus === 'in-progress' ? 'In corso' : 'Richiesta'; }
-  protected workStatusIcon(operation: Operation): string { return operation.workStatus === 'completed' ? '✅' : operation.workStatus === 'in-progress' ? '🛠️' : '📝'; }
+  protected workStatusIcon(operation: Operation): string { return operation.workStatus === 'completed' ? '✓' : operation.workStatus === 'in-progress' ? '🛠️' : '📝'; }
+  protected workStatusIconFor(status: Operation['workStatus'] | null): string { return status === 'completed' ? '✓' : status === 'delivered' ? '📦' : status === 'in-progress' ? '🛠️' : status === 'requested' ? '📝' : '🚫'; }
   protected workAdvanceLabel(operation: Operation): string { return operation.workStatus === 'in-progress' ? 'Segna come terminata' : operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione'; }
-  protected workAdvanceIcon(operation: Operation): string { return operation.workStatus === 'in-progress' ? '✅' : operation.workStatus === 'completed' ? '📦' : '▶'; }
+  protected workAdvanceIcon(operation: Operation): string { return operation.workStatus === 'in-progress' ? '✓' : operation.workStatus === 'completed' ? '📦' : '▶'; }
+  protected workNextStatus(operation: Operation): NonNullable<Operation['workStatus']> | null {
+    return operation.workStatus === 'requested' ? 'in-progress' : operation.workStatus === 'in-progress' ? 'completed' : operation.workStatus === 'completed' ? 'delivered' : null;
+  }
+  protected workNextStatusIcon(operation: Operation): string { const nextStatus = this.workNextStatus(operation); return this.workStatusIconFor(nextStatus); }
+  protected workPreviousStatusIcon(operation: Operation): string { return this.workStatusIconFor(this.workPreviousStatus(operation)); }
+  protected workPreviousStatus(operation: Operation): NonNullable<Operation['workStatus']> | null {
+    return operation.workStatus === 'delivered' ? 'completed' : operation.workStatus === 'completed' ? 'in-progress' : operation.workStatus === 'in-progress' ? 'requested' : null;
+  }
+  protected statusDragStart(operation: Operation, event: PointerEvent): void {
+    this.statusDragOperationId = operation.id;
+    this.statusDragStartX = event.clientX;
+    this.statusDragConsumed = false;
+    this.statusDragX.set(0);
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+  protected statusDragMove(operation: Operation, event: PointerEvent): void {
+    if (this.statusDragOperationId !== operation.id) return;
+    const distance = Math.max(-72, Math.min(72, event.clientX - this.statusDragStartX));
+    if (Math.abs(distance) >= 8) this.statusDragConsumed = true;
+    this.statusDragX.set(distance);
+  }
+  protected async statusDragEnd(operation: Operation, event: PointerEvent): Promise<void> {
+    if (this.statusDragOperationId !== operation.id) return;
+    const distance = this.statusDragX();
+    this.statusDragOperationId = null;
+    this.statusDragX.set(0);
+    if (Math.abs(distance) < 40) return;
+    const target = distance > 0 ? this.workNextStatus(operation) : this.workPreviousStatus(operation);
+    if (target) await this.transitionWork(operation, target);
+    setTimeout(() => { this.statusDragConsumed = false; });
+  }
+  protected async handleStatusSlideClick(operation: Operation): Promise<void> {
+    if (this.statusDragConsumed) return;
+    await this.advanceWork(operation);
+  }
+  protected workSummary(operation: Operation): string { const name = this.operationDisplayName(operation); return operation.description?.trim() ? `${name} - ${operation.description.trim()}` : name; }
+  protected isWorkExpanded(operation: Operation): boolean { return this.expandedWorks().has(operation.id); }
+  protected toggleWorkDetails(operation: Operation): void {
+    const expanded = new Set(this.expandedWorks());
+    if (expanded.has(operation.id)) expanded.delete(operation.id); else expanded.add(operation.id);
+    this.expandedWorks.set(expanded);
+  }
+  protected isSaleExpanded(operation: Operation): boolean { return this.expandedSales().has(operation.id); }
+  protected toggleSaleDetails(operation: Operation): void {
+    const expanded = new Set(this.expandedSales());
+    if (expanded.has(operation.id)) expanded.delete(operation.id); else expanded.add(operation.id);
+    this.expandedSales.set(expanded);
+  }
   protected paymentTotal(operationId: string): number { return this.payments().filter((payment) => payment.operationId === operationId).reduce((total, payment) => total + payment.amount, 0); }
   protected paymentRemaining(operation: Operation): number { return Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0); }
+  protected workPaymentSummary(operation: Operation): string { return this.formatMoney(operation.amount); }
+  protected workPaymentAriaLabel(operation: Operation): string { return `Totale ${this.formatMoney(operation.amount)}, residuo ${this.formatMoney(this.paymentRemaining(operation))}`; }
   protected isFullyPaid(operation: Operation): boolean { return (operation.amount ?? 0) <= 0 || this.paymentRemaining(operation) < 0.005; }
 
   protected changeYear(offset: -1 | 1): void {
@@ -251,10 +324,14 @@ export class DashboardPage implements OnInit {
   }
 
   protected async advanceWork(operation: Operation): Promise<void> {
+    const nextStatus = this.workNextStatus(operation);
+    if (nextStatus) await this.transitionWork(operation, nextStatus);
+  }
+  private async transitionWork(operation: Operation, status: NonNullable<Operation['workStatus']>): Promise<void> {
     this.transitioningId.set(operation.id);
     this.errorMessage.set('');
     try {
-      const updated = await this.operationService.advanceWorkStatus(operation.id);
+      const updated = await this.operationService.transitionWorkStatus(operation.id, status);
       this.operations.update((operations) => operations.map((item) => item.id === updated.id ? updated : item));
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile aggiornare la lavorazione.');

@@ -264,7 +264,7 @@ export class OperationsPage implements OnInit {
     return ({ requested: 'Richiesta', 'in-progress': 'In corso', completed: 'Terminata', delivered: 'Consegnata/Spedita', cancelled: 'Cancellata' } as Record<string, string>)[status ?? ''] ?? 'Non indicata';
   }
   protected workStatusIcon(status?: Operation['workStatus']): string {
-    return ({ requested: '📝', 'in-progress': '🛠️', completed: '✅', delivered: '📦', cancelled: '🚫' } as Record<string, string>)[status ?? ''] ?? '❔';
+    return ({ requested: '📝', 'in-progress': '🛠️', completed: '✓', delivered: '📦', cancelled: '🚫' } as Record<string, string>)[status ?? ''] ?? '❔';
   }
   protected isBundleGroupCollapsed(group: WorkGroup): boolean { return Boolean(group.parent && this.collapsedBundleGroups().has(group.key)); }
   protected toggleBundleGroup(group: WorkGroup): void {
@@ -288,7 +288,7 @@ export class OperationsPage implements OnInit {
     return operation.workStatus === 'in-progress' ? 'Segna come terminata' : operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione';
   }
   protected workAdvanceIcon(operation: Operation): string {
-    return operation.workStatus === 'in-progress' ? '✅' : operation.workStatus === 'completed' ? '📦' : '▶';
+    return operation.workStatus === 'in-progress' ? '✓' : operation.workStatus === 'completed' ? '📦' : '▶';
   }
   protected async advanceWork(operation: Operation): Promise<void> {
     this.transitioningWorkId.set(operation.id);

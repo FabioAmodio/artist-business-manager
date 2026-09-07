@@ -21,18 +21,27 @@
         <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')" [attr.aria-label]="coverageLabel(fair, 'hotel')" [attr.title]="coverageLabel(fair, 'hotel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'hotel')" aria-hidden="true">🏨</b><span class="badge-label">{{ coverageLabel(fair, 'hotel') }}</span></span>
         @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')" [attr.aria-label]="coverageLabel(fair, 'other')" [attr.title]="coverageLabel(fair, 'other')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'other')" aria-hidden="true">🧾</b><span class="badge-label">{{ coverageLabel(fair, 'other') }}</span></span> }
       </div>
+      <button class="mobile-fair-economics-button" type="button" (click)="openFairEconomics(fair)">Mostra</button>
     </article>
+    @if (fairEconomicsDialogOpen()) {
+      <dialog #fairEconomicsDialog class="fair-economics-dialog" aria-labelledby="fair-economics-title" (cancel)="$event.preventDefault()">
+        <div class="dialog-heading"><h2 id="fair-economics-title">{{ fair.name }} · {{ fair.edition || fair.year }}</h2><button class="close-button" type="button" aria-label="Chiudi" (click)="closeFairEconomics()">×</button></div>
+        <div class="fair-economics-columns">
+          <section aria-labelledby="fair-costs-title"><h3 id="fair-costs-title">Costi</h3><dl><div><dt>Stand</dt><dd>{{ formatMoney(fair.standCost) }}</dd></div><div><dt>Viaggio</dt><dd>{{ formatMoney(fair.travelCost) }}</dd></div><div><dt>Hotel</dt><dd>{{ formatMoney(fair.hotelCost) }}</dd></div><div><dt>Altri costi</dt><dd>{{ formatMoney(fair.otherCosts) }}</dd></div><div class="total"><dt>Totale costi</dt><dd>{{ formatMoney(totalCosts(fair)) }}</dd></div></dl></section>
+          <section aria-labelledby="fair-revenues-title"><h3 id="fair-revenues-title">Ricavi</h3><dl><div><dt>Vendite</dt><dd>{{ formatMoney(fairSalesTotal(fair)) }}</dd></div><div><dt>Rimborso</dt><dd>{{ formatMoney(fair.reimbursement) }}</dd></div><div class="total"><dt>Totale ricavi</dt><dd>{{ formatMoney(fairRevenue(fair)) }}</dd></div></dl></section>
+        </div>
+      </dialog>
+    }
 
     <section class="dashboard-section" aria-labelledby="active-works-title">
       <div class="section-heading"><h2 id="active-works-title">Lavori aperti</h2><span>{{ activeWorks().length }}</span></div>
       @if (activeWorks().length) {
         <div class="dashboard-list">
           @for (work of activeWorks(); track work.id) {
-            <article class="dashboard-row work-row">
-              <div><h3>{{ operationDisplayName(work) }}</h3><p>{{ customerLabel(work) }} · {{ formatDateTime(work.operationDate ?? work.createdAt) }}</p></div>
+            <article class="dashboard-row work-row" [class.work-expanded]="isWorkExpanded(work)">
+              <button class="work-summary-toggle" type="button" [attr.aria-expanded]="isWorkExpanded(work)" (click)="toggleWorkDetails(work)"><h3>{{ workSummary(work) }}</h3><p>{{ customerLabel(work) }} · {{ formatDateTime(work.operationDate ?? work.createdAt) }}</p></button>
               <div class="row-facts"><span><strong>Consegna</strong>{{ formatDate(work.deliveryDate) }}</span><span><strong>Importo</strong>{{ formatMoney(work.amount) }}</span></div>
-              <span class="status-badge" [attr.aria-label]="workStatusLabel(work)" [attr.title]="workStatusLabel(work)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(work) }}</span><span class="badge-label">{{ workStatusLabel(work) }}</span></span>
-              <div class="row-actions"><button class="text-button" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="editOperation(work)">✎</button>@if (!isFullyPaid(work)) { <button class="payment-button" type="button" aria-label="Registra pagamento lavorazione" title="Registra pagamento lavorazione" (click)="openPaymentDialog(work)"><span aria-hidden="true">€</span></button> }<button class="quick-status" type="button" [disabled]="transitioningId() === work.id" [attr.aria-label]="workAdvanceLabel(work)" [attr.title]="workAdvanceLabel(work)" (click)="advanceWork(work)"><span aria-hidden="true">{{ workAdvanceIcon(work) }}</span><span class="action-label">{{ work.workStatus === 'requested' ? 'Inizia' : work.workStatus === 'in-progress' ? 'Termina' : 'Consegna' }}</span></button></div>
+              <div class="row-actions"><div class="work-status-actions"><div class="status-slide" role="button" tabindex="0" [attr.aria-label]="workAdvanceLabel(work)" [attr.title]="workAdvanceLabel(work)" [style.--drag-x.px]="statusDragOperationId === work.id ? statusDragX() : 0" (pointerdown)="statusDragStart(work, $event)" (pointermove)="statusDragMove(work, $event)" (pointerup)="statusDragEnd(work, $event)" (pointercancel)="statusDragEnd(work, $event)" (click)="handleStatusSlideClick(work)"><span class="status-slide-track" aria-hidden="true"><span class="status-slide-progress"></span><span class="status-slide-node status-slide-previous">{{ workPreviousStatusIcon(work) }}</span><span class="status-slide-line"></span><span class="status-slide-node status-slide-thumb" [class.status-completed]="work.workStatus === 'completed'">{{ workStatusIcon(work) }}</span><span class="status-slide-line"></span><span class="status-slide-node status-slide-next" [class.status-completed]="workNextStatus(work) === 'completed'">{{ workNextStatusIcon(work) }}</span></span></div></div><div class="work-payment-actions"><span class="work-payment-summary" [class.payment-settled]="isFullyPaid(work)" [attr.aria-label]="workPaymentAriaLabel(work)">{{ workPaymentSummary(work) }}</span>@if (!isFullyPaid(work)) { <button class="payment-button work-payment-button" type="button" [attr.aria-label]="'Registra pagamento di ' + formatMoney(paymentRemaining(work))" title="Registra pagamento lavorazione" (click)="openPaymentDialog(work)"><span aria-hidden="true">€</span><span>{{ formatMoney(paymentRemaining(work)) }}</span></button> }</div><div class="work-edit-actions"><button class="text-button" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="editOperation(work)">✎</button></div></div>
             </article>
           }
         </div>
@@ -44,10 +53,11 @@
       @if (fairSales().length) {
         <div class="dashboard-list">
           @for (sale of fairSales(); track sale.id) {
-            <article class="dashboard-row sale-row">
-              <div><h3>{{ operationDisplayName(sale) }}</h3><p>{{ customerLabel(sale) }} · {{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</p></div>
+            <article class="dashboard-row sale-row" [class.sale-expanded]="isSaleExpanded(sale)">
+              <button class="work-summary-toggle" type="button" [attr.aria-expanded]="isSaleExpanded(sale)" (click)="toggleSaleDetails(sale)"><h3>{{ workSummary(sale) }}</h3><p>{{ customerLabel(sale) }} · {{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</p></button>
               <div class="row-facts"><span><strong>Quantità</strong>{{ sale.quantity ?? 1 }}</span><span><strong>Importo</strong>{{ formatMoney(sale.amount) }}</span><span><strong>Pagato</strong>{{ formatMoney(paymentTotal(sale.id)) }}</span></div>
-              <div class="row-actions"><button class="text-button" type="button" aria-label="Modifica vendita" title="Modifica vendita" (click)="editOperation(sale)">✎</button>@if (!isFullyPaid(sale)) { <button class="payment-button" type="button" aria-label="Registra pagamento" title="Registra pagamento" (click)="openPaymentDialog(sale)"><span class="payment-icon" aria-hidden="true">€</span><span class="action-label">Pagamento</span></button> }</div>
+              <div class="sale-mobile-details"><span><strong>Cliente</strong>{{ customerLabel(sale) }}</span><span><strong>Acquisto</strong>{{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</span></div>
+              <div class="row-actions sale-actions"><span class="sale-quantity">{{ sale.quantity ?? 1 }}</span><span class="sale-price">{{ formatMoney(sale.amount) }}</span>@if (!isFullyPaid(sale)) { <button class="payment-button work-payment-button" type="button" [attr.aria-label]="'Registra pagamento di ' + formatMoney(paymentRemaining(sale))" title="Registra pagamento" (click)="openPaymentDialog(sale)"><span aria-hidden="true">€</span><span>{{ formatMoney(paymentRemaining(sale)) }}</span></button> }<button class="text-button" type="button" aria-label="Modifica vendita" title="Modifica vendita" (click)="editOperation(sale)">✎</button></div>
             </article>
           }
         </div>
