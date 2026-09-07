@@ -44,12 +44,15 @@ export const appConfig: ApplicationConfig = {
       return storage.open().then(
         async () => {
           await persistence.initialize();
-          if (persistence.mode() === 'firestore') {
-            const user = await firebaseAuth.whenInitialized();
-            if (user) await workspace.loadForCurrentUser();
-          }
           await activeFair.initialize();
           appState.notifyDatabaseReady();
+          if (persistence.mode() === 'firestore') {
+            void firebaseAuth.whenInitialized()
+              .then(async (user) => {
+                if (user) await workspace.loadForCurrentUser();
+              })
+              .catch((error) => console.error('Firebase workspace initialization failed:', error));
+          }
         },
         (error) => {
           console.error('Database initialization failed:', error);
