@@ -16,6 +16,7 @@ export interface AnnualDashboardMetrics {
   };
   readonly fairs: {
     readonly completed: number;
+    readonly inProgress: number;
     readonly balance: number;
     readonly upcoming: number;
     readonly next: Fair | null;
@@ -89,6 +90,7 @@ export function annualDashboardMetrics(source: AnnualDashboardSource, year: numb
     },
     fairs: {
       completed: yearFairs.filter((fair) => fair.endDate < today).length,
+      inProgress: yearFairs.filter((fair) => fair.startDate <= today && fair.endDate >= today).length,
       balance: fairIncome - fairExpenses,
       upcoming: yearFairs.filter((fair) => fair.startDate > today).length,
       next: yearFairs.filter((fair) => fair.startDate > today).sort((first, second) => first.startDate.localeCompare(second.startDate))[0] ?? null,

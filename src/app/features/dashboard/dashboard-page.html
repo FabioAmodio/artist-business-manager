@@ -81,8 +81,9 @@
 
       <section class="annual-panel" aria-labelledby="annual-fairs-title">
         <div class="annual-panel-heading"><span class="panel-icon" aria-hidden="true">📅</span><h2 id="annual-fairs-title">Fiere {{ selectedYear() }}</h2></div>
-        <div class="annual-metrics three-columns">
+        <div class="annual-metrics four-columns">
           <a routerLink="/events" [queryParams]="{ year: selectedYear(), fairFilter: 'completed' }"><strong>{{ annualMetrics().fairs.completed }}</strong><span>Fatte nell'anno</span></a>
+          <a routerLink="/events" [queryParams]="{ year: selectedYear() }"><strong>{{ annualMetrics().fairs.inProgress }}</strong><span>In corso</span></a>
           <a routerLink="/events" [queryParams]="{ year: selectedYear() }"><strong>{{ formatMoney(annualMetrics().fairs.balance) }}</strong><span>Bilancio annuale</span></a>
           <a routerLink="/events" [queryParams]="{ year: selectedYear(), fairFilter: 'upcoming' }"><strong>{{ annualMetrics().fairs.upcoming }}</strong><span>Prossime</span></a>
         </div>

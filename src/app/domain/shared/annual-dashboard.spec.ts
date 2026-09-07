@@ -24,9 +24,17 @@ describe('annual dashboard', () => {
     const metrics = annualDashboardMetrics(source, 2026, '2026-09-01');
 
     expect(metrics.works).toEqual({ requested: 1, inProgress: 1, toDeliver: 2, unpaid: 3, annualTotal: 4 });
-    expect(metrics.fairs).toMatchObject({ completed: 1, balance: 85, upcoming: 0, next: null });
+    expect(metrics.fairs).toMatchObject({ completed: 1, inProgress: 0, balance: 85, upcoming: 0, next: null });
     expect(metrics.finance).toMatchObject({ expenses: 50, purchaseExpenses: 30, fairExpenses: 20, income: 155, fairIncome: 105, nonFairIncome: 50, reimbursements: 5, balance: 105 });
     expect(metrics.finance.revenueDetails).toEqual([{ key: 'product:product-1', label: 'Stampa', amount: 100 }, { key: 'bundle:bundle-1', label: 'Pacchetto', amount: 50 }]);
+  });
+
+  it('counts a fair in progress separately from completed and upcoming fairs', () => {
+    const currentFair = { ...source.fairs[0], id: 'fair-current', startDate: '2026-08-31', endDate: '2026-09-03' };
+    const futureFair = { ...source.fairs[0], id: 'fair-future', startDate: '2026-09-10', endDate: '2026-09-11' };
+    const metrics = annualDashboardMetrics({ ...source, fairs: [source.fairs[0], currentFair, futureFair] }, 2026, '2026-09-01');
+
+    expect(metrics.fairs).toMatchObject({ completed: 1, inProgress: 1, upcoming: 1 });
   });
 
   it('derives inclusive year bounds from registered data and the current year', () => {
