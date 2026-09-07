@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +11,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, PageHeaderComponent],
   selector: 'app-clients-page',
   templateUrl: './clients-page.html',
   styleUrl: './clients-page.scss',
@@ -54,6 +55,8 @@ export class ClientsPage implements OnInit {
   protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.typeFilter() !== 'all'; }
 
   protected isClientUsed(client: Party): boolean { return this.operations().some((operation) => operation.partyId === client.id); }
+  protected purchaseCount(client: Party): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.partyId === client.id && (operation.type === 'sale' || operation.type === 'bundle')).length; }
+  protected purchaseTotal(client: Party): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.partyId === client.id && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
 
   protected startCreating(displayName = ''): void {
     this.resetMessages();
@@ -112,10 +115,6 @@ export class ClientsPage implements OnInit {
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare il cliente.');
     }
-  }
-
-  protected typeLabel(type: Party['type']): string {
-    return type === 'person' ? 'Persona' : 'Organizzazione';
   }
 
   private async load(): Promise<void> {

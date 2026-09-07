@@ -27,6 +27,8 @@
           </div>
           <div class="context-grid">
             <span class="product-price"><strong>Prezzo</strong>{{ product.suggestedPrice != null ? (product.suggestedPrice | currency:'EUR':'symbol':'1.2-2') : 'n.d.' }}</span>
+            <span><strong>Venduti</strong>{{ soldQuantity(product.id) }}</span>
+            <span><strong>Ricavi</strong>{{ soldRevenue(product.id) | currency:'EUR':'symbol':'1.2-2' }}</span>
             <span class="product-status"><strong>Stato</strong><em [class.active]="product.active" [class.inactive]="!product.active" [attr.aria-label]="product.active ? 'Disponibile' : 'Non disponibile'" [attr.title]="product.active ? 'Disponibile' : 'Non disponibile'"><b aria-hidden="true">{{ product.active ? '●' : '○' }}</b><i>{{ product.active ? 'Disponibile' : 'Non disponibile' }}</i></em></span>
             <button class="linked-info" type="button" (click)="openProductManagement(product)"><strong>Acquisti collegati</strong><span>{{ productLots(product.id).length ? productLots(product.id).map(lot => lot.name).join(', ') : 'Nessuno' }}</span></button>
           </div>

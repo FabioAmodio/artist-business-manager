@@ -99,6 +99,9 @@ export class CatalogPage implements OnInit {
     return isBundleAvailable(bundle, this.products(), this.services());
   }
 
+  protected soldQuantity(productId: string): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.productId === productId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.quantity ?? 1), 0); }
+  protected soldRevenue(productId: string): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.productId === productId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
+
   protected async load(): Promise<void> {
     this.loading.set(true);
     try {

@@ -65,6 +65,8 @@ export class ProductsPage implements OnInit {
   protected async applyFilters(): Promise<void> { await this.load(); }
 
   protected productLots(productId: string): readonly Lot[] { return this.lots().filter((lot) => lot.productId === productId); }
+  protected soldQuantity(productId: string): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.productId === productId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.quantity ?? 1), 0); }
+  protected soldRevenue(productId: string): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.productId === productId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
   protected isProductUsed(product: Product): boolean {
     return this.operations().some((operation) => operation.productId === product.id) || this.purchases().some((purchase) => purchase.productId === product.id) || this.productLots(product.id).length > 0;
   }

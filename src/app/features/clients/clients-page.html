@@ -24,10 +24,11 @@
       @for (client of visibleClients(); track client.id) {
         <article class="client-row">
           <div>
-            <h3>{{ client.displayName }}</h3>
-            <p>{{ typeLabel(client.type) }}</p>
+            <h3><span class="client-type-icon" aria-hidden="true">{{ client.type === 'person' ? '👤' : '🏢' }}</span>{{ client.displayName }}</h3>
           </div>
           <div class="contact-grid">
+            <span><strong>Acquisti</strong>{{ purchaseCount(client) }}</span>
+            <span><strong>Spesa</strong>{{ purchaseTotal(client) | currency:'EUR':'symbol':'1.2-2' }}</span>
             <span><strong>Email</strong>{{ client.email || 'n.d.' }}</span>
             <span><strong>Telefono</strong>{{ client.phone || 'n.d.' }}</span>
             <span><strong>Sito</strong>{{ client.website || 'n.d.' }}</span>
