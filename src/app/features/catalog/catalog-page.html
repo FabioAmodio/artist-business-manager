@@ -74,7 +74,7 @@
   }
 
   @if (createMode()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="clearCreateMode()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="catalog-dialog" role="dialog" aria-modal="true" aria-labelledby="catalog-create-title">
       @if (createMode() === 'product') {
         <form class="catalog-form" (ngSubmit)="saveProduct()" #productForm="ngForm">
@@ -156,7 +156,7 @@
   }
 
   @if (lotDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelLotForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="catalog-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="catalog-lot-form-title">
       <form class="catalog-form" (ngSubmit)="saveLot()" #catalogLotForm="ngForm">
         <h2 id="catalog-lot-form-title">{{ lotEditingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2>

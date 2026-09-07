@@ -53,6 +53,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .bundle-detail-row > span { padding-bottom: .7rem; }
 .dialog-backdrop { background: rgba(31, 41, 38, .35); bottom: 0; left: 0; position: fixed; right: 0; top: 0; z-index: var(--z-modal-backdrop); }
 .operation-dialog { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); box-sizing: border-box; left: 50%; max-height: calc(100vh - 3rem); max-width: min(70rem, calc(100vw - 3rem)); overflow-y: auto; padding: 1.5rem; position: fixed; top: 50%; transform: translate(-50%, -50%); width: 70rem; z-index: var(--z-modal); }
+.operation-dialog.blocked-by-quick-customer { pointer-events: none; }
+.quick-customer-dialog { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); box-sizing: border-box; margin: auto; max-height: calc(100dvh - 2rem); max-width: min(32rem, calc(100vw - 2rem)); overflow-y: auto; padding: 1.25rem; width: 32rem; }
+.quick-customer-dialog::backdrop { background: rgba(31, 41, 38, .55); }
+.quick-customer-dialog h2 { margin: 0; }
+.quick-customer-dialog p { margin: .5rem 0 1rem; }
+.quick-customer-actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: flex-end; }
 .operation-form { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .product-selection-step { gap: 1rem; }
 .product-picker { display: grid; gap: 1rem; margin: 1rem 0; }

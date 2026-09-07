@@ -91,7 +91,7 @@
   </fieldset>
 
   @if (inviteDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closeInviteDialog()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="reset-dialog invite-dialog" role="dialog" aria-modal="true" aria-labelledby="invite-dialog-title">
       <h2 id="invite-dialog-title">Aggiungi collaboratore</h2>
       <label>Email <input name="inviteEmail" type="email" required [(ngModel)]="inviteEmail" /></label>
@@ -110,7 +110,7 @@
   }
 
   @if (resetStep()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closeFactoryReset()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="reset-dialog" role="alertdialog" aria-modal="true" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-description">
       @if (resetStep() === 1) {
         <h2 id="reset-dialog-title">Ripristinare i dati?</h2>

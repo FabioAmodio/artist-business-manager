@@ -39,7 +39,7 @@
   }
 
   @if (editingId() || creating()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="purchase-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-form-title">
       <form class="purchase-form" (ngSubmit)="save()" #purchaseForm="ngForm">
         <div class="form-heading"><div><h2 id="purchase-form-title">{{ editingId() ? 'Modifica acquisto' : 'Nuovo acquisto' }}</h2></div></div>
@@ -71,7 +71,7 @@
   }
 
   @if (lotDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelLotForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="purchase-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-lot-form-title">
       <form class="purchase-form" (ngSubmit)="saveLot()" #purchaseLotForm="ngForm">
         <div class="form-heading"><div><h2 id="purchase-lot-form-title">{{ lotEditingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2><p class="context-lock">Acquisto origine: {{ purchaseLabel(lotPurchaseId()) }}</p></div></div>
@@ -92,7 +92,7 @@
   }
 
   @if (lotListDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closeLotList()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="purchase-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-lots-title">
       <div class="purchase-form">
         <div class="form-heading"><div><h2 id="purchase-lots-title">Prodotti collegati</h2><p class="context-lock">Acquisto origine: {{ purchaseLabel(lotPurchaseId()) }}</p></div><button class="text-button" type="button" (click)="startCreatingLot(purchases().find(purchase => purchase.id === lotPurchaseId())!)">+ Aggiungi</button></div>

@@ -40,7 +40,7 @@
   }
 
   @if (editingId() || creating()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="product-dialog" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
       <form class="product-form" (ngSubmit)="save()" #productForm="ngForm">
         <div class="form-heading"><div><h2 id="product-form-title">{{ editingId() ? 'Modifica prodotto' : 'Nuovo prodotto' }}</h2></div></div>
@@ -67,7 +67,7 @@
   }
 
   @if (lotDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelLotForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="product-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="product-lot-form-title">
       <form class="product-form" (ngSubmit)="saveLot()" #productLotForm="ngForm">
         <div class="form-heading"><div><h2 id="product-lot-form-title">{{ lotEditingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2><p class="context-lock">Prodotto: {{ products().find(product => product.id === lotProductId())?.name }}</p></div></div>
@@ -82,7 +82,7 @@
   }
 
   @if (lotListDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closeLotList()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="product-dialog lot-context-dialog" role="dialog" aria-modal="true" aria-labelledby="product-lots-title">
       <div class="product-form">
         <div class="form-heading"><div><h2 id="product-lots-title">Acquisti collegati</h2><p class="context-lock">Prodotto: {{ products().find(product => product.id === lotProductId())?.name }}</p></div><button class="text-button" type="button" (click)="startCreatingLot(products().find(product => product.id === lotProductId())!)">+ Aggiungi</button></div>

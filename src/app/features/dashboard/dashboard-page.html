@@ -110,7 +110,7 @@
   }
 
   @if (paymentSale(); as sale) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closePaymentDialog()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
       <form (ngSubmit)="addPayment()" #paymentForm="ngForm">
         <div class="dialog-heading"><div><h2 id="payment-dialog-title">Registra pagamento</h2><p>{{ sale.title }}</p></div><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingPayment()" (click)="closePaymentDialog()">×</button></div>
@@ -134,7 +134,7 @@
   }
 
   @if (forceFairDialogOpen()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closeForceFairDialog()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="payment-dialog force-fair-dialog" role="dialog" aria-modal="true" aria-labelledby="force-fair-dialog-title">
       <form (ngSubmit)="forceSelectedFair()">
         <div class="dialog-heading"><div><h2 id="force-fair-dialog-title">Forza modalità fiera</h2><p>Scegli la fiera da usare come contesto attivo.</p></div><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="forcingFair()" (click)="closeForceFairDialog()">×</button></div>

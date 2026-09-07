@@ -40,7 +40,7 @@
   }
 
   @if (editingId() || creating()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="client-dialog" role="dialog" aria-modal="true" aria-labelledby="client-form-title">
       <form class="client-form" (ngSubmit)="save()" #clientForm="ngForm">
         <div class="form-heading"><div><h2 id="client-form-title">{{ editingId() ? 'Modifica cliente' : 'Nuovo cliente' }}</h2></div></div>

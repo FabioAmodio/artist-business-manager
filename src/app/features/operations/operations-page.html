@@ -70,7 +70,7 @@
   }
 
   @if (quickPaymentOperation(); as operation) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="closeQuickPayment()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="operation-dialog quick-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-payment-title">
       <form class="operation-form" (ngSubmit)="addQuickPayment()" #quickPaymentForm="ngForm">
         @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
@@ -88,8 +88,8 @@
   }
 
   @if (editingId() || creating()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
-    <section class="operation-dialog" role="dialog" aria-modal="true" aria-labelledby="operation-form-title">
+    <div class="dialog-backdrop" aria-hidden="true"></div>
+    <section class="operation-dialog" [class.blocked-by-quick-customer]="quickCustomerPromptOpen()" role="dialog" aria-modal="true" aria-labelledby="operation-form-title">
       @if (selectingFairProduct()) {
         <div class="operation-form product-selection-step">
           <div class="form-heading"><div><h2 id="operation-form-title">{{ salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione' }}</h2></div></div>
@@ -175,5 +175,12 @@
         </form>
       }
     </section>
+  }
+  @if (quickCustomerPromptOpen()) {
+    <dialog #quickCustomerDialog class="quick-customer-dialog" aria-labelledby="quick-customer-prompt-title" (cancel)="$event.preventDefault()">
+      <h2 id="quick-customer-prompt-title">Inserire il cliente in anagrafica?</h2>
+      <p>Il cliente <strong>{{ draft.customerName }}</strong> verrà collegato a questa vendita.</p>
+      <div class="quick-customer-actions"><button class="text-button" type="button" (click)="goBackFromQuickCustomerPrompt()">Indietro</button><button class="text-button" type="button" (click)="decideQuickCustomerRegistration(false)">No, solo questa vendita</button><button class="primary-button" type="button" (click)="decideQuickCustomerRegistration(true)">Sì, inserisci</button></div>
+    </dialog>
   }
 </section>

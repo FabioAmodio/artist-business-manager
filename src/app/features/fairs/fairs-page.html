@@ -64,7 +64,7 @@
   }
 
   @if (editingId() || creating()) {
-    <div class="dialog-backdrop" aria-hidden="true" (click)="cancelForm()"></div>
+    <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="fair-dialog" role="dialog" aria-modal="true" aria-labelledby="fair-form-title">
       <form class="fair-form" (ngSubmit)="save()" #fairForm="ngForm">
         <div class="form-heading">

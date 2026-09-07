@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OperationService, type OperationInput } from '../../application/operations/operation.service';
@@ -63,6 +63,7 @@ interface WorkGroup {
   styleUrl: './operations-page.scss',
 })
 export class OperationsPage implements OnInit {
+  @ViewChild('quickCustomerDialog') private quickCustomerDialog?: ElementRef<HTMLDialogElement>;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly activeFairMode = inject(ActiveFairService);
@@ -110,10 +111,12 @@ export class OperationsPage implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected readonly filtersOpen = signal(false);
+  protected readonly quickCustomerPromptOpen = signal(false);
   protected draft: OperationInput = this.emptyDraft();
   protected paymentDraft: PaymentDraft = this.emptyPaymentDraft();
   private fairPaymentManuallyEdited = false;
   protected readonly customerMode = signal<'none' | 'soft' | 'existing'>('none');
+  private quickCustomerDecision: 'yes' | 'no' | null = null;
   private pendingCreateTrigger: string | null = null;
   private pendingOpenId: string | null = null;
   private returnWorkId: string | null = null;
@@ -442,6 +445,8 @@ export class OperationsPage implements OnInit {
   protected updateCustomerName(value: string): void {
     this.draft = { ...this.draft, customerName: value, partyId: undefined };
     this.customerMode.set(value.trim() ? 'soft' : 'none');
+    this.quickCustomerDecision = null;
+    this.quickCustomerPromptOpen.set(false);
   }
   protected customerSuggestions(): readonly Party[] {
     const normalized = this.draft.customerName?.trim().toLowerCase() ?? '';
@@ -459,6 +464,50 @@ export class OperationsPage implements OnInit {
     this.customerMode.set(this.draft.customerName?.trim() ? 'soft' : 'none');
   }
   protected canRegisterQuickCustomer(): boolean { return !this.draft.partyId && Boolean(this.draft.customerName?.trim()); }
+  protected shouldAskQuickCustomerRegistration(): boolean {
+    const fairContext = this.mode() === 'fair' || Boolean(this.draft.fairEditionId) || Boolean(this.activeFair());
+    return this.salesOnly && fairContext && !this.editingId() && this.customerMode() === 'soft' && this.quickCustomerDecision === null;
+  }
+  protected async decideQuickCustomerRegistration(register: boolean): Promise<void> {
+    const customerName = this.draft.customerName?.trim();
+    if (!customerName) return;
+    this.closeQuickCustomerPrompt();
+    if (!register) {
+      this.quickCustomerDecision = 'no';
+      await this.save();
+      return;
+    }
+    this.saving.set(true);
+    this.resetMessages();
+    try {
+      const client = await this.clientService.create({ type: 'person', displayName: customerName, email: '', phone: '', website: '', social: '', notes: '' });
+      this.draft = { ...this.draft, partyId: client.id, customerName: client.displayName };
+      this.customerMode.set('existing');
+      this.quickCustomerDecision = 'yes';
+      this.parties.update((parties) => [...parties, client]);
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile registrare il cliente.');
+    } finally {
+      this.saving.set(false);
+    }
+    if (this.quickCustomerDecision === 'yes') await this.save();
+  }
+  protected goBackFromQuickCustomerPrompt(): void {
+    this.quickCustomerDecision = null;
+    this.closeQuickCustomerPrompt();
+  }
+  private openQuickCustomerPrompt(): void {
+    this.quickCustomerPromptOpen.set(true);
+    setTimeout(() => {
+      const dialog = this.quickCustomerDialog?.nativeElement;
+      if (dialog && !dialog.open) dialog.showModal();
+    });
+  }
+  private closeQuickCustomerPrompt(): void {
+    const dialog = this.quickCustomerDialog?.nativeElement;
+    if (dialog?.open) dialog.close();
+    this.quickCustomerPromptOpen.set(false);
+  }
   protected registerQuickCustomer(): void {
     if (!this.editingId() || !this.canRegisterQuickCustomer()) return;
     void this.router.navigate(['/clients'], { queryParams: { create: 'quick', name: this.draft.customerName, returnOperationId: this.editingId(), returnPath: this.salesOnly ? '/sales' : '/operations' } });
@@ -471,6 +520,8 @@ export class OperationsPage implements OnInit {
     this.bundleDetails.set([]);
     this.bundleParentMode.set(false);
     this.fairPaymentManuallyEdited = false;
+    this.quickCustomerDecision = null;
+    this.closeQuickCustomerPrompt();
     this.offerSelection.set('');
     this.editingId.set(null);
     this.creating.set(true);
@@ -507,6 +558,10 @@ export class OperationsPage implements OnInit {
   }
 
   protected async save(): Promise<void> {
+    if (this.shouldAskQuickCustomerRegistration()) {
+      this.openQuickCustomerPrompt();
+      return;
+    }
     this.saving.set(true); this.resetMessages();
     const input = this.prepareInput();
     try {
