@@ -32,7 +32,7 @@
               <div><h3>{{ operationDisplayName(work) }}</h3><p>{{ customerLabel(work) }} · {{ formatDateTime(work.operationDate ?? work.createdAt) }}</p></div>
               <div class="row-facts"><span><strong>Consegna</strong>{{ formatDate(work.deliveryDate) }}</span><span><strong>Importo</strong>{{ formatMoney(work.amount) }}</span></div>
               <span class="status-badge" [attr.aria-label]="workStatusLabel(work)" [attr.title]="workStatusLabel(work)"><span class="badge-icon" aria-hidden="true">{{ workStatusIcon(work) }}</span><span class="badge-label">{{ workStatusLabel(work) }}</span></span>
-              <button class="quick-status" type="button" [disabled]="transitioningId() === work.id" [attr.aria-label]="workAdvanceLabel(work)" [attr.title]="workAdvanceLabel(work)" (click)="advanceWork(work)"><span aria-hidden="true">{{ workAdvanceIcon(work) }}</span><span class="action-label">{{ work.workStatus === 'requested' ? 'Inizia' : work.workStatus === 'in-progress' ? 'Termina' : 'Consegna' }}</span></button>
+              <div class="row-actions"><button class="text-button" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="editOperation(work)">✎</button>@if (!isFullyPaid(work)) { <button class="payment-button" type="button" aria-label="Registra pagamento lavorazione" title="Registra pagamento lavorazione" (click)="openPaymentDialog(work)"><span aria-hidden="true">€</span></button> }<button class="quick-status" type="button" [disabled]="transitioningId() === work.id" [attr.aria-label]="workAdvanceLabel(work)" [attr.title]="workAdvanceLabel(work)" (click)="advanceWork(work)"><span aria-hidden="true">{{ workAdvanceIcon(work) }}</span><span class="action-label">{{ work.workStatus === 'requested' ? 'Inizia' : work.workStatus === 'in-progress' ? 'Termina' : 'Consegna' }}</span></button></div>
             </article>
           }
         </div>
@@ -47,14 +47,14 @@
             <article class="dashboard-row sale-row">
               <div><h3>{{ operationDisplayName(sale) }}</h3><p>{{ customerLabel(sale) }} · {{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</p></div>
               <div class="row-facts"><span><strong>Quantità</strong>{{ sale.quantity ?? 1 }}</span><span><strong>Importo</strong>{{ formatMoney(sale.amount) }}</span><span><strong>Pagato</strong>{{ formatMoney(paymentTotal(sale.id)) }}</span></div>
-              @if (!isFullyPaid(sale)) { <button class="payment-button" type="button" aria-label="Registra pagamento" title="Registra pagamento" (click)="openPaymentDialog(sale)"><span class="payment-icon" aria-hidden="true">€</span><span class="action-label">Pagamento</span></button> }
+              <div class="row-actions"><button class="text-button" type="button" aria-label="Modifica vendita" title="Modifica vendita" (click)="editOperation(sale)">✎</button>@if (!isFullyPaid(sale)) { <button class="payment-button" type="button" aria-label="Registra pagamento" title="Registra pagamento" (click)="openPaymentDialog(sale)"><span class="payment-icon" aria-hidden="true">€</span><span class="action-label">Pagamento</span></button> }</div>
             </article>
           }
         </div>
       } @else { <p class="empty-inline">Nessuna vendita registrata per questa fiera.</p> }
     </section>
 
-    <button class="primary-action" type="button" (click)="openFairSale()">+ Nuova vendita fiera</button>
+    <div class="row-actions"><button class="primary-action" type="button" (click)="openFairSale()">+ Nuova vendita fiera</button><button class="primary-action" type="button" (click)="openFairWork()">+ Nuova lavorazione</button></div>
   } @else {
     <div class="dashboard-controls">
       <div class="year-selector" aria-label="Anno del riepilogo">

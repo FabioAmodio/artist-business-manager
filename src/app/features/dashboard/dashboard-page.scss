@@ -32,6 +32,7 @@ h3 { font-size: 1.15rem; }
 .quick-status { align-items: center; background: var(--color-accent); border: 0; border-radius: var(--radius-full); color: var(--color-text-inverse); cursor: pointer; display: inline-flex; font: 600 var(--font-size-xs) var(--font-sans); gap: .35rem; justify-content: center; min-height: 2.25rem; padding: .4rem .7rem; }
 .quick-status:hover, .quick-status:focus-visible { background: var(--color-accent-light); outline: none; }
 .quick-status:disabled { cursor: wait; opacity: .55; }
+.dashboard .row-actions { align-items: center; display: inline-flex; flex-wrap: nowrap; gap: .35rem; justify-content: flex-end; }
 .payment-button { align-items: center; background: var(--color-accent); border: 0; border-radius: var(--radius-full); color: var(--color-text-inverse); cursor: pointer; display: inline-flex; font: 600 var(--font-size-xs) var(--font-sans); gap: .35rem; justify-content: center; min-height: 2.25rem; padding: .4rem .7rem; }
 .payment-icon { font-size: 1rem; font-weight: 700; line-height: 1; }
 .payment-button:hover, .payment-button:focus-visible { background: var(--color-accent-light); outline: none; }
@@ -110,12 +111,14 @@ h3 { font-size: 1.15rem; }
   .dashboard-section { margin-top: var(--spacing-4); }
   .dashboard-row { grid-template-columns: minmax(0, 1fr) auto; }
   .dashboard-row > :first-child, .dashboard-row > .row-facts { grid-column: 1 / -1; }
-  .work-row { grid-template-columns: minmax(0, 1fr) 1.75rem 2rem; }
+  .work-row { grid-template-columns: minmax(0, 1fr) auto; }
   .work-row > .row-facts { grid-column: 1; grid-row: 2; }
-  .status-badge { align-self: center; grid-column: 2; grid-row: 2; height: 1.75rem; justify-content: center; padding: var(--spacing-1); width: 1.75rem; }
-  .quick-status { align-self: center; grid-column: 3; grid-row: 2; min-height: 2rem; padding: 0; width: 2rem; }
+  .work-row > .status-badge { align-self: center; grid-column: 1; grid-row: 3; height: 1.75rem; justify-content: center; padding: var(--spacing-1); width: 1.75rem; }
+  .work-row > .row-actions { align-self: center; grid-column: 2; grid-row: 3; }
+  .quick-status { min-height: 2rem; padding: 0; width: 2rem; }
   .sale-row > .row-facts { grid-column: 1; grid-row: 2; }
-  .sale-row > .payment-button { align-self: center; grid-column: 2; grid-row: 2; min-height: 2rem; padding: 0; width: 2rem; }
+  .sale-row > .row-actions { align-self: center; grid-column: 2; grid-row: 2; }
+  .sale-row > .row-actions .payment-button { min-height: 2rem; padding: 0; width: 2rem; }
   .action-label { display: none; }
   .sale-row { grid-template-columns: minmax(0, 1fr) auto; }
   .payment-form-grid { grid-template-columns: 1fr; }

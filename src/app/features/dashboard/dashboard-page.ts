@@ -169,6 +169,14 @@ export class DashboardPage implements OnInit {
     void this.router.navigate(['/sales'], { queryParams: { create: Date.now().toString() } });
   }
 
+  protected openFairWork(): void {
+    void this.router.navigate(['/works'], { queryParams: { create: Date.now().toString() } });
+  }
+
+  protected editOperation(operation: Operation): void {
+    void this.router.navigate([operation.type === 'work' ? '/works' : '/sales'], { queryParams: { open: operation.id } });
+  }
+
   protected changeDashboardView(value: string): void {
     if (value === 'fair' || value === 'annual') this.dashboardView.set(value);
   }
