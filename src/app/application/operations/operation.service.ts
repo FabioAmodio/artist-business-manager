@@ -44,7 +44,8 @@ export class OperationService {
     const operation = await this.repository.getById(id);
     if (!operation) throw new Error('Operazione non trovata.');
     const nextStatus = operation.workStatus === 'requested' ? 'in-progress'
-      : operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? 'delivered'
+      : operation.workStatus === 'in-progress' ? 'completed'
+        : operation.workStatus === 'completed' ? 'delivered'
         : null;
     if (!nextStatus) throw new Error('La lavorazione non puo essere avanzata ulteriormente.');
     return this.repository.transition(id, { status: nextStatus });

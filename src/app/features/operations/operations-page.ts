@@ -276,10 +276,10 @@ export class OperationsPage implements OnInit {
     return this.worksOnly && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress' || operation.workStatus === 'completed');
   }
   protected workAdvanceLabel(operation: Operation): string {
-    return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione';
+    return operation.workStatus === 'in-progress' ? 'Segna come terminata' : operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione';
   }
   protected workAdvanceIcon(operation: Operation): string {
-    return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? '📦' : '▶';
+    return operation.workStatus === 'in-progress' ? '✅' : operation.workStatus === 'completed' ? '📦' : '▶';
   }
   protected async advanceWork(operation: Operation): Promise<void> {
     this.transitioningWorkId.set(operation.id);

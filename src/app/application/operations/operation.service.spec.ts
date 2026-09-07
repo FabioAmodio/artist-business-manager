@@ -64,13 +64,14 @@ describe('OperationService', () => {
     expect(repository.operations.get(created.id)?.workStatus).toBe('in-progress');
   });
 
-  it('advances work directly from in progress to delivered', async () => {
+  it('advances work through completed before delivered', async () => {
     const repository = createRepositoryMock();
     TestBed.configureTestingModule({ providers: [OperationService, { provide: OperationRepository, useValue: repository }] });
     const service = TestBed.inject(OperationService);
     const created = await service.create({ type: 'work', title: 'Ritratto', workStatus: 'requested', needsReview: false });
 
     expect((await service.advanceWorkStatus(created.id)).workStatus).toBe('in-progress');
+    expect((await service.advanceWorkStatus(created.id)).workStatus).toBe('completed');
     expect((await service.advanceWorkStatus(created.id)).workStatus).toBe('delivered');
     await expect(service.advanceWorkStatus(created.id)).rejects.toThrow('non puo essere avanzata ulteriormente');
   });

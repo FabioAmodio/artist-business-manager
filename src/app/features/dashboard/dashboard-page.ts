@@ -147,8 +147,8 @@ export class DashboardPage implements OnInit {
   protected customerLabel(operation: Operation): string { return this.parties().find((party) => party.id === operation.partyId)?.displayName ?? operation.customerName ?? 'Cliente non indicato'; }
   protected workStatusLabel(operation: Operation): string { return operation.workStatus === 'completed' ? 'Terminata' : operation.workStatus === 'in-progress' ? 'In corso' : 'Richiesta'; }
   protected workStatusIcon(operation: Operation): string { return operation.workStatus === 'completed' ? '✅' : operation.workStatus === 'in-progress' ? '🛠️' : '📝'; }
-  protected workAdvanceLabel(operation: Operation): string { return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione'; }
-  protected workAdvanceIcon(operation: Operation): string { return operation.workStatus === 'in-progress' || operation.workStatus === 'completed' ? '📦' : '▶'; }
+  protected workAdvanceLabel(operation: Operation): string { return operation.workStatus === 'in-progress' ? 'Segna come terminata' : operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione'; }
+  protected workAdvanceIcon(operation: Operation): string { return operation.workStatus === 'in-progress' ? '✅' : operation.workStatus === 'completed' ? '📦' : '▶'; }
   protected paymentTotal(operationId: string): number { return this.payments().filter((payment) => payment.operationId === operationId).reduce((total, payment) => total + payment.amount, 0); }
   protected paymentRemaining(operation: Operation): number { return Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0); }
   protected isFullyPaid(operation: Operation): boolean { return (operation.amount ?? 0) <= 0 || this.paymentRemaining(operation) < 0.005; }
