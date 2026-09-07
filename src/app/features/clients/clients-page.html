@@ -27,8 +27,8 @@
             <h3><span class="client-type-icon" aria-hidden="true">{{ client.type === 'person' ? '👤' : '🏢' }}</span>{{ client.displayName }}</h3>
           </div>
           <div class="contact-grid">
-            <span><strong>Acquisti</strong>{{ purchaseCount(client) }}</span>
-            <span><strong>Spesa</strong>{{ purchaseTotal(client) | currency:'EUR':'symbol':'1.2-2' }}</span>
+            <button class="metric-link" type="button" aria-label="Apri vendite del cliente" title="Apri vendite del cliente" (click)="openClientSales(client)"><strong>Acquisti</strong>{{ purchaseCount(client) }}</button>
+            <button class="metric-link" type="button" aria-label="Apri vendite del cliente" title="Apri vendite del cliente" (click)="openClientSales(client)"><strong>Spesa</strong>{{ purchaseTotal(client) | currency:'EUR':'symbol':'1.2-2' }}</button>
             <span><strong>Email</strong>{{ client.email || 'n.d.' }}</span>
             <span><strong>Telefono</strong>{{ client.phone || 'n.d.' }}</span>
             <span><strong>Sito</strong>{{ client.website || 'n.d.' }}</span>

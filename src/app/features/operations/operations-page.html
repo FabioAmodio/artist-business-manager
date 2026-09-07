@@ -19,6 +19,18 @@
         @if (unavailableOfferFilterChoices().length) { <option disabled>-- N.D. --</option>@for (offer of unavailableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">⚠ {{ offer.icon }} {{ offer.label }} (Non disponibile)</option> } }
       </select>
     </label> }
+    @if (salesOnly) { <label>Cliente
+      <select name="customerFilter" [ngModel]="customerFilter()" (ngModelChange)="changeCustomerFilter($event)">
+        <option value="">Tutti</option>
+        @for (customer of customerFilterChoices(); track customer.id) { <option [value]="customer.id">{{ customer.displayName }}</option> }
+      </select>
+    </label> }
+    @if (salesOnly) { <label>Fiera
+      <select name="fairEditionFilter" [ngModel]="fairEditionFilter()" (ngModelChange)="changeFairEditionFilter($event)">
+        <option value="">Tutte</option>
+        @for (fair of fairEditionFilterChoices(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }
+      </select>
+    </label> }
     @if (salesOnly) { <label>Contesto
       <select name="fairScopeFilter" [ngModel]="fairScopeFilter() ?? ''" (ngModelChange)="changeFairScopeFilter($event)">
         <option value="">Tutte</option><option value="fair">In fiera</option><option value="non-fair">Fuori fiera</option>

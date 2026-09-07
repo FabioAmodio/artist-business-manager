@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
 import { ProductService, type ProductInput } from '../../application/products/product.service';
 import { OperationService } from '../../application/operations/operation.service';
@@ -25,6 +26,7 @@ export class ProductsPage implements OnInit {
   private readonly lotService = inject(LotService);
   private readonly operationService = inject(OperationService);
   private readonly purchaseService = inject(PurchaseService);
+  private readonly router = inject(Router);
   private readonly syncStatus = inject(SyncStatusService);
   protected readonly products = signal<readonly Product[]>([]);
   protected readonly lots = signal<readonly Lot[]>([]);
@@ -67,6 +69,7 @@ export class ProductsPage implements OnInit {
   protected productLots(productId: string): readonly Lot[] { return this.lots().filter((lot) => lot.productId === productId); }
   protected soldQuantity(productId: string): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.productId === productId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.quantity ?? 1), 0); }
   protected soldRevenue(productId: string): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.productId === productId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
+  protected openProductSales(product: Product): void { void this.router.navigate(['/sales'], { queryParams: { offer: `product:${product.id}` } }); }
   protected isProductUsed(product: Product): boolean {
     return this.operations().some((operation) => operation.productId === product.id) || this.purchases().some((purchase) => purchase.productId === product.id) || this.productLots(product.id).length > 0;
   }

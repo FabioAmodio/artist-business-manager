@@ -108,6 +108,8 @@ export class OperationsPage implements OnInit {
   protected readonly workStatusOptions: readonly NonNullable<Operation['workStatus']>[] = ['requested', 'in-progress', 'completed', 'delivered', 'cancelled'];
   protected readonly fairScopeFilter = signal<'fair' | 'non-fair' | null>(null);
   protected readonly offerFilter = signal('');
+  protected readonly customerFilter = signal('');
+    protected readonly fairEditionFilter = signal('');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected readonly filtersOpen = signal(false);
@@ -131,6 +133,8 @@ export class OperationsPage implements OnInit {
       const fairScope = params.get('fairScope');
       this.fairScopeFilter.set(fairScope === 'fair' || fairScope === 'non-fair' ? fairScope : null);
       this.offerFilter.set(params.get('offer') ?? '');
+      this.customerFilter.set(params.get('customer') ?? '');
+      this.fairEditionFilter.set(params.get('fairEdition') ?? '');
       this.returnWorkId = params.get('returnWork');
     });
     this.route.queryParamMap.subscribe((params) => {
@@ -150,7 +154,7 @@ export class OperationsPage implements OnInit {
 
   protected async applyFilters(): Promise<void> { await this.loadOperations(); }
   protected hasActiveFilters(): boolean {
-    return Boolean(this.query().trim()) || this.yearFilter() !== null || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter());
+    return Boolean(this.query().trim()) || this.yearFilter() !== null || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter()) || Boolean(this.customerFilter()) || Boolean(this.fairEditionFilter());
   }
   protected availableYears(): readonly number[] {
     return [...new Set([new Date().getFullYear(), ...this.allOperations.map((operation) => Number((operation.operationDate ?? operation.createdAt).slice(0, 4)))])]
@@ -179,6 +183,18 @@ export class OperationsPage implements OnInit {
   }
   protected changeOfferFilter(offer: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { offer: offer || null }, queryParamsHandling: 'merge' });
+  }
+  protected customerFilterChoices(): readonly Party[] {
+    return [...this.parties()].filter((party) => party.roles?.includes('customer')).sort((first, second) => first.displayName.localeCompare(second.displayName));
+  }
+  protected changeCustomerFilter(customer: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { customer: customer || null }, queryParamsHandling: 'merge' });
+  }
+  protected fairEditionFilterChoices(): readonly Fair[] {
+    return [...this.fairs()].sort((first, second) => `${second.year ?? 0}-${second.name}`.localeCompare(`${first.year ?? 0}-${first.name}`));
+  }
+  protected changeFairEditionFilter(fairEdition: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { fairEdition: fairEdition || null }, queryParamsHandling: 'merge' });
   }
   protected changeWorkFilter(filter: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { workFilter: filter || null }, queryParamsHandling: 'merge' });
@@ -367,6 +383,8 @@ export class OperationsPage implements OnInit {
       const [kind, id] = this.offerFilter().split(':');
       operations = operations.filter((operation) => kind === 'product' ? operation.productId === id : kind === 'service' ? operation.serviceId === id : kind === 'bundle' ? operation.bundleId === id : true);
     }
+    if (this.salesOnly && this.customerFilter()) operations = operations.filter((operation) => operation.partyId === this.customerFilter());
+    if (this.salesOnly && this.fairEditionFilter()) operations = operations.filter((operation) => operation.fairEditionId === this.fairEditionFilter());
     if (this.worksOnly) {
       const filter = this.workFilter();
       if (filter === 'open') operations = operations.filter((operation) => operation.workStatus !== 'delivered' && operation.workStatus !== 'cancelled');

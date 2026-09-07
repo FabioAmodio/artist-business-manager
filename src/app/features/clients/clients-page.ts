@@ -57,6 +57,7 @@ export class ClientsPage implements OnInit {
   protected isClientUsed(client: Party): boolean { return this.operations().some((operation) => operation.partyId === client.id); }
   protected purchaseCount(client: Party): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.partyId === client.id && (operation.type === 'sale' || operation.type === 'bundle')).length; }
   protected purchaseTotal(client: Party): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.partyId === client.id && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
+  protected openClientSales(client: Party): void { void this.router.navigate(['/sales'], { queryParams: { customer: client.id } }); }
 
   protected startCreating(displayName = ''): void {
     this.resetMessages();

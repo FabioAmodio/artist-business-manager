@@ -134,6 +134,21 @@ export class DashboardPage implements OnInit {
   }
 
   protected fairSalesTotal(fair: Fair): number { return this.operations().filter((operation) => operation.fairEditionId === fair.id && !operation.parentOperationId && (operation.type === 'sale' || operation.type === 'bundle')).reduce((total, operation) => total + (operation.amount ?? 0), 0); }
+  protected handleSaleSummaryClick(operation: Operation, event: MouseEvent): void {
+    const target = event.target;
+    if (target instanceof Element && target.closest('.customer-link')) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.openFairCustomerSales(operation);
+      return;
+    }
+    this.toggleSaleDetails(operation);
+  }
+  protected openFairCustomerSales(operation: Operation): void {
+    const fairId = this.activeFair()?.id;
+    if (!operation.partyId || !fairId) return;
+    void this.router.navigate(['/sales'], { queryParams: { customer: operation.partyId, fairEdition: fairId } });
+  }
   protected openFairEconomics(fair: Fair): void {
     this.fairEconomicsDialogOpen.set(true);
     setTimeout(() => {
