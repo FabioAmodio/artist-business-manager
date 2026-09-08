@@ -9,6 +9,8 @@ import type { SyncOperation } from '../../domain/models/sync-operation';
 import { IndexedDbProvider } from '../../core/storage/indexed-db.provider';
 import { WorkspaceService } from '../../core/firebase/workspace.service';
 import { FirebaseAuthService } from '../../core/firebase/firebase-auth.service';
+import { FirestoreProvider } from '../../core/storage/firestore.provider';
+import { mergeConcurrentRecord } from '../../domain/shared/concurrent-record-merge';
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
@@ -40,6 +42,7 @@ export class PersistenceService {
   private readonly offlineStorage = inject(IndexedDbProvider, { optional: true });
   private readonly workspace = inject(WorkspaceService);
   private readonly firebaseAuth = inject(FirebaseAuthService);
+  private readonly firestore = inject(FirestoreProvider);
   readonly mode = signal<PersistenceMode>(this.environment.defaultPersistenceMode);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
@@ -61,13 +64,14 @@ export class PersistenceService {
   constructor() {
     effect(() => {
       this.syncStatus.changeVersion();
-      if (this.initialized && this.source() !== 'none') this.scheduleAutomaticSync();
+      const workspaceId = this.workspace.activeWorkspaceId();
+      if (this.initialized && (this.source() !== 'none' || (this.mode() === 'firestore' && workspaceId !== null))) this.scheduleAutomaticSync();
     });
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => this.scheduleAutomaticSync());
       window.addEventListener('focus', () => this.scheduleAutomaticSync());
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') this.scheduleAutomaticSync();
+        if (document.visibilityState === 'visible' && (this.source() !== 'none' || this.mode() === 'firestore')) this.scheduleAutomaticSync();
       });
     }
   }
@@ -326,7 +330,7 @@ export class PersistenceService {
     this.syncStatus.setStatus('syncing');
     try {
       await this.synchronizeInternal();
-      this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
+      if (this.mode() !== 'firestore') this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
       this.syncStatus.notifySyncCompleted();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Errore applicativo di sincronizzazione.';
@@ -339,6 +343,10 @@ export class PersistenceService {
   }
 
   private async synchronizeInternal(): Promise<void> {
+    if (this.mode() === 'firestore') {
+      await this.synchronizeFirestoreInternal();
+      return;
+    }
     const local = await this.readLocalDataset();
     const remote = this.source() === 'file-system'
       ? await this.readDirectoryDataset()
@@ -353,6 +361,83 @@ export class PersistenceService {
     await this.acknowledgePendingChanges(remote, merged);
     await this.refreshSyncOperations();
     this.status.set(remote ? 'Dati locali e persistenti allineati.' : 'Dati locali copiati nella cartella persistente.');
+  }
+
+  private async synchronizeFirestoreInternal(): Promise<void> {
+    if (!this.workspace.activeWorkspaceId()) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.syncStatus.setStatus('pending');
+      return;
+    }
+    const local = await this.readLocalDataset();
+    const pending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    const remote = await this.readFirestoreDataset();
+    const remoteByKey = new Map<string, Record<string, unknown>>();
+    for (const [collection, records] of Object.entries(remote.collections)) {
+      for (const record of records) remoteByKey.set(`${collection}:${String(record['id'])}`, record);
+    }
+
+    const effectivePending: SyncOperation[] = [];
+    for (const operation of pending) {
+      const remoteRecord = remoteByKey.get(`${operation.collection}:${operation.entityId}`);
+      let effectiveOperation = operation;
+      if (operation.action !== 'delete' && operation.before && operation.after && remoteRecord) {
+        const merge = mergeConcurrentRecord(operation.before, operation.after, remoteRecord, operation.collection);
+        if (merge.conflictFields.length) {
+          await this.markSyncOperation(operation, 'conflict', `Conflitto nei campi: ${merge.conflictFields.join(', ')}.`);
+          effectivePending.push({ ...operation, status: 'conflict' });
+          continue;
+        }
+        if (merge.record && !this.sameData(operation.after, merge.record)) {
+          effectiveOperation = { ...operation, after: merge.record, updatedAt: new Date().toISOString() };
+          await this.storage.put(SYNC_OPERATIONS_COLLECTION, effectiveOperation);
+        }
+      }
+      try {
+        if (effectiveOperation.action === 'delete') {
+          await this.firestore.deleteLogical(effectiveOperation.collection, effectiveOperation.entityId, { expectedVersion: typeof effectiveOperation.before?.['version'] === 'number' ? effectiveOperation.before['version'] : undefined });
+        } else if (effectiveOperation.after) {
+          await this.firestore.put(effectiveOperation.collection, effectiveOperation.after);
+        }
+      } catch (error) {
+        if (this.isFirestoreConflict(error)) await this.markSyncOperation(effectiveOperation, 'conflict', error instanceof Error ? error.message : 'Conflitto Firestore.');
+        else throw error;
+      }
+      effectivePending.push(effectiveOperation);
+    }
+
+    const synchronizedRemote = await this.readFirestoreDataset();
+    const merged = this.mergeLocalWithFirestore(local, synchronizedRemote, effectivePending);
+    await this.syncStatus.suppress(() => this.writeLocalDataset(this.storage, merged));
+    for (const operation of effectivePending) {
+      const status = await this.storage.get<SyncOperation>(SYNC_OPERATIONS_COLLECTION, operation.id);
+      if (status?.status !== 'pending') continue;
+      const remoteRecord = (synchronizedRemote.collections[operation.collection] ?? []).find((record) => String(record['id']) === operation.entityId);
+      const synchronized = operation.action === 'delete' ? Boolean(remoteRecord?.['deletedAt']) : Boolean(remoteRecord) && this.sameData(operation.after, remoteRecord);
+      if (synchronized) await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, operation.id);
+    }
+    await this.refreshSyncOperations();
+    const unresolved = this.pendingSyncOperations().some((operation) => operation.status === 'conflict' || operation.status === 'error');
+    this.syncStatus.setStatus(unresolved ? 'error' : 'synced');
+    this.status.set(unresolved ? 'Sync completata con conflitti da risolvere.' : 'Dati locali e Firestore allineati.');
+  }
+
+  private async readFirestoreDataset(): Promise<PersistedDataset> {
+    const collections = Object.fromEntries(await Promise.all(DATA_COLLECTIONS.map(async (collection) => [collection, await this.firestore.list<Record<string, unknown>>(collection)]))) as Record<string, readonly Record<string, unknown>[]>;
+    return { format: 'artist-business-manager', version: 1, exportedAt: new Date().toISOString(), collections };
+  }
+
+  private mergeLocalWithFirestore(local: PersistedDataset, remote: PersistedDataset, pending: readonly SyncOperation[]): PersistedDataset {
+    const pendingKeys = new Set(pending.map((operation) => `${operation.collection}:${operation.entityId}`));
+    const collections = Object.fromEntries(DATA_COLLECTIONS.map((collection) => {
+      const records = new Map<string, Record<string, unknown>>();
+      for (const record of remote.collections[collection] ?? []) records.set(String(record['id']), record);
+      for (const record of local.collections[collection] ?? []) {
+        if (pendingKeys.has(`${collection}:${String(record['id'])}`) || !records.has(String(record['id']))) records.set(String(record['id']), record);
+      }
+      return [collection, [...records.values()]];
+    })) as Record<string, readonly Record<string, unknown>[] >;
+    return { ...local, exportedAt: new Date().toISOString(), collections };
   }
 
   private scheduleAutomaticSync(): void {
@@ -572,10 +657,14 @@ export class PersistenceService {
     return this.repairDatasetIds({ format: 'artist-business-manager', version: 1, exportedAt: new Date().toISOString(), collections });
   }
 
-  private sameData(first: Record<string, unknown>, second: Record<string, unknown>): boolean {
+  private sameData(first: Record<string, unknown> | undefined, second: Record<string, unknown> | undefined): boolean {
     const ignoredFields = new Set(['createdBy', 'updatedBy', 'version']);
-    const normalize = (record: Record<string, unknown>) => Object.fromEntries(Object.entries(record).filter(([key]) => !ignoredFields.has(key)));
+    const normalize = (record: Record<string, unknown> | undefined) => record ? Object.fromEntries(Object.entries(record).filter(([key]) => !ignoredFields.has(key))) : undefined;
     return JSON.stringify(normalize(first)) === JSON.stringify(normalize(second));
+  }
+
+  private isFirestoreConflict(error: unknown): boolean {
+    return error instanceof Error && (error.message.includes('modificato anche su un altro dispositivo') || error.message.includes('Conflitto Firestore:'));
   }
 
   private async writeLocalDataset(provider: IStorageProvider, dataset: PersistedDataset): Promise<void> {

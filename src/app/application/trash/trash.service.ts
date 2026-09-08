@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { STORAGE_PROVIDER } from '../../core/configuration/environment.tokens';
 import type { EntityId } from '../../domain/shared/types';
 import type { IStorageProvider } from '../../core/storage/storage-provider';
+import { AppStateService } from '../../core/state/app-state.service';
 
 export interface TrashEntry {
   readonly id: EntityId;
@@ -31,6 +32,7 @@ const COLLECTIONS = Object.keys(COLLECTION_LABELS);
 @Injectable({ providedIn: 'root' })
 export class TrashService {
   private readonly storage = inject<IStorageProvider>(STORAGE_PROVIDER);
+  private readonly appState = inject(AppStateService);
   readonly hasDeletedItems = signal(false);
 
   async list(): Promise<readonly TrashEntry[]> {
@@ -51,6 +53,7 @@ export class TrashService {
   }
 
   deletePermanent(entry: TrashEntry): Promise<void> {
+    if (!this.appState.isOnline()) throw new Error('L\'eliminazione definitiva richiede una connessione di rete.');
     return this.storage.deletePermanent(entry.collection, entry.id);
   }
 

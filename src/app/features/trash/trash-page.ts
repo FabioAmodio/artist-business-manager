@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DatePipe } from '@angular/common';
 import { TrashService, type TrashEntry } from '../../application/trash/trash.service';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { AppStateService } from '../../core/state/app-state.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -12,6 +13,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 })
 export class TrashPage implements OnInit {
   private readonly service = inject(TrashService);
+  protected readonly appState = inject(AppStateService);
   protected readonly entries = signal<readonly TrashEntry[]>([]);
   protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   protected readonly loading = signal(true);

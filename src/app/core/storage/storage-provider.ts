@@ -19,6 +19,7 @@ export interface StorageFilter {
 export interface DeleteMetadata {
   readonly deletedAt?: IsoDateTime;
   readonly deletedBy?: EntityId;
+  readonly expectedVersion?: number;
 }
 
 export interface IStorageProvider {

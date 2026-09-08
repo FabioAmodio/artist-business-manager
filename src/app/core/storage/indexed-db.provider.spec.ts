@@ -16,6 +16,7 @@ describe('IndexedDbProvider', () => {
       allowImportExport: false,
       allowCloudSync: false,
       version: '0.0.0',
+      defaultPersistenceMode: 'offline',
     };
 
     TestBed.configureTestingModule({
@@ -44,6 +45,7 @@ describe('IndexedDbProvider', () => {
           allowImportExport: false,
           allowCloudSync: false,
           version: '0.0.0',
+          defaultPersistenceMode: 'offline',
         } satisfies AppEnvironment },
       ],
     });
@@ -67,7 +69,7 @@ describe('IndexedDbProvider', () => {
       providers: [
         IndexedDbProvider,
         { provide: APP_ENVIRONMENT, useValue: {
-          applicationName: 'Artist Business Manager', environmentName: 'test', storagePrefix: 'ABM-TEST', logLevel: 'debug', syncEnabled: false, allowExternalPersistence: false, allowImportExport: false, allowCloudSync: false, version: '0.0.0',
+          applicationName: 'Artist Business Manager', environmentName: 'test', storagePrefix: 'ABM-TEST', logLevel: 'debug', syncEnabled: false, allowExternalPersistence: false, allowImportExport: false, allowCloudSync: false, version: '0.0.0', defaultPersistenceMode: 'offline',
         } satisfies AppEnvironment },
       ],
     });

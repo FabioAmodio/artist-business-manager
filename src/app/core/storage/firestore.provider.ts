@@ -58,6 +58,11 @@ export class FirestoreProvider implements IStorageProvider {
       await runTransaction(this.firebase.firestore(), async (transaction) => {
         const current = await transaction.get(reference);
         const currentData = current.data() as Record<string, unknown> | undefined;
+        const expectedVersion = (value as Record<string, unknown>)['version'];
+        const remoteVersion = currentData?.['version'];
+        if (current.exists() && typeof expectedVersion === 'number' && typeof remoteVersion === 'number' && expectedVersion !== remoteVersion) {
+          throw new Error(`Conflitto Firestore: versione remota ${remoteVersion}, attesa ${expectedVersion}.`);
+        }
         transaction.set(reference, {
           ...value as Record<string, unknown>,
           createdBy: currentData?.['createdBy'] ?? user.uid,
@@ -76,6 +81,9 @@ export class FirestoreProvider implements IStorageProvider {
         const current = await transaction.get(reference);
         if (!current.exists()) throw new Error('Documento Firestore non trovato.');
         const currentData = current.data() as Record<string, unknown>;
+        if (typeof metadata.expectedVersion === 'number' && typeof currentData['version'] === 'number' && metadata.expectedVersion !== currentData['version']) {
+          throw new Error(`Conflitto Firestore: versione remota ${currentData['version']}, attesa ${metadata.expectedVersion}.`);
+        }
         transaction.update(reference, {
           deletedAt: metadata.deletedAt ?? new Date().toISOString(),
           deletedBy: metadata.deletedBy ?? user.uid,
