@@ -242,7 +242,16 @@ export class DashboardPage implements OnInit {
     this.expandedSales.set(expanded);
   }
   protected paymentTotal(operationId: string): number { return this.payments().filter((payment) => payment.operationId === operationId).reduce((total, payment) => total + payment.amount, 0); }
-  protected paymentRemaining(operation: Operation): number { return Math.max((operation.amount ?? 0) - this.paymentTotal(operation.id), 0); }
+  protected paymentTotalFor(operation: Operation): number {
+    if (!operation.parentOperationId) return this.paymentTotal(operation.id);
+    const parent = this.operations().find((item) => item.id === operation.parentOperationId);
+    if (!parent || (parent.amount ?? 0) <= 0) return this.paymentTotal(operation.id);
+    return Math.min(operation.amount ?? 0, this.paymentTotal(parent.id) * (operation.amount ?? 0) / (parent.amount ?? 0));
+  }
+  protected paymentRemaining(operation: Operation): number { return Math.max((operation.amount ?? 0) - this.paymentTotalFor(operation), 0); }
+  protected paymentTarget(operation: Operation): Operation {
+    return operation.parentOperationId ? this.operations().find((item) => item.id === operation.parentOperationId) ?? operation : operation;
+  }
   protected workPaymentSummary(operation: Operation): string { return this.formatMoney(operation.amount); }
   protected workPaymentAriaLabel(operation: Operation): string { return `Totale ${this.formatMoney(operation.amount)}, residuo ${this.formatMoney(this.paymentRemaining(operation))}`; }
   protected isFullyPaid(operation: Operation): boolean { return (operation.amount ?? 0) <= 0 || this.paymentRemaining(operation) < 0.005; }
@@ -327,7 +336,7 @@ export class DashboardPage implements OnInit {
     this.savingPayment.set(true);
     this.errorMessage.set('');
     try {
-      await this.paymentService.create({ operationId: operation.id, amount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
+      await this.paymentService.create({ operationId: this.paymentTarget(operation).id, amount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       this.payments.set(await this.paymentService.list());
       this.paymentSale.set(null);
       this.paymentDraft = this.emptyPaymentDraft();
