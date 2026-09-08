@@ -2,7 +2,6 @@
 .page-header, .list-heading, .row-actions, .bundle-items-header { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
 .page-header { background: var(--color-surface); border-top: 3px solid var(--color-accent); padding: 1.25rem 0 .75rem; position: sticky; top: 0; z-index: var(--z-sticky); }
 .page-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-.toolbar { display: grid; gap: 1rem; grid-template-columns: minmax(10rem, 16rem); justify-content: end; margin: .75rem 0; }
 .list-heading { border-bottom: 1px solid var(--color-border); margin-top: 1rem; padding-bottom: .75rem; }
 .list-heading span { color: var(--color-text-secondary); }
 .primary-button, .secondary-button, .danger-button, .text-button { border: 0; border-radius: var(--radius-base); cursor: pointer; font: 600 .9rem var(--font-sans); padding: .75rem 1rem; }

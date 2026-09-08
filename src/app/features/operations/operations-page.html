@@ -4,38 +4,50 @@
   @if (errorMessage() && !editingId() && !creating() && !quickPaymentOperation()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><div class="list-heading-end"><span>{{ visibleOperations().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
-  @if (filtersOpen()) { <div class="toolbar filter-panel">
-    <label>Ricerca <input type="search" name="query" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Titolo o descrizione" /></label>
-    <label>Anno
-      <select name="yearFilter" [ngModel]="yearFilter()?.toString() ?? ''" (ngModelChange)="changeYearFilter($event)">
+  <div class="list-heading"><h2>{{ salesOnly ? 'Elenco vendite' : worksOnly ? 'Elenco lavori' : 'Elenco operazioni' }}</h2><div class="list-heading-end"><span>{{ visibleOperations().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="toggleFilters()"><span aria-hidden="true">🔎</span></button>@if (salesOnly) { <button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" [attr.aria-label]="hasActiveSort() ? 'Ordinamento attivo' : 'Apri ordinamento'" [attr.title]="hasActiveSort() ? 'Ordinamento attivo' : 'Ordina lista'" (click)="toggleSort()"><span aria-hidden="true">↕</span></button> }</div></div>
+  @if (filtersOpen()) { <div class="sheet-backdrop" aria-hidden="true" (click)="closeFilters()"></div><div class="toolbar filter-panel sales-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="sales-filter-title"><div class="sheet-heading"><h2 id="sales-filter-title">Filtra</h2><button class="sheet-close" type="button" aria-label="Annulla e chiudi filtri" title="Annulla" (click)="closeFilters()">×</button></div>
+    <label><span class="filter-label">Ricerca@if (isDraftFilterActive('query')) { <sup aria-hidden="true">*</sup> }</span><input type="search" name="query" [ngModel]="salesOnly ? filterDraft().query : query()" (ngModelChange)="changeQueryFilter($event)" placeholder="Titolo o descrizione" /></label>
+    <label><span class="filter-label">Anno@if (isDraftFilterActive('year')) { <sup aria-hidden="true">*</sup> }</span>
+      <select name="yearFilter" [ngModel]="(salesOnly ? filterDraft().year : yearFilter())?.toString() ?? ''" (ngModelChange)="changeYearFilter($event)">
         @for (option of yearFilterOptions(); track option.value) { <option [value]="option.value">{{ option.label }}</option> }
       </select>
     </label>
-    @if (salesOnly) { <label>Prodotto/Servizio/Bundle
-      <select name="offerFilter" [ngModel]="offerFilter()" (ngModelChange)="changeOfferFilter($event)">
+    @if (salesOnly) { <label><span class="filter-label">Prodotto/Servizio/Bundle@if (isDraftFilterActive('offer')) { <sup aria-hidden="true">*</sup> }</span>
+      <select name="offerFilter" [ngModel]="salesOnly ? filterDraft().offer : offerFilter()" (ngModelChange)="changeOfferFilter($event)">
         <option value="">Tutti</option>
         @for (offer of availableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">{{ offer.icon }} {{ offer.label }}</option> }
         @if (unavailableOfferFilterChoices().length) { <option disabled>-- N.D. --</option>@for (offer of unavailableOfferFilterChoices(); track offer.key) { <option [value]="offer.key">⚠ {{ offer.icon }} {{ offer.label }} (Non disponibile)</option> } }
       </select>
     </label> }
-    @if (salesOnly) { <label>Cliente
-      <select name="customerFilter" [ngModel]="customerFilter()" (ngModelChange)="changeCustomerFilter($event)">
+    @if (salesOnly) { <label><span class="filter-label">Cliente@if (isDraftFilterActive('customer')) { <sup aria-hidden="true">*</sup> }</span>
+      <select name="customerFilter" [ngModel]="salesOnly ? filterDraft().customer : customerFilter()" (ngModelChange)="changeCustomerFilter($event)">
         <option value="">Tutti</option>
         @for (customer of customerFilterChoices(); track customer.id) { <option [value]="customer.id">{{ customer.displayName }}</option> }
       </select>
     </label> }
-    @if (salesOnly) { <label>Fiera
-      <select name="fairEditionFilter" [ngModel]="fairEditionFilter()" (ngModelChange)="changeFairEditionFilter($event)">
+    @if (salesOnly) { <label><span class="filter-label">Fiera@if (isDraftFilterActive('fairEdition')) { <sup aria-hidden="true">*</sup> }</span>
+      <select name="fairEditionFilter" [ngModel]="salesOnly ? filterDraft().fairEdition : fairEditionFilter()" (ngModelChange)="changeFairEditionFilter($event)">
         <option value="">Tutte</option>
         @for (fair of fairEditionFilterChoices(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }}</option> }
       </select>
     </label> }
-    @if (salesOnly) { <label>Contesto
-      <select name="fairScopeFilter" [ngModel]="fairScopeFilter() ?? ''" (ngModelChange)="changeFairScopeFilter($event)">
+    @if (salesOnly) { <label><span class="filter-label">Contesto@if (isDraftFilterActive('fairScope')) { <sup aria-hidden="true">*</sup> }</span>
+      <select name="fairScopeFilter" [ngModel]="(salesOnly ? filterDraft().fairScope : fairScopeFilter()) ?? ''" (ngModelChange)="salesOnly ? updateFilterDraft('fairScope', $event || null) : changeFairScopeFilter($event)">
         <option value="">Tutte</option><option value="fair">In fiera</option><option value="non-fair">Fuori fiera</option>
       </select>
     </label> }
+    @if (salesOnly) { <label><span class="filter-label">Pagamento@if (isDraftFilterActive('payment')) { <sup aria-hidden="true">*</sup> }</span>
+      <select name="paymentFilter" [ngModel]="filterDraft().payment" (ngModelChange)="changePaymentFilter($event)">
+        <option value="all">Tutti</option><option value="paid">Pagate</option><option value="partial">Parziali</option><option value="unpaid">Da pagare</option>
+      </select>
+    </label>
+    <label><span class="filter-label">Importo minimo@if (isDraftFilterActive('amountMin')) { <sup aria-hidden="true">*</sup> }</span>
+      <input name="amountMinFilter" type="number" min="0" step="0.01" [ngModel]="filterDraft().amountMin ?? ''" (ngModelChange)="changeAmountFilter('min', $event)" />
+    </label>
+    <label><span class="filter-label">Importo massimo@if (isDraftFilterActive('amountMax')) { <sup aria-hidden="true">*</sup> }</span>
+      <input name="amountMaxFilter" type="number" min="0" step="0.01" [ngModel]="filterDraft().amountMax ?? ''" (ngModelChange)="changeAmountFilter('max', $event)" />
+    </label>
+    }
     @if (worksOnly) { <label>Stato lavorazione
       <select name="workFilter" [ngModel]="workFilter() ?? ''" (ngModelChange)="changeWorkFilter($event)">
         <option value="">Tutte</option><option value="open">Aperte</option><option value="requested">Da fare</option><option value="in-progress">In lavorazione</option><option value="to-deliver">Da consegnare</option><option value="unpaid">Da saldare</option>
@@ -46,6 +58,11 @@
         <option value="all">Tutte</option><option value="sale">Vendite</option><option value="work">Lavorazioni</option>
       </select>
     </label> }
+    <div class="sheet-actions"><button class="sheet-reset" type="button" (click)="restoreSalesFilters()">Ripristina</button><button class="sheet-apply" type="button" (click)="applySalesFilters()">Filtra {{ previewSalesCount() }} elementi</button></div>
+  </div> }
+  @if (sortOpen()) { <div class="sort-backdrop sheet-backdrop" aria-hidden="true" (click)="closeSort()"></div><div class="toolbar sort-panel" role="dialog" aria-modal="true"><div class="sort-control-row"><select name="salesSortKey" aria-label="Colonna da ordinare" [ngModel]="salesSortKey()" (ngModelChange)="changeSalesSortKey($event)">
+        @for (choice of salesSortChoices(); track choice.value) { <option [value]="choice.value">{{ choice.label }}</option> }
+      </select><button class="sort-direction-button" type="button" [attr.aria-label]="salesSortDirection() === 'asc' ? 'Ordinamento ascendente, passa a discendente' : 'Ordinamento discendente, passa ad ascendente'" [attr.title]="salesSortDirection() === 'asc' ? 'Passa a discendente' : 'Passa ad ascendente'" (click)="changeSalesSortDirection(salesSortDirection() === 'asc' ? 'desc' : 'asc')"><span aria-hidden="true">{{ salesSortDirection() === 'asc' ? '↑' : '↓' }}</span></button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSalesSort()"><span aria-hidden="true">↺</span></button></div>
   </div> }
   @if (loading()) { <p class="empty-state">Caricamento...</p> }
   @else if (!visibleOperations().length) { <div class="empty-state"><h3>{{ salesOnly ? 'Nessuna vendita registrata' : worksOnly ? 'Nessuna lavorazione registrata' : 'Nessuna operazione registrata' }}</h3></div> }

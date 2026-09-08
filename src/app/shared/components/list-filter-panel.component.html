@@ -1,0 +1,6 @@
+<div class="sheet-backdrop" aria-hidden="true" (click)="close.emit()"></div>
+<section class="toolbar filter-panel list-filter-sheet" role="dialog" aria-modal="true" [attr.aria-label]="title()">
+  <div class="sheet-heading"><h2>{{ title() }}</h2><button class="sheet-close" type="button" aria-label="Chiudi filtri" title="Chiudi" (click)="close.emit()">×</button></div>
+  <ng-content></ng-content>
+  <div class="sheet-actions"><button class="sheet-reset" type="button" (click)="reset.emit()">Ripristina</button><button class="sheet-apply" type="button" (click)="apply.emit()">{{ resultLabel() || 'Applica filtri' }}</button></div>
+</section>

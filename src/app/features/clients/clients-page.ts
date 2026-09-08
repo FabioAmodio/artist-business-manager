@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ClientService, type ClientInput } from '../../application/clients/client.service';
@@ -8,10 +8,13 @@ import type { Operation } from '../../domain/models/operation';
 import type { Party } from '../../domain/models/party';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+
+type ClientSortKey = 'name' | 'purchases' | 'spending';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
   selector: 'app-clients-page',
   templateUrl: './clients-page.html',
   styleUrl: './clients-page.scss',
@@ -29,7 +32,14 @@ export class ClientsPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly typeFilter = signal<'all' | 'person' | 'organization'>('all');
+  protected readonly purchasesMin = signal<number | null>(null);
+  protected readonly purchasesMax = signal<number | null>(null);
+  protected readonly spendingMin = signal<number | null>(null);
+  protected readonly spendingMax = signal<number | null>(null);
   protected readonly filtersOpen = signal(false);
+  protected readonly sortOpen = signal(false);
+  protected readonly sortKey = signal<ClientSortKey>('name');
+  protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: ClientInput = this.emptyDraft();
@@ -50,9 +60,28 @@ export class ClientsPage implements OnInit {
 
   protected visibleClients(): readonly Party[] {
     const type = this.typeFilter();
-    return type === 'all' ? this.clients() : this.clients().filter((client) => client.type === type);
+    let clients = type === 'all' ? this.clients() : this.clients().filter((client) => client.type === type);
+    if (this.purchasesMin() !== null) clients = clients.filter((client) => this.purchaseCount(client) >= this.purchasesMin()!);
+    if (this.purchasesMax() !== null) clients = clients.filter((client) => this.purchaseCount(client) <= this.purchasesMax()!);
+    if (this.spendingMin() !== null) clients = clients.filter((client) => this.purchaseTotal(client) >= this.spendingMin()!);
+    if (this.spendingMax() !== null) clients = clients.filter((client) => this.purchaseTotal(client) <= this.spendingMax()!);
+    return [...clients].sort((first, second) => this.compareClients(first, second));
   }
-  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.typeFilter() !== 'all'; }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.typeFilter() !== 'all' || this.purchasesMin() !== null || this.purchasesMax() !== null || this.spendingMin() !== null || this.spendingMax() !== null; }
+  protected closeFilterPanel(): void { this.filtersOpen.set(false); }
+  protected resetFilters(): void { this.query.set(''); this.typeFilter.set('all'); this.purchasesMin.set(null); this.purchasesMax.set(null); this.spendingMin.set(null); this.spendingMax.set(null); this.filtersOpen.set(false); void this.load(); }
+  protected hasActiveSort(): boolean { return this.sortKey() !== 'name' || this.sortDirection() !== 'asc'; }
+  protected toggleSort(): void { this.sortOpen.update((open) => !open); this.filtersOpen.set(false); }
+  protected restoreSort(): void { this.sortKey.set('name'); this.sortDirection.set('asc'); this.sortOpen.set(false); }
+  protected changeSortDirection(): void { this.sortDirection.update((direction) => direction === 'asc' ? 'desc' : 'asc'); }
+  @HostListener('document:click', ['$event'])
+  protected closeSortOutside(event: MouseEvent): void { const target = event.target; if (this.sortOpen() && (!(target instanceof Element) || (!target.closest('.sort-panel') && !target.closest('.sort-toggle')))) this.sortOpen.set(false); }
+  private compareClients(first: Party, second: Party): number {
+    const value = (client: Party): string | number => this.sortKey() === 'name' ? client.displayName.toLocaleLowerCase() : this.sortKey() === 'purchases' ? this.purchaseCount(client) : this.purchaseTotal(client);
+    const firstValue = value(first); const secondValue = value(second);
+    const result = typeof firstValue === 'number' && typeof secondValue === 'number' ? firstValue - secondValue : String(firstValue).localeCompare(String(secondValue), 'it', { numeric: true, sensitivity: 'base' });
+    return this.sortDirection() === 'asc' ? result : -result;
+  }
 
   protected isClientUsed(client: Party): boolean { return this.operations().some((operation) => operation.partyId === client.id); }
   protected purchaseCount(client: Party): number { return this.operations().filter((operation) => !operation.parentOperationId && operation.partyId === client.id && (operation.type === 'sale' || operation.type === 'bundle')).length; }

@@ -1,5 +1,5 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BundleService } from '../../application/bundles/bundle.service';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
@@ -16,6 +16,7 @@ import type { Service } from '../../domain/models/service';
 import { isBundleAvailable } from '../../domain/shared/catalog-availability';
 import { completeAmountsToTotal } from '../../domain/shared/money';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 
 interface BundleDraftItem {
@@ -26,10 +27,11 @@ interface BundleDraftItem {
   amount?: number;
   percentage?: number;
 }
+type CatalogSortKey = 'name' | 'price' | 'sold' | 'revenue';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DecimalPipe, FormsModule, PageHeaderComponent],
+  imports: [CurrencyPipe, DecimalPipe, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
   selector: 'app-catalog-page',
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',
@@ -61,6 +63,16 @@ export class CatalogPage implements OnInit {
   protected readonly successMessage = signal('');
   protected readonly filtersOpen = signal(false);
   protected readonly catalogTypeFilter = signal<'all' | 'product' | 'service' | 'bundle'>('all');
+  protected readonly activeFilter = signal<'all' | 'active' | 'inactive'>('all');
+  protected readonly priceMin = signal<number | null>(null);
+  protected readonly priceMax = signal<number | null>(null);
+  protected readonly soldMin = signal<number | null>(null);
+  protected readonly soldMax = signal<number | null>(null);
+  protected readonly revenueMin = signal<number | null>(null);
+  protected readonly revenueMax = signal<number | null>(null);
+  protected readonly sortOpen = signal(false);
+  protected readonly sortKey = signal<CatalogSortKey>('name');
+  protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
   protected productDraft: ProductInput = this.emptyProductDraft();
   protected productTagText = '';
   protected serviceDraft: ServiceInput = this.emptyServiceDraft();
@@ -87,12 +99,34 @@ export class CatalogPage implements OnInit {
     return type === 'product' ? 'Prodotto' : type === 'service' ? 'Servizio' : 'Pacchetto';
   }
 
-  protected hasActiveFilters(): boolean { return this.catalogTypeFilter() !== 'all'; }
+  protected hasActiveFilters(): boolean { return this.catalogTypeFilter() !== 'all' || this.activeFilter() !== 'all' || this.priceMin() !== null || this.priceMax() !== null || this.soldMin() !== null || this.soldMax() !== null || this.revenueMin() !== null || this.revenueMax() !== null; }
+  protected closeFilterPanel(): void { this.filtersOpen.set(false); }
+  protected resetFilters(): void { this.catalogTypeFilter.set('all'); this.activeFilter.set('all'); this.priceMin.set(null); this.priceMax.set(null); this.soldMin.set(null); this.soldMax.set(null); this.revenueMin.set(null); this.revenueMax.set(null); this.filtersOpen.set(false); }
   protected visibleCatalogCount(): number {
     const type = this.catalogTypeFilter();
     return (type === 'all' || type === 'product' ? this.products().length : 0)
       + (type === 'all' || type === 'service' ? this.services().length : 0)
       + (type === 'all' || type === 'bundle' ? this.bundles().length : 0);
+  }
+  protected visibleProducts(): readonly Product[] { return [...this.products().filter((product) => this.matchesActive(product.active) && (this.priceMin() === null || (product.suggestedPrice ?? 0) >= this.priceMin()!) && (this.priceMax() === null || (product.suggestedPrice ?? 0) <= this.priceMax()!) && (this.soldMin() === null || this.soldQuantity(product.id) >= this.soldMin()!) && (this.soldMax() === null || this.soldQuantity(product.id) <= this.soldMax()!) && (this.revenueMin() === null || this.soldRevenue(product.id) >= this.revenueMin()!) && (this.revenueMax() === null || this.soldRevenue(product.id) <= this.revenueMax()!))].sort((first, second) => this.compareCatalog(first.name, first.suggestedPrice ?? 0, this.soldQuantity(first.id), this.soldRevenue(first.id), second.name, second.suggestedPrice ?? 0, this.soldQuantity(second.id), this.soldRevenue(second.id))); }
+  protected visibleServices(): readonly Service[] { return [...this.services().filter((service) => this.matchesActive(service.active))].sort((first, second) => this.compareCatalog(first.description, 0, 0, 0, second.description, 0, 0, 0)); }
+  protected visibleBundles(): readonly Bundle[] {
+    const bundles = this.bundles().filter((bundle) => this.matchesActive(isBundleAvailable(bundle, this.products(), this.services()))
+      && (this.priceMin() === null || (bundle.bundlePrice ?? 0) >= this.priceMin()!)
+      && (this.priceMax() === null || (bundle.bundlePrice ?? 0) <= this.priceMax()!));
+    return [...bundles].sort((first, second) => this.compareCatalog(first.name, first.bundlePrice ?? 0, 0, 0, second.name, second.bundlePrice ?? 0, 0, 0));
+  }
+  private matchesActive(active: boolean): boolean { return this.activeFilter() === 'all' || active === (this.activeFilter() === 'active'); }
+  protected hasActiveSort(): boolean { return this.sortKey() !== 'name' || this.sortDirection() !== 'asc'; }
+  protected toggleSort(): void { this.sortOpen.update((open) => !open); this.filtersOpen.set(false); }
+  protected restoreSort(): void { this.sortKey.set('name'); this.sortDirection.set('asc'); this.sortOpen.set(false); }
+  protected changeSortDirection(): void { this.sortDirection.update((direction) => direction === 'asc' ? 'desc' : 'asc'); }
+  @HostListener('document:click', ['$event']) protected closeSortOutside(event: MouseEvent): void { const target = event.target; if (this.sortOpen() && (!(target instanceof Element) || (!target.closest('.sort-panel') && !target.closest('.sort-toggle')))) this.sortOpen.set(false); }
+  private compareCatalog(firstName: string, firstPrice: number, firstSold: number, firstRevenue: number, secondName: string, secondPrice: number, secondSold: number, secondRevenue: number): number {
+    const first = this.sortKey() === 'name' ? firstName.toLocaleLowerCase() : this.sortKey() === 'price' ? firstPrice : this.sortKey() === 'sold' ? firstSold : firstRevenue;
+    const second = this.sortKey() === 'name' ? secondName.toLocaleLowerCase() : this.sortKey() === 'price' ? secondPrice : this.sortKey() === 'sold' ? secondSold : secondRevenue;
+    const result = typeof first === 'number' && typeof second === 'number' ? first - second : String(first).localeCompare(String(second), 'it', { numeric: true, sensitivity: 'base' });
+    return this.sortDirection() === 'asc' ? result : -result;
   }
 
   protected isBundleAvailable(bundle: Bundle): boolean {

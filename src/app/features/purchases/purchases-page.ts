@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LotService, type LotInput } from '../../application/lots/lot.service';
@@ -13,10 +13,13 @@ import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+
+type PurchaseSortKey = 'date' | 'description' | 'supplier' | 'amount' | 'balance';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
   selector: 'app-purchases-page',
   templateUrl: './purchases-page.html',
   styleUrl: './purchases-page.scss',
@@ -40,7 +43,15 @@ export class PurchasesPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly yearFilter = signal<number | null>(null);
+  protected readonly supplierFilter = signal('');
+  protected readonly amountMin = signal<number | null>(null);
+  protected readonly amountMax = signal<number | null>(null);
+  protected readonly balanceMin = signal<number | null>(null);
+  protected readonly balanceMax = signal<number | null>(null);
   protected readonly filtersOpen = signal(false);
+  protected readonly sortOpen = signal(false);
+  protected readonly sortKey = signal<PurchaseSortKey>('date');
+  protected readonly sortDirection = signal<'asc' | 'desc'>('desc');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: PurchaseInput = this.emptyDraft();
@@ -62,12 +73,26 @@ export class PurchasesPage implements OnInit {
   protected visiblePurchases(): readonly Purchase[] {
     const normalized = this.query().trim().toLowerCase();
     const year = this.yearFilter();
-    return this.purchases().filter((purchase) => {
+    const purchases = this.purchases().filter((purchase) => {
       if (year && Number(purchase.purchaseDate.slice(0, 4)) !== year) return false;
+      if (this.supplierFilter() && purchase.supplierId !== this.supplierFilter()) return false;
+      if (this.amountMin() !== null && purchase.totalAmount < this.amountMin()!) return false;
+      if (this.amountMax() !== null && purchase.totalAmount > this.amountMax()!) return false;
+      if (this.balanceMin() !== null && this.purchaseBalance(purchase) < this.balanceMin()!) return false;
+      if (this.balanceMax() !== null && this.purchaseBalance(purchase) > this.balanceMax()!) return false;
       return !normalized || `${purchase.purchaseDate} ${purchase.description} ${purchase.notes ?? ''} ${purchase.totalAmount} ${this.supplierName(purchase.supplierId)}`.toLowerCase().includes(normalized);
     });
+    return [...purchases].sort((first, second) => this.comparePurchases(first, second));
   }
-  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.yearFilter() !== null; }
+  protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.yearFilter() !== null || Boolean(this.supplierFilter()) || this.amountMin() !== null || this.amountMax() !== null || this.balanceMin() !== null || this.balanceMax() !== null; }
+  protected closeFilterPanel(): void { this.filtersOpen.set(false); }
+  protected resetFilters(): void { this.query.set(''); this.yearFilter.set(null); this.supplierFilter.set(''); this.amountMin.set(null); this.amountMax.set(null); this.balanceMin.set(null); this.balanceMax.set(null); this.filtersOpen.set(false); void this.loadPurchases(); }
+  protected hasActiveSort(): boolean { return this.sortKey() !== 'date' || this.sortDirection() !== 'desc'; }
+  protected toggleSort(): void { this.sortOpen.update((open) => !open); this.filtersOpen.set(false); }
+  protected restoreSort(): void { this.sortKey.set('date'); this.sortDirection.set('desc'); this.sortOpen.set(false); }
+  protected changeSortDirection(): void { this.sortDirection.update((direction) => direction === 'asc' ? 'desc' : 'asc'); }
+  @HostListener('document:click', ['$event']) protected closeSortOutside(event: MouseEvent): void { const target = event.target; if (this.sortOpen() && (!(target instanceof Element) || (!target.closest('.sort-panel') && !target.closest('.sort-toggle')))) this.sortOpen.set(false); }
+  private comparePurchases(first: Purchase, second: Purchase): number { const value = (purchase: Purchase): string | number => this.sortKey() === 'date' ? purchase.purchaseDate : this.sortKey() === 'description' ? purchase.description.toLocaleLowerCase() : this.sortKey() === 'supplier' ? this.supplierName(purchase.supplierId).toLocaleLowerCase() : this.sortKey() === 'amount' ? purchase.totalAmount : this.purchaseBalance(purchase); const a = value(first); const b = value(second); const result = typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'it', { numeric: true, sensitivity: 'base' }); return this.sortDirection() === 'asc' ? result : -result; }
 
   protected availableYears(): readonly number[] {
     return [...new Set([new Date().getFullYear(), ...this.purchases().map((purchase) => Number(purchase.purchaseDate.slice(0, 4)))])]

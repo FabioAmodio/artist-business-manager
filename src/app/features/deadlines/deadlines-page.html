@@ -1,11 +1,13 @@
 <section class="deadlines-page" aria-labelledby="deadlines-title">
   <app-page-header icon="⏰" title="Scadenze" />
-  <div class="list-heading"><h2>Lavorazioni aperte</h2><span>{{ works().length }} registrate</span></div>
+  <div class="list-heading"><h2>Lavorazioni aperte</h2><div class="list-heading-end"><span>{{ visibleWorks().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" aria-label="Apri filtri" title="Filtra lista" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button><button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" aria-label="Ordina lista" title="Ordina lista" (click)="toggleSort()"><span aria-hidden="true">↕</span></button></div></div>
+  @if (filtersOpen()) { <app-list-filter-panel [resultLabel]="'Filtra ' + visibleWorks().length + ' elementi'" (close)="closeFilterPanel()" (reset)="resetFilters()" (apply)="closeFilterPanel()"><label>Ricerca <input type="search" [(ngModel)]="query" placeholder="Lavorazione, offerta o cliente" /></label><label>Stato <select [(ngModel)]="statusFilter"><option value="all">Tutte</option><option value="overdue">Scadute</option><option value="due-soon">In scadenza</option></select></label></app-list-filter-panel> }
+  @if (sortOpen()) { <div class="toolbar sort-panel" role="dialog" aria-label="Ordinamento scadenze"><div class="sort-control-row"><select aria-label="Colonna da ordinare" [ngModel]="sortKey()" (ngModelChange)="sortKey.set($event)"><option value="date">Consegna</option><option value="offer">Offerta</option><option value="customer">Cliente</option><option value="status">Stato</option></select><button class="sort-direction-button" type="button" aria-label="Cambia direzione" title="Cambia direzione" (click)="changeSortDirection()">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSort()">↺</button></div></div> }
   @if (loading()) { <p class="empty-state">Caricamento...</p> }
   @else if (!works().length) { <div class="empty-state"><h3>Nessuna lavorazione aperta</h3></div> }
   @else {
     <div class="deadline-list">
-      @for (work of works(); track work.id) {
+      @for (work of visibleWorks(); track work.id) {
         <article class="deadline-row">
           <div><h3>{{ work.title }}</h3><p>{{ offerName(work) }} · {{ customerName(work) }}</p></div>
           <div class="deadline-date"><strong>Consegna</strong><span>{{ formatDate(work.deliveryDate) }}</span></div>

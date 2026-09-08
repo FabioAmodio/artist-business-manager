@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OperationService, type OperationInput } from '../../application/operations/operation.service';
@@ -53,6 +53,21 @@ interface WorkGroup {
   readonly title?: string;
   readonly parent?: Operation;
   operations: Operation[];
+}
+
+type SalesSortKey = 'offer' | 'customer' | 'fair' | 'date' | 'quantity' | 'amount' | 'paid' | 'remaining';
+type SortDirection = 'asc' | 'desc';
+
+interface SalesFilterDraft {
+  query: string;
+  year: number | null;
+  offer: string;
+  customer: string;
+  fairEdition: string;
+  fairScope: 'fair' | 'non-fair' | null;
+  payment: 'all' | 'paid' | 'partial' | 'unpaid';
+  amountMin: number | null;
+  amountMax: number | null;
 }
 
 @Component({
@@ -110,9 +125,16 @@ export class OperationsPage implements OnInit {
   protected readonly offerFilter = signal('');
   protected readonly customerFilter = signal('');
     protected readonly fairEditionFilter = signal('');
+    protected readonly paymentFilter = signal<'all' | 'paid' | 'partial' | 'unpaid'>('all');
+    protected readonly amountMinFilter = signal<number | null>(null);
+    protected readonly amountMaxFilter = signal<number | null>(null);
+    protected readonly salesSortKey = signal<SalesSortKey>('date');
+    protected readonly salesSortDirection = signal<SortDirection>('desc');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected readonly filtersOpen = signal(false);
+  protected readonly sortOpen = signal(false);
+  protected readonly filterDraft = signal<SalesFilterDraft>(this.emptySalesFilterDraft());
   protected readonly quickCustomerPromptOpen = signal(false);
   protected draft: OperationInput = this.emptyDraft();
   protected paymentDraft: PaymentDraft = this.emptyPaymentDraft();
@@ -135,6 +157,13 @@ export class OperationsPage implements OnInit {
       this.offerFilter.set(params.get('offer') ?? '');
       this.customerFilter.set(params.get('customer') ?? '');
       this.fairEditionFilter.set(params.get('fairEdition') ?? '');
+      const paymentFilter = params.get('payment');
+      this.paymentFilter.set(paymentFilter === 'paid' || paymentFilter === 'partial' || paymentFilter === 'unpaid' ? paymentFilter : 'all');
+      this.amountMinFilter.set(this.parseAmountFilter(params.get('amountMin')));
+      this.amountMaxFilter.set(this.parseAmountFilter(params.get('amountMax')));
+      const sortKey = params.get('sort');
+      this.salesSortKey.set(this.isSalesSortKey(sortKey) ? sortKey : 'date');
+      this.salesSortDirection.set(params.get('sortDirection') === 'asc' ? 'asc' : 'desc');
       this.returnWorkId = params.get('returnWork');
     });
     this.route.queryParamMap.subscribe((params) => {
@@ -153,8 +182,65 @@ export class OperationsPage implements OnInit {
   }
 
   protected async applyFilters(): Promise<void> { await this.loadOperations(); }
+  protected changeQueryFilter(value: string): void { if (this.salesOnly) this.updateFilterDraft('query', value); else { this.query.set(value); void this.loadOperations(); } }
   protected hasActiveFilters(): boolean {
-    return Boolean(this.query().trim()) || this.yearFilter() !== null || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter()) || Boolean(this.customerFilter()) || Boolean(this.fairEditionFilter());
+    return Boolean(this.query().trim()) || this.yearFilter() !== null || this.typeFilter() !== 'all' || Boolean(this.workFilter()) || Boolean(this.fairScopeFilter()) || Boolean(this.offerFilter()) || Boolean(this.customerFilter()) || Boolean(this.fairEditionFilter()) || this.paymentFilter() !== 'all' || this.amountMinFilter() !== null || this.amountMaxFilter() !== null;
+  }
+  protected hasActiveSort(): boolean { return this.salesSortKey() !== 'date' || this.salesSortDirection() !== 'desc'; }
+  protected toggleFilters(): void {
+    if (this.filtersOpen()) { this.closeFilters(); return; }
+    this.filterDraft.set(this.currentSalesFilterDraft());
+    this.filtersOpen.set(true);
+    this.sortOpen.set(false);
+  }
+  protected closeFilters(): void { this.filtersOpen.set(false); }
+  protected applySalesFilters(): void {
+    const draft = this.filterDraft();
+    this.query.set(draft.query);
+    this.yearFilter.set(draft.year);
+    this.offerFilter.set(draft.offer);
+    this.customerFilter.set(draft.customer);
+    this.fairEditionFilter.set(draft.fairEdition);
+    this.fairScopeFilter.set(draft.fairScope);
+    this.paymentFilter.set(draft.payment);
+    this.amountMinFilter.set(draft.amountMin);
+    this.amountMaxFilter.set(draft.amountMax);
+    this.filtersOpen.set(false);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {
+      query: draft.query || null, year: draft.year, offer: draft.offer || null, customer: draft.customer || null,
+      fairEdition: draft.fairEdition || null, fairScope: draft.fairScope, payment: draft.payment === 'all' ? null : draft.payment,
+      amountMin: draft.amountMin, amountMax: draft.amountMax,
+    }, queryParamsHandling: 'merge' });
+    void this.loadOperations();
+  }
+  protected restoreSalesFilters(): void { this.filterDraft.set(this.emptySalesFilterDraft()); this.applySalesFilters(); }
+  protected previewSalesCount(): number {
+    const draft = this.filterDraft();
+    let operations = this.allOperations.filter((operation) => !operation.parentOperationId);
+    const query = draft.query.trim().toLocaleLowerCase();
+    if (query) operations = operations.filter((operation) => `${operation.title} ${operation.description ?? ''}`.toLocaleLowerCase().includes(query));
+    if (draft.year) operations = operations.filter((operation) => Number((operation.operationDate ?? operation.createdAt).slice(0, 4)) === draft.year);
+    if (draft.fairScope) operations = operations.filter((operation) => draft.fairScope === 'fair' ? Boolean(operation.fairEditionId) : !operation.fairEditionId);
+    if (draft.offer) { const [kind, id] = draft.offer.split(':'); operations = operations.filter((operation) => kind === 'product' ? operation.productId === id : kind === 'service' ? operation.serviceId === id : operation.bundleId === id); }
+    if (draft.customer) operations = operations.filter((operation) => operation.partyId === draft.customer);
+    if (draft.fairEdition) operations = operations.filter((operation) => operation.fairEditionId === draft.fairEdition);
+    if (draft.payment !== 'all') operations = operations.filter((operation) => { const paid = this.paymentTotalFor(operation); const remaining = Math.max((operation.amount ?? 0) - paid, 0); return draft.payment === 'paid' ? remaining < .005 : draft.payment === 'unpaid' ? paid < .005 : paid >= .005 && remaining >= .005; });
+    if (draft.amountMin !== null) operations = operations.filter((operation) => (operation.amount ?? 0) >= draft.amountMin!);
+    if (draft.amountMax !== null) operations = operations.filter((operation) => (operation.amount ?? 0) <= draft.amountMax!);
+    return operations.length;
+  }
+  protected updateFilterDraft<K extends keyof SalesFilterDraft>(key: K, value: SalesFilterDraft[K]): void { this.filterDraft.update((draft) => ({ ...draft, [key]: value })); }
+  protected isDraftFilterActive(key: keyof SalesFilterDraft): boolean {
+    const value = this.filterDraft()[key];
+    return value !== '' && value !== null && value !== 'all';
+  }
+  protected toggleSort(): void { this.sortOpen.update((open) => !open); this.filtersOpen.set(false); }
+  protected closeSort(): void { this.sortOpen.set(false); }
+  @HostListener('document:click', ['$event'])
+  protected closeSortOnOutsideClick(event: MouseEvent): void {
+    if (!this.sortOpen()) return;
+    const target = event.target;
+    if (!(target instanceof Element) || (!target.closest('.sort-panel') && !target.closest('.sort-toggle'))) this.closeSort();
   }
   protected availableYears(): readonly number[] {
     return [...new Set([new Date().getFullYear(), ...this.allOperations.map((operation) => Number((operation.operationDate ?? operation.createdAt).slice(0, 4)))])]
@@ -164,7 +250,7 @@ export class OperationsPage implements OnInit {
   protected yearFilterOptions(): readonly { readonly value: string; readonly label: string }[] {
     return [{ value: '', label: 'Tutti' }, ...this.availableYears().map((year) => ({ value: String(year), label: String(year) }))];
   }
-  protected changeYearFilter(value: string): void { this.changeYear(value ? Number(value) : null); }
+  protected changeYearFilter(value: string): void { this.salesOnly ? this.updateFilterDraft('year', value ? Number(value) : null) : this.changeYear(value ? Number(value) : null); }
   protected changeYear(year: number | null): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
   }
@@ -182,19 +268,50 @@ export class OperationsPage implements OnInit {
     ].sort((first, second) => first.label.localeCompare(second.label));
   }
   protected changeOfferFilter(offer: string): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: { offer: offer || null }, queryParamsHandling: 'merge' });
+    if (this.salesOnly) this.updateFilterDraft('offer', offer);
+    else void this.router.navigate([], { relativeTo: this.route, queryParams: { offer: offer || null }, queryParamsHandling: 'merge' });
   }
   protected customerFilterChoices(): readonly Party[] {
     return [...this.parties()].filter((party) => party.roles?.includes('customer')).sort((first, second) => first.displayName.localeCompare(second.displayName));
   }
   protected changeCustomerFilter(customer: string): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: { customer: customer || null }, queryParamsHandling: 'merge' });
+    if (this.salesOnly) this.updateFilterDraft('customer', customer);
+    else void this.router.navigate([], { relativeTo: this.route, queryParams: { customer: customer || null }, queryParamsHandling: 'merge' });
   }
   protected fairEditionFilterChoices(): readonly Fair[] {
     return [...this.fairs()].sort((first, second) => `${second.year ?? 0}-${second.name}`.localeCompare(`${first.year ?? 0}-${first.name}`));
   }
   protected changeFairEditionFilter(fairEdition: string): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: { fairEdition: fairEdition || null }, queryParamsHandling: 'merge' });
+    if (this.salesOnly) this.updateFilterDraft('fairEdition', fairEdition);
+    else void this.router.navigate([], { relativeTo: this.route, queryParams: { fairEdition: fairEdition || null }, queryParamsHandling: 'merge' });
+  }
+  protected changePaymentFilter(payment: string): void {
+    if (this.salesOnly) this.updateFilterDraft('payment', payment === 'paid' || payment === 'partial' || payment === 'unpaid' ? payment : 'all');
+    else void this.router.navigate([], { relativeTo: this.route, queryParams: { payment: payment === 'all' ? null : payment }, queryParamsHandling: 'merge' });
+  }
+  protected changeAmountFilter(kind: 'min' | 'max', value: string): void {
+    const amount = this.parseAmountFilter(value);
+    if (this.salesOnly) this.updateFilterDraft(kind === 'min' ? 'amountMin' : 'amountMax', amount);
+    else void this.router.navigate([], { relativeTo: this.route, queryParams: { [kind === 'min' ? 'amountMin' : 'amountMax']: amount }, queryParamsHandling: 'merge' });
+  }
+  protected changeSalesSortKey(key: string): void {
+    if (this.isSalesSortKey(key)) void this.router.navigate([], { relativeTo: this.route, queryParams: { sort: key }, queryParamsHandling: 'merge' });
+  }
+  protected changeSalesSortDirection(direction: string): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { sortDirection: direction === 'asc' ? 'asc' : 'desc' }, queryParamsHandling: 'merge' });
+  }
+  protected restoreSalesSort(): void {
+    this.salesSortKey.set('date');
+    this.salesSortDirection.set('desc');
+    this.sortOpen.set(false);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { sort: null, sortDirection: null }, queryParamsHandling: 'merge' });
+  }
+  protected salesSortChoices(): readonly { value: SalesSortKey; label: string }[] {
+    return [
+      { value: 'offer', label: 'Offerta' }, { value: 'customer', label: 'Cliente' }, { value: 'fair', label: 'Fiera' },
+      { value: 'date', label: 'Data' }, { value: 'quantity', label: 'Quantità' }, { value: 'amount', label: 'Importo' },
+      { value: 'paid', label: 'Pagato' }, { value: 'remaining', label: 'Residuo' },
+    ];
   }
   protected changeWorkFilter(filter: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { workFilter: filter || null }, queryParamsHandling: 'merge' });
@@ -385,6 +502,13 @@ export class OperationsPage implements OnInit {
     }
     if (this.salesOnly && this.customerFilter()) operations = operations.filter((operation) => operation.partyId === this.customerFilter());
     if (this.salesOnly && this.fairEditionFilter()) operations = operations.filter((operation) => operation.fairEditionId === this.fairEditionFilter());
+    if (this.salesOnly && this.paymentFilter() !== 'all') operations = operations.filter((operation) => {
+      const paid = this.paymentTotalFor(operation);
+      const remaining = Math.max((operation.amount ?? 0) - paid, 0);
+      return this.paymentFilter() === 'paid' ? remaining < 0.005 : this.paymentFilter() === 'unpaid' ? paid < 0.005 : paid >= 0.005 && remaining >= 0.005;
+    });
+    if (this.salesOnly && this.amountMinFilter() !== null) operations = operations.filter((operation) => (operation.amount ?? 0) >= this.amountMinFilter()!);
+    if (this.salesOnly && this.amountMaxFilter() !== null) operations = operations.filter((operation) => (operation.amount ?? 0) <= this.amountMaxFilter()!);
     if (this.worksOnly) {
       const filter = this.workFilter();
       if (filter === 'open') operations = operations.filter((operation) => operation.workStatus !== 'delivered' && operation.workStatus !== 'cancelled');
@@ -393,7 +517,37 @@ export class OperationsPage implements OnInit {
       if (filter === 'to-deliver') operations = operations.filter((operation) => operation.workStatus === 'completed');
       if (filter === 'unpaid') operations = operations.filter((operation) => this.paymentTotalFor(operation) + 0.005 < (operation.amount ?? 0));
     }
+    if (this.salesOnly) return [...operations].sort((first, second) => this.compareSales(first, second));
     return operations;
+  }
+  private compareSales(first: Operation, second: Operation): number {
+    const value = (operation: Operation): string | number => {
+      switch (this.salesSortKey()) {
+        case 'offer': return this.offerName(operation).toLocaleLowerCase();
+        case 'customer': return this.customerLabel(operation).toLocaleLowerCase();
+        case 'fair': return this.fairName(operation.fairEditionId).toLocaleLowerCase();
+        case 'date': return operation.operationDate ?? operation.createdAt;
+        case 'quantity': return operation.quantity ?? 1;
+        case 'amount': return operation.amount ?? 0;
+        case 'paid': return this.paymentTotalFor(operation);
+        case 'remaining': return Math.max((operation.amount ?? 0) - this.paymentTotalFor(operation), 0);
+      }
+    };
+    const firstValue = value(first);
+    const secondValue = value(second);
+    const result = typeof firstValue === 'number' && typeof secondValue === 'number'
+      ? firstValue - secondValue
+      : String(firstValue).localeCompare(String(secondValue), 'it', { numeric: true, sensitivity: 'base' });
+    return this.salesSortDirection() === 'asc' ? result : -result;
+  }
+  private parseAmountFilter(value: string | null): number | null {
+    const amount = value === null || value.trim() === '' ? NaN : Number(value);
+    return Number.isFinite(amount) && amount >= 0 ? amount : null;
+  }
+  private emptySalesFilterDraft(): SalesFilterDraft { return { query: '', year: null, offer: '', customer: '', fairEdition: '', fairScope: null, payment: 'all', amountMin: null, amountMax: null }; }
+  private currentSalesFilterDraft(): SalesFilterDraft { return { query: this.query(), year: this.yearFilter(), offer: this.offerFilter(), customer: this.customerFilter(), fairEdition: this.fairEditionFilter(), fairScope: this.fairScopeFilter(), payment: this.paymentFilter(), amountMin: this.amountMinFilter(), amountMax: this.amountMaxFilter() }; }
+  private isSalesSortKey(value: string | null): value is SalesSortKey {
+    return value === 'offer' || value === 'customer' || value === 'fair' || value === 'date' || value === 'quantity' || value === 'amount' || value === 'paid' || value === 'remaining';
   }
   protected bundleDetailTotal(): number { return this.bundleDetails().reduce((total, detail) => total + detail.amount, 0); }
   protected updateBundleDetailAmount(id: string, amount: number | null): void {

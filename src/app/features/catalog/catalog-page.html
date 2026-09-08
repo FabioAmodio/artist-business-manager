@@ -4,21 +4,29 @@
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="list-heading"><h2>Elementi catalogo</h2><div class="list-heading-end"><span>{{ visibleCatalogCount() }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
+  <div class="list-heading"><h2>Elementi catalogo</h2><div class="list-heading-end"><span>{{ visibleCatalogCount() }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" aria-label="Apri filtri" title="Filtra lista" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button><button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" aria-label="Ordina lista" title="Ordina lista" (click)="toggleSort()"><span aria-hidden="true">↕</span></button></div></div>
   @if (filtersOpen()) {
-    <div class="toolbar filter-panel">
+    <app-list-filter-panel [resultLabel]="'Filtra ' + visibleCatalogCount() + ' elementi'" (close)="closeFilterPanel()" (reset)="resetFilters()" (apply)="closeFilterPanel()">
       <label>Tipo
         <select name="catalogTypeFilter" [(ngModel)]="catalogTypeFilter">
           <option value="all">Tutti</option><option value="product">Prodotti</option><option value="service">Servizi</option><option value="bundle">Bundle</option>
         </select>
       </label>
-    </div>
+      <label>Stato <select [ngModel]="activeFilter()" (ngModelChange)="activeFilter.set($event)"><option value="all">Tutti</option><option value="active">Disponibili</option><option value="inactive">Non disponibili</option></select></label>
+      <label>Prezzo minimo <input type="number" min="0" step="0.01" [ngModel]="priceMin() ?? ''" (ngModelChange)="priceMin.set($event === '' ? null : +$event)" /></label>
+      <label>Prezzo massimo <input type="number" min="0" step="0.01" [ngModel]="priceMax() ?? ''" (ngModelChange)="priceMax.set($event === '' ? null : +$event)" /></label>
+      <label>Venduti minimi <input type="number" min="0" step="1" [ngModel]="soldMin() ?? ''" (ngModelChange)="soldMin.set($event === '' ? null : +$event)" /></label>
+      <label>Venduti massimi <input type="number" min="0" step="1" [ngModel]="soldMax() ?? ''" (ngModelChange)="soldMax.set($event === '' ? null : +$event)" /></label>
+      <label>Ricavi minimi <input type="number" min="0" step="0.01" [ngModel]="revenueMin() ?? ''" (ngModelChange)="revenueMin.set($event === '' ? null : +$event)" /></label>
+      <label>Ricavi massimi <input type="number" min="0" step="0.01" [ngModel]="revenueMax() ?? ''" (ngModelChange)="revenueMax.set($event === '' ? null : +$event)" /></label>
+    </app-list-filter-panel>
   }
+  @if (sortOpen()) { <div class="toolbar sort-panel" role="dialog" aria-label="Ordinamento catalogo"><div class="sort-control-row"><select aria-label="Colonna da ordinare" [ngModel]="sortKey()" (ngModelChange)="sortKey.set($event)"><option value="name">Nome</option><option value="price">Prezzo</option><option value="sold">Venduti</option><option value="revenue">Ricavi</option></select><button class="sort-direction-button" type="button" aria-label="Cambia direzione" title="Cambia direzione" (click)="changeSortDirection()">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSort()">↺</button></div></div> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else {
     <div class="catalog-list">
-      @for (product of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'product' ? products() : []; track product.id) {
+      @for (product of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'product' ? visibleProducts() : []; track product.id) {
         <article class="catalog-item catalog-product-item">
           <div class="item-header">
             <span class="kind-badge" aria-label="Prodotto" title="Prodotto"><span class="badge-icon" aria-hidden="true">🏷️</span><span class="badge-label">Prodotto</span></span>
@@ -39,7 +47,7 @@
         </article>
       }
 
-      @for (service of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'service' ? services() : []; track service.id) {
+      @for (service of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'service' ? visibleServices() : []; track service.id) {
         <article class="catalog-item catalog-service-item">
           <div class="item-header">
             <span class="kind-badge service" aria-label="Servizio" title="Servizio"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Servizio</span></span>
@@ -54,7 +62,7 @@
         </article>
       }
 
-      @for (bundle of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'bundle' ? bundles() : []; track bundle.id) {
+      @for (bundle of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'bundle' ? visibleBundles() : []; track bundle.id) {
         <article class="catalog-item catalog-bundle-item bundle">
           <div class="item-header">
             <span class="kind-badge bundle" aria-label="Pacchetto" title="Pacchetto"><span class="badge-icon" aria-hidden="true">🎁</span><span class="badge-label">Pacchetto</span></span>

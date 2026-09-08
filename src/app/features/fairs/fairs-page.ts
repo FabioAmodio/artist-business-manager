@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FairService, type FairInput } from '../../application/fairs/fair.service';
@@ -10,10 +10,14 @@ import type { FairSeries } from '../../domain/models/fair';
 import type { Operation } from '../../domain/models/operation';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+
+type FairSortKey = 'name' | 'year' | 'startDate' | 'balance';
+type CoverageFilter = 'all' | 'covered' | 'not-covered';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
   selector: 'app-fairs-page',
   templateUrl: './fairs-page.html',
   styleUrl: './fairs-page.scss',
@@ -36,7 +40,20 @@ export class FairsPage implements OnInit {
   protected readonly matchedSeries = signal<FairSeries | null>(null);
   protected readonly yearFilter = signal<number | null>(null);
   protected readonly fairFilter = signal<'completed' | 'upcoming' | null>(null);
+  protected readonly standCoverageFilter = signal<CoverageFilter>('all');
+  protected readonly travelCoverageFilter = signal<CoverageFilter>('all');
+  protected readonly hotelCoverageFilter = signal<CoverageFilter>('all');
+  protected readonly otherCoverageFilter = signal<CoverageFilter>('all');
+  protected readonly costsMin = signal<number | null>(null);
+  protected readonly costsMax = signal<number | null>(null);
+  protected readonly revenueMin = signal<number | null>(null);
+  protected readonly revenueMax = signal<number | null>(null);
+  protected readonly balanceMin = signal<number | null>(null);
+  protected readonly balanceMax = signal<number | null>(null);
   protected readonly filtersOpen = signal(false);
+  protected readonly sortOpen = signal(false);
+  protected readonly sortKey = signal<FairSortKey>('startDate');
+  protected readonly sortDirection = signal<'asc' | 'desc'>('desc');
   protected draft: FairInput = this.emptyDraft();
 
   ngOnInit(): void {
@@ -53,12 +70,23 @@ export class FairsPage implements OnInit {
     const year = this.yearFilter();
     const filter = this.fairFilter();
     const today = new Date().toISOString().slice(0, 10);
-    return this.fairs().filter((fair) => {
+    const fairs = this.fairs().filter((fair) => {
       if (year && Number(fair.startDate.slice(0, 4)) !== year) return false;
       if (filter === 'completed' && fair.endDate >= today) return false;
       if (filter === 'upcoming' && fair.startDate <= today) return false;
+      if (!this.matchesCoverage(fair, 'stand', this.standCoverageFilter())) return false;
+      if (!this.matchesCoverage(fair, 'travel', this.travelCoverageFilter())) return false;
+      if (!this.matchesCoverage(fair, 'hotel', this.hotelCoverageFilter())) return false;
+      if (!this.matchesCoverage(fair, 'other', this.otherCoverageFilter())) return false;
+      if (this.costsMin() !== null && (this.totalCosts(fair) ?? 0) < this.costsMin()!) return false;
+      if (this.costsMax() !== null && (this.totalCosts(fair) ?? 0) > this.costsMax()!) return false;
+      if (this.revenueMin() !== null && (this.fairRevenue(fair) ?? 0) < this.revenueMin()!) return false;
+      if (this.revenueMax() !== null && (this.fairRevenue(fair) ?? 0) > this.revenueMax()!) return false;
+      if (this.balanceMin() !== null && (this.fairBalance(fair) ?? 0) < this.balanceMin()!) return false;
+      if (this.balanceMax() !== null && (this.fairBalance(fair) ?? 0) > this.balanceMax()!) return false;
       return true;
     });
+    return [...fairs].sort((first, second) => { const value = (fair: Fair): string | number => this.sortKey() === 'name' ? fair.name.toLocaleLowerCase() : this.sortKey() === 'year' ? (fair.year ?? Number(fair.startDate.slice(0, 4))) : this.sortKey() === 'balance' ? (this.fairBalance(fair) ?? 0) : fair.startDate; const a = value(first); const b = value(second); const result = typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'it', { numeric: true, sensitivity: 'base' }); return this.sortDirection() === 'asc' ? result : -result; });
   }
 
   protected availableYears(): readonly number[] {
@@ -77,7 +105,15 @@ export class FairsPage implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
   }
 
-  protected hasActiveFilters(): boolean { return this.fairFilter() !== null || this.yearFilter() !== null; }
+  protected hasActiveFilters(): boolean { return this.fairFilter() !== null || this.yearFilter() !== null || this.standCoverageFilter() !== 'all' || this.travelCoverageFilter() !== 'all' || this.hotelCoverageFilter() !== 'all' || this.otherCoverageFilter() !== 'all' || this.costsMin() !== null || this.costsMax() !== null || this.revenueMin() !== null || this.revenueMax() !== null || this.balanceMin() !== null || this.balanceMax() !== null; }
+  protected closeFilterPanel(): void { this.filtersOpen.set(false); }
+  protected resetFilters(): void { this.yearFilter.set(null); this.fairFilter.set(null); this.standCoverageFilter.set('all'); this.travelCoverageFilter.set('all'); this.hotelCoverageFilter.set('all'); this.otherCoverageFilter.set('all'); this.costsMin.set(null); this.costsMax.set(null); this.revenueMin.set(null); this.revenueMax.set(null); this.balanceMin.set(null); this.balanceMax.set(null); this.filtersOpen.set(false); void this.router.navigate([], { relativeTo: this.route, queryParams: { year: null, fairFilter: null }, queryParamsHandling: 'merge' }); }
+  private matchesCoverage(fair: Fair, cost: 'stand' | 'travel' | 'hotel' | 'other', filter: CoverageFilter): boolean { return filter === 'all' || this.isCostCovered(fair, cost) === (filter === 'covered'); }
+  protected hasActiveSort(): boolean { return this.sortKey() !== 'startDate' || this.sortDirection() !== 'desc'; }
+  protected toggleSort(): void { this.sortOpen.update((open) => !open); this.filtersOpen.set(false); }
+  protected restoreSort(): void { this.sortKey.set('startDate'); this.sortDirection.set('desc'); this.sortOpen.set(false); }
+  protected changeSortDirection(): void { this.sortDirection.update((direction) => direction === 'asc' ? 'desc' : 'asc'); }
+  @HostListener('document:click', ['$event']) protected closeSortOutside(event: MouseEvent): void { const target = event.target; if (this.sortOpen() && (!(target instanceof Element) || (!target.closest('.sort-panel') && !target.closest('.sort-toggle')))) this.sortOpen.set(false); }
 
   protected changeFairFilter(filter: string): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { fairFilter: filter || null }, queryParamsHandling: 'merge' });

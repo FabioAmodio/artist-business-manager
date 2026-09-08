@@ -4,8 +4,8 @@
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="list-heading"><h2>Elenco fornitori</h2><div class="list-heading-end"><span>{{ visibleSuppliers().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
-  @if (filtersOpen()) { <div class="toolbar filter-panel">
+  <div class="list-heading"><h2>Elenco fornitori</h2><div class="list-heading-end"><span>{{ visibleSuppliers().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" aria-label="Apri filtri" title="Filtra lista" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button><button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" aria-label="Ordina lista" title="Ordina lista" (click)="toggleSort()"><span aria-hidden="true">↕</span></button></div></div>
+  @if (filtersOpen()) { <app-list-filter-panel [resultLabel]="'Filtra ' + visibleSuppliers().length + ' elementi'" (close)="closeFilterPanel()" (reset)="resetFilters()" (apply)="closeFilterPanel()">
     <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, email, telefono, sito" /></label>
     <label>Tipo
       <select name="typeFilter" [(ngModel)]="typeFilter">
@@ -17,7 +17,8 @@
         <option value="other">Altri fornitori</option>
       </select>
     </label>
-  </div> }
+  </app-list-filter-panel> }
+  @if (sortOpen()) { <div class="toolbar sort-panel" role="dialog" aria-label="Ordinamento fornitori"><div class="sort-control-row"><select aria-label="Colonna da ordinare" [ngModel]="sortKey()" (ngModelChange)="sortKey.set($event)"><option value="name">Nome</option><option value="type">Tipo</option></select><button class="sort-direction-button" type="button" aria-label="Cambia direzione" title="Cambia direzione" (click)="changeSortDirection()">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSort()">↺</button></div></div> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleSuppliers().length) {

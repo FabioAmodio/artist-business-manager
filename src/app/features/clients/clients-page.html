@@ -4,8 +4,8 @@
   @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
   @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
 
-  <div class="list-heading"><h2>Elenco clienti</h2><div class="list-heading-end"><span>{{ visibleClients().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button></div></div>
-  @if (filtersOpen()) { <div class="toolbar filter-panel">
+  <div class="list-heading"><h2>Elenco clienti</h2><div class="list-heading-end"><span>{{ visibleClients().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" [attr.aria-label]="hasActiveFilters() ? 'Filtri attivi' : 'Apri filtri'" [attr.title]="hasActiveFilters() ? 'Filtri attivi' : 'Filtra lista'" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button><button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" aria-label="Ordina lista" title="Ordina lista" (click)="toggleSort()"><span aria-hidden="true">↕</span></button></div></div>
+  @if (filtersOpen()) { <app-list-filter-panel [resultLabel]="'Filtra ' + visibleClients().length + ' elementi'" (close)="closeFilterPanel()" (reset)="resetFilters()" (apply)="closeFilterPanel()">
     <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, email, telefono, social" /></label>
     <label>Tipo
       <select name="typeFilter" [(ngModel)]="typeFilter">
@@ -14,7 +14,12 @@
         <option value="organization">Organizzazioni</option>
       </select>
     </label>
-  </div> }
+    <label>Acquisti minimi <input type="number" min="0" step="1" [ngModel]="purchasesMin() ?? ''" (ngModelChange)="purchasesMin.set($event === '' ? null : +$event)" /></label>
+    <label>Acquisti massimi <input type="number" min="0" step="1" [ngModel]="purchasesMax() ?? ''" (ngModelChange)="purchasesMax.set($event === '' ? null : +$event)" /></label>
+    <label>Spesa minima <input type="number" min="0" step="0.01" [ngModel]="spendingMin() ?? ''" (ngModelChange)="spendingMin.set($event === '' ? null : +$event)" /></label>
+    <label>Spesa massima <input type="number" min="0" step="0.01" [ngModel]="spendingMax() ?? ''" (ngModelChange)="spendingMax.set($event === '' ? null : +$event)" /></label>
+  </app-list-filter-panel> }
+  @if (sortOpen()) { <div class="sort-backdrop sheet-backdrop" aria-hidden="true"></div><div class="toolbar sort-panel" role="dialog" aria-label="Ordinamento clienti"><div class="sort-control-row"><select aria-label="Colonna da ordinare" [ngModel]="sortKey()" (ngModelChange)="sortKey.set($event)"><option value="name">Nome</option><option value="purchases">Acquisti</option><option value="spending">Spesa</option></select><button class="sort-direction-button" type="button" [attr.aria-label]="sortDirection() === 'asc' ? 'Discendente' : 'Ascendente'" title="Cambia direzione" (click)="changeSortDirection()">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSort()">↺</button></div></div> }
   @if (loading()) {
     <p class="empty-state">Caricamento...</p>
   } @else if (!visibleClients().length) {

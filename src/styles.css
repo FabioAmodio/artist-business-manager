@@ -23,12 +23,11 @@ body {
 	z-index: 1000 !important;
 }
 
-[role='dialog'],
-[role='alertdialog'] {
+[role='dialog']:not(.sales-filter-sheet):not(.sort-panel),
+[role='alertdialog']:not(.sales-filter-sheet):not(.sort-panel) {
 	box-sizing: border-box !important;
 	max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem) !important;
 	overflow-y: auto !important;
-	top: calc(env(safe-area-inset-top, 0px) + (100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 2) !important;
 	z-index: 1001 !important;
 }
 
@@ -163,6 +162,30 @@ main.main-content .filter-panel {
 	margin: .75rem 0;
 	padding: .75rem;
 }
+
+main.main-content .toolbar { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); margin: 1rem 0; }
+main.main-content .filter-panel, main.main-content .sort-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); padding: 1rem; }
+main.main-content .sheet-backdrop { background: rgba(31, 41, 38, .55); inset: 0; position: fixed; z-index: calc(var(--z-modal) - 1); }
+main.main-content .sheet-heading { align-items: center; background: var(--color-surface); border-bottom: 1px solid var(--color-border); display: flex; grid-column: 1 / -1; justify-content: space-between; margin: -1rem -1rem .25rem; padding: .8rem 1rem; position: sticky; top: -1rem; z-index: 2; }
+main.main-content .sheet-heading h2 { font-size: 1.2rem; }
+main.main-content .sheet-close { background: transparent; border: 0; color: var(--color-text-primary); cursor: pointer; font: 400 1.6rem/1 var(--font-sans); padding: .2rem; }
+main.main-content .sheet-close:hover, main.main-content .sheet-close:focus-visible { color: var(--color-accent); outline: none; }
+main.main-content .sheet-actions { background: var(--color-surface); border-top: 1px solid var(--color-border); display: grid; gap: .55rem; grid-column: 1 / -1; grid-template-columns: 1fr; margin: .25rem -1rem -1rem; padding: .8rem 1rem; position: sticky; bottom: -1rem; z-index: 2; }
+main.main-content .sort-control-row { align-items: end; display: flex; gap: .5rem; grid-column: 1 / -1; }
+main.main-content .sort-control-row select { flex: 1; min-width: 0; }
+main.main-content .sort-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); padding: .85rem; position: absolute; right: 1.25rem; top: 5.5rem; width: 21rem; z-index: var(--z-modal); }
+main.main-content .sort-backdrop { display: none; }
+main.main-content .sales-filter-sheet, main.main-content .list-filter-sheet { align-content: start; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0; box-shadow: var(--shadow-xl); box-sizing: border-box; display: grid; grid-template-columns: 1fr; inset: 0 0 0 auto; max-height: 100dvh; overflow-x: hidden; overflow-y: auto; padding: 1.25rem; position: fixed; width: min(30rem, 42vw); z-index: var(--z-modal); }
+main.main-content .sales-filter-sheet input, main.main-content .sales-filter-sheet select, main.main-content .list-filter-sheet input, main.main-content .list-filter-sheet select { height: 2.55rem !important; line-height: 1.2; max-height: 2.55rem !important; min-height: 2.55rem !important; padding: .7rem; }
+main.main-content .sales-filter-sheet > label, main.main-content .list-filter-sheet > label { position: relative; z-index: 1; }
+main.main-content .sales-filter-sheet > label input, main.main-content .sales-filter-sheet > label select, main.main-content .list-filter-sheet > label input, main.main-content .list-filter-sheet > label select { position: relative; z-index: 1; }
+main.main-content .sales-filter-sheet .sheet-actions button, main.main-content .list-filter-sheet .sheet-actions button { height: 2.75rem !important; max-height: 2.75rem !important; min-height: 2.75rem !important; }
+@media (max-width: 1024px) {
+	main.main-content .list-filter-sheet { bottom: 0; height: auto; inset: auto 0 0; max-height: calc(100dvh - env(safe-area-inset-top, 0px)); width: 100%; }
+	main.main-content .list-filter-sheet .sheet-actions { bottom: 0; }
+}
+main.main-content .sort-direction-button, main.main-content .sort-reset-button { align-items: center; background: var(--color-surface-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; display: inline-flex; flex: 0 0 2.55rem; font: 600 1.2rem/1 var(--font-sans); height: 2.55rem; justify-content: center; padding: 0; width: 2.55rem; }
+main.main-content .sort-direction-button:hover, main.main-content .sort-direction-button:focus-visible, main.main-content .sort-reset-button:hover, main.main-content .sort-reset-button:focus-visible { border-color: var(--color-accent); color: var(--color-accent); outline: none; }
 
 main.main-content :is(.fair-list, .catalog-list, .client-list, .supplier-list, .purchase-list, .payment-method-list, .lot-list, .product-list, .deadline-list, .operation-list, .service-list, .trash-list) {
 	display: grid;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PurchaseService } from '../../application/purchases/purchase.service';
 import { SupplierService, type SupplierInput } from '../../application/suppliers/supplier.service';
@@ -6,10 +6,13 @@ import type { Party, SupplierType } from '../../domain/models/party';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+
+type SupplierSortKey = 'name' | 'type';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
   selector: 'app-suppliers-page',
   templateUrl: './suppliers-page.html',
   styleUrl: './suppliers-page.scss',
@@ -26,6 +29,9 @@ export class SuppliersPage implements OnInit {
   protected readonly query = signal('');
   protected readonly typeFilter = signal<'all' | SupplierType>('all');
   protected readonly filtersOpen = signal(false);
+  protected readonly sortOpen = signal(false);
+  protected readonly sortKey = signal<SupplierSortKey>('name');
+  protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected draft: SupplierInput = this.emptyDraft();
@@ -36,9 +42,17 @@ export class SuppliersPage implements OnInit {
 
   protected visibleSuppliers(): readonly Party[] {
     const type = this.typeFilter();
-    return type === 'all' ? this.suppliers() : this.suppliers().filter((supplier) => supplier.supplierType === type);
+    const suppliers = type === 'all' ? this.suppliers() : this.suppliers().filter((supplier) => supplier.supplierType === type);
+    return [...suppliers].sort((first, second) => { const a = this.sortKey() === 'name' ? first.displayName : this.supplierTypeLabel(first.supplierType); const b = this.sortKey() === 'name' ? second.displayName : this.supplierTypeLabel(second.supplierType); const result = a.localeCompare(b, 'it', { sensitivity: 'base' }); return this.sortDirection() === 'asc' ? result : -result; });
   }
   protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.typeFilter() !== 'all'; }
+  protected closeFilterPanel(): void { this.filtersOpen.set(false); }
+  protected resetFilters(): void { this.query.set(''); this.typeFilter.set('all'); this.filtersOpen.set(false); void this.load(); }
+  protected hasActiveSort(): boolean { return this.sortKey() !== 'name' || this.sortDirection() !== 'asc'; }
+  protected toggleSort(): void { this.sortOpen.update((open) => !open); this.filtersOpen.set(false); }
+  protected restoreSort(): void { this.sortKey.set('name'); this.sortDirection.set('asc'); this.sortOpen.set(false); }
+  protected changeSortDirection(): void { this.sortDirection.update((direction) => direction === 'asc' ? 'desc' : 'asc'); }
+  @HostListener('document:click', ['$event']) protected closeSortOutside(event: MouseEvent): void { const target = event.target; if (this.sortOpen() && (!(target instanceof Element) || (!target.closest('.sort-panel') && !target.closest('.sort-toggle')))) this.sortOpen.set(false); }
 
   protected isSupplierUsed(supplier: Party): boolean { return this.purchases().some((purchase) => purchase.supplierId === supplier.id); }
 
