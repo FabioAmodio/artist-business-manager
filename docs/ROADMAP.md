@@ -37,6 +37,11 @@ La migrazione personale e descritta in [HISTORICAL-DATA-MIGRATION.md](business/H
 ## Funzionalita future
 
 - outbox persistente e gestione conflitti avanzata;
+- vendita multipla: ingresso dal selettore rapido;
+- vendite successive per lo stesso cliente;
+- riepilogo vendita multipla, sconti e arrotondamenti;
+- distribuzione dei pagamenti della vendita multipla;
+- azione `Salva e aggiungi vendita` mantenendo il contesto cliente/fiera;
 - provider OneDrive, Dropbox o backend (Google Drive e implementato);
 - appunti rapidi, testo libero e dettatura vocale;
 - suggerimenti di prezzo e bundle;
