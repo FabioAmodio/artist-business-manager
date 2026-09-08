@@ -300,6 +300,8 @@ main.main-content:has(.sales-filter-sheet) { overflow: visible; }
     text-align: center;
   }
 
+  .footer { display: none; }
+
   .topbar { padding: env(safe-area-inset-top, 0px) var(--spacing-4) 0; }
 
   .brand-mark {
@@ -309,10 +311,13 @@ main.main-content:has(.sales-filter-sheet) { overflow: visible; }
 
   .main-content {
     min-height: 0;
-    padding-bottom: calc(4.5rem + var(--spacing-4) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
     scroll-padding-bottom: calc(4.5rem + var(--spacing-4) + env(safe-area-inset-bottom, 0px));
     touch-action: pan-y;
   }
+
+  .pull-content { box-sizing: border-box; padding-bottom: var(--spacing-4); }
+  .pull-content::after { content: ''; display: block; height: calc(4.5rem + env(safe-area-inset-bottom, 0px)); width: 1px; }
 
   :host ::ng-deep .nav-icon {
     width: 1.25rem;

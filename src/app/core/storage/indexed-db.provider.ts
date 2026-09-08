@@ -48,9 +48,12 @@ export class IndexedDbProvider implements IStorageProvider {
         const queue = this.database.table('syncOperations') as Table<SyncOperation, string>;
         await this.database.transaction('rw', [table, queue], async () => {
           await table.put(_value as Record<string, unknown>);
-          await this.recordSyncOperation(_collection, _value as Record<string, unknown>, previous);
+          const value = _value as Record<string, unknown>;
+          if (!(value['system'] === true && (_collection === 'services' || _collection === 'paymentMethods'))) {
+            await this.recordSyncOperation(_collection, value, previous);
+          }
         });
-        this.syncStatus.notifyLocalChange();
+        if (!this.syncStatus.isSuppressed()) this.syncStatus.notifyLocalChange();
       } else {
         await this.database.table(_collection).put(_value);
       }
@@ -69,7 +72,7 @@ export class IndexedDbProvider implements IStorageProvider {
           await table.put(next as Record<string, unknown>);
           await this.recordSyncOperation(_collection, next as Record<string, unknown>, value as unknown as Record<string, unknown>);
         });
-        this.syncStatus.notifyLocalChange();
+        if (!this.syncStatus.isSuppressed()) this.syncStatus.notifyLocalChange();
       } else {
         await table.put({ ...value, deletedAt: _metadata?.deletedAt ?? new Date().toISOString() });
       }

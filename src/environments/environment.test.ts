@@ -8,7 +8,7 @@ export const environment: AppEnvironment = {
   syncEnabled: false,
   allowExternalPersistence: false,
   allowImportExport: true,
-  allowCloudSync: false,
+  allowCloudSync: true,
   version: '0.0.0',
   defaultPersistenceMode: 'offline',
   firebase: {

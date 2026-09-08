@@ -13,7 +13,7 @@ import { AppNavigationService } from './core/navigation/app-navigation.service';
 import { AppErrorHandler } from './core/error/error-handler';
 import { routes } from './app.routes';
 import { environmentProviders } from './core/configuration/environment.providers';
-import { STORAGE_PROVIDER } from './core/configuration/environment.tokens';
+import { APP_ENVIRONMENT, STORAGE_PROVIDER } from './core/configuration/environment.tokens';
 import { PersistenceService } from './application/persistence/persistence.service';
 import { ActiveFairService } from './core/event/active-fair.service';
 import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
@@ -36,6 +36,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const appState = inject(AppStateService);
       const storage = inject(STORAGE_PROVIDER);
+      const environment = inject(APP_ENVIRONMENT);
       const persistence = inject(PersistenceService);
       const activeFair = inject(ActiveFairService);
       const firebaseAuth = inject(FirebaseAuthService);
@@ -49,7 +50,12 @@ export const appConfig: ApplicationConfig = {
           if (persistence.mode() === 'firestore') {
             void firebaseAuth.whenInitialized()
               .then(async (user) => {
-                if (user) await workspace.loadForCurrentUser();
+                if (user) {
+                  await workspace.loadForCurrentUser();
+                  if (environment.allowCloudSync && persistence.mode() === 'firestore') {
+                    void persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error));
+                  }
+                }
               })
               .catch((error) => console.error('Firebase workspace initialization failed:', error));
           }

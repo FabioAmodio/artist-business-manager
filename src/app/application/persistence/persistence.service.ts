@@ -64,8 +64,7 @@ export class PersistenceService {
   constructor() {
     effect(() => {
       this.syncStatus.changeVersion();
-      const workspaceId = this.workspace.activeWorkspaceId();
-      if (this.initialized && (this.source() !== 'none' || (this.mode() === 'firestore' && workspaceId !== null))) this.scheduleAutomaticSync();
+      if (this.initialized && (this.source() !== 'none' || this.mode() === 'firestore')) this.scheduleAutomaticSync();
     });
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => this.scheduleAutomaticSync());
@@ -364,13 +363,25 @@ export class PersistenceService {
   }
 
   private async synchronizeFirestoreInternal(): Promise<void> {
-    if (!this.workspace.activeWorkspaceId()) return;
+    if (!this.workspace.activeWorkspaceId()) {
+      if (this.firebaseAuth.user()) await this.workspace.loadForCurrentUser();
+      await this.refreshSyncOperations();
+      if (this.pendingSyncOperations().some((operation) => operation.status === 'pending')) {
+        this.syncStatus.setStatus('pending');
+        this.scheduleAutomaticSync();
+      }
+      return;
+    }
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       this.syncStatus.setStatus('pending');
       return;
     }
     const local = await this.readLocalDataset();
-    const pending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    const allPending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
+    const pending = allPending.filter((operation) => !this.isSystemSyncOperation(operation));
+    for (const operation of allPending.filter((item) => this.isSystemSyncOperation(item))) {
+      await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, operation.id);
+    }
     const remote = await this.readFirestoreDataset();
     const remoteByKey = new Map<string, Record<string, unknown>>();
     for (const [collection, records] of Object.entries(remote.collections)) {
@@ -425,6 +436,11 @@ export class PersistenceService {
   private async readFirestoreDataset(): Promise<PersistedDataset> {
     const collections = Object.fromEntries(await Promise.all(DATA_COLLECTIONS.map(async (collection) => [collection, await this.firestore.list<Record<string, unknown>>(collection)]))) as Record<string, readonly Record<string, unknown>[]>;
     return { format: 'artist-business-manager', version: 1, exportedAt: new Date().toISOString(), collections };
+  }
+
+  private isSystemSyncOperation(operation: SyncOperation): boolean {
+    const record = operation.after ?? operation.before;
+    return record?.['system'] === true && (operation.collection === 'services' || operation.collection === 'paymentMethods');
   }
 
   private mergeLocalWithFirestore(local: PersistedDataset, remote: PersistedDataset, pending: readonly SyncOperation[]): PersistedDataset {

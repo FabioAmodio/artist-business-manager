@@ -3,13 +3,14 @@
   <a routerLink="/events">◷<span>Eventi</span></a>
   <button class="fab" type="button" (click)="openQuickAction()" aria-label="Nuova operazione fiera">+</button>
   <a routerLink="/catalog">□<span>Catalogo</span></a>
-  <button class="more-trigger" type="button" (click)="toggleMoreMenu()" aria-label="Mostra altre voci di menu" aria-haspopup="menu" [attr.aria-expanded]="moreMenuOpen()">•••<span>Altro</span></button>
+  <button class="more-trigger" type="button" (click)="toggleMoreMenu()" aria-label="Mostra altre voci di menu" aria-haspopup="menu" [attr.aria-expanded]="moreMenuOpen()"><span class="quick-status-dots" aria-hidden="true"><i [class.online]="appState.isOnline()"></i><i [class.firebase]="dataModeOnline()"></i><i [class]="syncIndicatorClass()"></i></span><span>Altro</span></button>
 </nav>
 
 @if (moreMenuOpen()) {
   <div class="mobile-more-backdrop" (click)="closeMoreMenu()"></div>
   <section class="mobile-more-menu" role="menu" aria-label="Altre voci di menu">
     <header><strong>Altre voci</strong><button type="button" (click)="closeMoreMenu()" aria-label="Chiudi menu">×</button></header>
+    <div class="mobile-status" role="status" aria-live="polite"><span class="status-dot" [class.online]="appState.isOnline()"></span><span>{{ appState.isOnline() ? 'Rete disponibile' : 'Offline' }}</span><span class="mobile-sync-status">{{ syncLabel() }}</span></div>
     <nav>
       @for (item of secondaryItems; track item.path) {
         <a [routerLink]="item.path" (click)="closeMoreMenu()" role="menuitem"><span>{{ item.icon }}</span>{{ item.label }}</a>
