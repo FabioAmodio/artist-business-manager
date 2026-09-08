@@ -109,6 +109,12 @@ Comunicazione legata a una `FairEdition`, con data, canale (`email`, `telefono`,
 
 Prenotazione di hotel, viaggio, parcheggio o altro. Resta un tipo di `Operation`; i dati specifici potranno includere provider, costo, riferimento e scadenza di cancellazione.
 
+### Nota di sviluppo: Hotel collegati a FairSeries
+
+L'anagrafica degli Hotel dovra essere collegata a `FairSeries`, perche lo stesso hotel puo essere riutilizzato in piu edizioni della manifestazione. La prenotazione concreta, le date del soggiorno, il costo effettivo, gli ospiti, lo stato e le note operative dovranno invece essere collegati alla specifica `FairEdition`.
+
+Questa nota non introduce ancora nuove entita o migrazioni. In una fase successiva si potra valutare un modello `Hotel`/`Accommodation` per la serie e una `Reservation` per l'edizione, mantenendo separati i dati riutilizzabili dai dati storici della singola partecipazione.
+
 ## Stato roadmap
 
 - MVP: `FairSeries`, `FairEdition`, repository separati, migrazione additive e gestione base delle edizioni;

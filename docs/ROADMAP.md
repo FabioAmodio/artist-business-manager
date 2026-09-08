@@ -64,6 +64,7 @@ Ogni esperimento deve essere isolato, disattivabile, riconoscibile all'utente e 
 - test Safari iOS e quota IndexedDB da aggiungere;
 - riduzione dei warning sui budget SCSS di Dashboard e Operations;
 - gestione avanzata delle edizioni, task, contatti e prenotazioni fieristiche;
+- nota di sviluppo Hotel: anagrafica riutilizzabile collegata a `FairSeries`, prenotazione e costi specifici collegati a `FairEdition`;
 
 ## Criteri di avanzamento
 
