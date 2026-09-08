@@ -100,6 +100,13 @@ export class App {
       this.swUpdate.versionUpdates.subscribe((event) => {
         if (event.type === 'VERSION_READY') this.updateAvailable.set(true);
       });
+      // A standalone PWA can stay open for days without a full reload, so the SW never re-checks on its own.
+      const checkForUpdate = () => { this.swUpdate.checkForUpdate().catch(() => undefined); };
+      window.addEventListener('focus', checkForUpdate);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+      setInterval(checkForUpdate, 30 * 60 * 1000);
     }
     // Handle GitHub Pages SPA redirect from 404.html
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd), take(1)).subscribe((event) => {
