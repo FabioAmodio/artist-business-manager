@@ -36,7 +36,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1.5rem 0; }
 .full-width { grid-column: 1 / -1; }
 .wide { grid-column: span 1; }
-.supplier-form app-form-actions { background: linear-gradient(to top, var(--color-surface) 78%, transparent); bottom: -1.5rem; margin-top: 1rem; padding: .75rem 0 0; position: sticky; }
+.supplier-form .form-heading { background: var(--color-surface); margin: -1.5rem -1.5rem 1rem; padding: 1.25rem 1.5rem .75rem; position: sticky; top: -1.5rem; z-index: 2; }
 @media (max-width: 1180px) { .supplier-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .relation-badges { grid-column: 1 / -2; } .supplier-row > * { min-width: 0; } .contact-grid span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } }
 @media (max-width: 799px) { .supplier-row, .form-grid { grid-template-columns: 1fr; } .relation-badges { grid-column: auto; } }

@@ -51,7 +51,7 @@
     <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="client-dialog" role="dialog" aria-modal="true" aria-labelledby="client-form-title">
       <form class="client-form" (ngSubmit)="save()" #clientForm="ngForm">
-        <div class="form-heading"><div><h2 id="client-form-title">{{ editingId() ? 'Modifica cliente' : 'Nuovo cliente' }}</h2></div></div>
+        <div class="form-heading"><app-form-actions [disabled]="clientForm.invalid === true" [saving]="saving()" saveLabel="Salva cliente" (cancel)="cancelForm()"><h2 id="client-form-title">{{ editingId() ? 'Modifica cliente' : 'Nuovo cliente' }}</h2></app-form-actions></div>
         <div class="form-grid">
           <label class="wide">Nome <input name="displayName" required [(ngModel)]="draft.displayName" /></label>
           <label>Tipo
@@ -66,7 +66,6 @@
           <label>Social <input name="social" [(ngModel)]="draft.social" /></label>
           <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
         </div>
-        <app-form-actions [disabled]="clientForm.invalid === true" [saving]="saving()" saveLabel="Salva cliente" (cancel)="cancelForm()"></app-form-actions>
       </form>
     </section>
   }

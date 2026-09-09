@@ -37,7 +37,7 @@
     <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="lot-dialog" role="dialog" aria-modal="true" aria-labelledby="lot-form-title">
       <form class="lot-form" (ngSubmit)="save()" #lotForm="ngForm">
-        <div class="form-heading"><div><h2 id="lot-form-title">{{ editingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2></div></div>
+        <div class="form-heading"><app-form-actions [disabled]="lotForm.invalid === true" [saving]="saving()" saveLabel="Salva collegamento" (cancel)="cancelForm()"><h2 id="lot-form-title">{{ editingId() ? 'Modifica collegamento' : 'Nuovo collegamento' }}</h2></app-form-actions></div>
         <div class="form-grid">
           <label class="wide">Nome collegamento <input name="name" required [(ngModel)]="draft.name" placeholder="Es. Tipografia marzo 2026" /></label>
           <label>Prodotto
@@ -55,7 +55,6 @@
           <label class="full-width">Alias <input name="aliases" [(ngModel)]="aliasText" /></label>
           <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
         </div>
-        <app-form-actions [disabled]="lotForm.invalid === true" [saving]="saving()" saveLabel="Salva collegamento" (cancel)="cancelForm()"></app-form-actions>
       </form>
     </section>
   }

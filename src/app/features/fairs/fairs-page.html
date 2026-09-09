@@ -81,9 +81,9 @@
     <section class="fair-dialog" role="dialog" aria-modal="true" aria-labelledby="fair-form-title">
       <form class="fair-form" (ngSubmit)="save()" #fairForm="ngForm">
         <div class="form-heading">
-          <div>
+          <app-form-actions [disabled]="fairForm.invalid === true" [saving]="saving()" [saveLabel]="hasWarnings() ? 'Salva comunque' : 'Salva fiera'" (cancel)="cancelForm()">
             <h2 id="fair-form-title">{{ editingId() ? 'Modifica fiera' : 'Nuova fiera' }}</h2>
-          </div>
+          </app-form-actions>
         </div>
         <div class="form-grid">
           <div class="form-row form-row-identity">
@@ -122,7 +122,6 @@
             <div><button class="primary-button" type="button" (click)="useExistingSeries(matched)">Nuova edizione</button><button class="text-button" type="button" (click)="useNewSeries()">Nuova fiera</button></div>
           </div>
         }
-        <app-form-actions [disabled]="fairForm.invalid === true" [saving]="saving()" [saveLabel]="hasWarnings() ? 'Salva comunque' : 'Salva fiera'" (cancel)="cancelForm()"></app-form-actions>
       </form>
     </section>
   }
