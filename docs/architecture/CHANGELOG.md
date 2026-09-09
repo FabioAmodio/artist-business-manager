@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] - 2026-09-09
+
+### Implementato
+
+- Vendite rapide consecutive per lo stesso cliente con riepilogo finale, importi modificabili, cancellazione singola/totale e pagamento aggregato opzionale.
+- Pagamento aggregato ripartito prima su prodotti e bundle solo prodotto, poi sui servizi; data pagamento predefinita a oggi.
+
 ## [2.1.0] - 2026-09-01
 
 ### Implementato

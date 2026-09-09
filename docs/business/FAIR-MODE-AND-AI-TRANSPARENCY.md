@@ -68,7 +68,7 @@ La presentazione dovra mantenere l'ordine di priorita stand, viaggio, alloggio e
 
 Su mobile la barra inferiore contiene un FAB centrale che apre il wizard di nuova vendita. Se esiste una fiera reale o forzata, l'Operazione viene associata automaticamente al contesto risolto da `ActiveFairService`; dopo il salvataggio il flusso torna alla Dashboard. Il pulsante desktop **Nuova vendita fiera** usa lo stesso trigger.
 
-Il wizard apre direttamente il primo passo, senza schermate intermedie, e puo raccogliere prodotto, servizio o bundle, quantita, cliente, importo, pagamento e note. Il pagamento rapido puo essere completo o parziale e usa Contanti come modalita predefinita quando disponibile.
+Il wizard apre direttamente il primo passo, senza schermate intermedie, e puo raccogliere prodotto, servizio o bundle, quantita, cliente, importo, pagamento e note. Il pagamento rapido e opzionale e usa Contanti come modalita predefinita quando disponibile. Su mobile la conferma prolungata permette vendite consecutive per lo stesso cliente e un riepilogo finale con importi modificabili, cancellazione delle righe e pagamento aggregato distribuito per priorita prodotto/servizio.
 
 La barra mobile deve evitare la sovrapposizione con il contenuto e con il FAB, mantenere target di tocco adeguati e offrire sempre un accesso a dashboard, eventi, catalogo e impostazioni/altro.
 

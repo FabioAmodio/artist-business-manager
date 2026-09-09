@@ -2,7 +2,7 @@
 
 La roadmap distingue lavoro completato, evoluzioni e sperimentazioni. Le date non sono vincolanti: la priorita e la solidita dei dati offline.
 
-Ultimo aggiornamento: 2026-09-01. Lo stato puntuale e in [IMPLEMENTATION-STATUS.md](architecture/IMPLEMENTATION-STATUS.md).
+Ultimo aggiornamento: 2026-09-09. Lo stato puntuale e in [IMPLEMENTATION-STATUS.md](architecture/IMPLEMENTATION-STATUS.md).
 
 ## MVP
 
@@ -20,6 +20,7 @@ Incrementi completati:
 8. Dashboard annuale e operativa fiera;
 9. catalogo Prodotti/Servizi/Bundle e pagamenti 1:N;
 10. sincronizzazione File System e Google Drive.
+11. inserimenti multipli di vendite rapide con riepilogo finale e pagamento raggruppato opzionale.
 
 Restano post-MVP analytics avanzati, stock e magazzino.
 
@@ -37,11 +38,7 @@ La migrazione personale e descritta in [HISTORICAL-DATA-MIGRATION.md](business/H
 ## Funzionalita future
 
 - outbox persistente e gestione conflitti avanzata;
-- vendita multipla: ingresso dal selettore rapido;
-- vendite successive per lo stesso cliente;
-- riepilogo vendita multipla, sconti e arrotondamenti;
-- distribuzione dei pagamenti della vendita multipla;
-- azione `Salva e aggiungi vendita` mantenendo il contesto cliente/fiera;
+- sconti e arrotondamenti avanzati per vendite raggruppate;
 - provider OneDrive, Dropbox o backend (Google Drive e implementato);
 - appunti rapidi, testo libero e dettatura vocale;
 - suggerimenti di prezzo e bundle;

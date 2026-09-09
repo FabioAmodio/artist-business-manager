@@ -50,9 +50,31 @@
 }
 
 .save-button {
+  overflow: visible;
+  position: relative;
+  isolation: isolate;
   background: var(--color-primary-action-bg);
   border: 1px solid var(--color-primary-action-bg);
   color: var(--color-primary-action-text);
+}
+
+.save-button.long-press-enabled::after {
+  background: color-mix(in srgb, var(--color-primary-action-bg) 32%, transparent);
+  border-radius: 50%;
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  transform: scale(1);
+  z-index: -1;
+}
+
+.save-button.long-press-enabled.holding::after {
+  animation: long-press-progress .6s linear forwards;
+}
+
+@keyframes long-press-progress {
+  to { transform: scale(2.5); }
 }
 
 .save-button:hover, .save-button:focus-visible {

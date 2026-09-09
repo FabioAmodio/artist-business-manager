@@ -136,14 +136,13 @@
       } @else {
         <form class="operation-form" (ngSubmit)="save()" #operationForm="ngForm">
           @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
-          <div class="form-heading"><app-form-actions [disabled]="operationForm.invalid === true" [saving]="saving()" saveLabel="Salva operazione" (cancel)="cancelForm()"><h2 id="operation-form-title">{{ editingId() ? (salesOnly ? 'Modifica vendita' : worksOnly ? 'Modifica lavorazione' : 'Modifica operazione') : (salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione') }}</h2></app-form-actions></div>
+          <div class="form-heading"><app-form-actions [disabled]="operationForm.invalid === true" [saving]="saving()" [longPressEnabled]="isMobileQuickSale()" saveLabel="Salva operazione" (cancel)="cancelForm()" (save)="save()" (longPress)="saveAndCreateAnotherSale()"><h2 id="operation-form-title">{{ editingId() ? (salesOnly ? 'Modifica vendita' : worksOnly ? 'Modifica lavorazione' : 'Modifica operazione') : (salesOnly ? 'Nuova vendita' : worksOnly ? 'Nuova lavorazione' : 'Nuova operazione') }}</h2></app-form-actions></div>
 
           @if (mode() === 'fair') {
           <div class="quick-form">
             <button class="selected-product" type="button" (click)="clearSelectedProduct()"><strong>Elemento</strong><span>{{ draft.bundleId ? bundleName(draft.bundleId) : draft.serviceId ? serviceName(draft.serviceId) : productName(draft.productId) }}</span></button>
             <label>Descrizione <input name="description" [(ngModel)]="draft.description" /></label>
             <div class="quick-form-row"><label>Quantita <app-number-stepper name="quantity" [step]="1" [min]="1" [integer]="true" required [(ngModel)]="draft.quantity" /></label><label>Importo totale <app-number-stepper name="amount" [step]="1" [decimals]="2" [min]="0" [ngModel]="draft.amount" (ngModelChange)="updateFairAmount($event)" /></label></div>
-            <div class="fair-payment"><strong>Pagamento</strong><label>Importo <app-number-stepper name="fairPaymentAmount" [step]="1" [decimals]="2" [min]="0" [max]="draft.amount ?? 0" [ngModel]="paymentDraft.amount" (ngModelChange)="updateFairPaymentAmount($event)" /></label><label>Modalita <select name="fairPaymentMethod" [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label></div>
             <div class="customer-box">
               <label>Cliente<input name="customerName" [ngModel]="draft.customerName" (ngModelChange)="updateCustomerName($event)" placeholder="Nome libero o cliente esistente" /></label>
               @if (editingId() && canRegisterQuickCustomer()) { <button class="text-button" type="button" (click)="registerQuickCustomer()">+ Inserisci in anagrafica</button> }
@@ -189,6 +188,9 @@
               @for (detail of bundleDetails(); track detail.id) { <div class="bundle-detail-row"><span>{{ detail.title }} · {{ detail.quantity }} unita</span><label>Importo <app-number-stepper name="detail-amount-{{ detail.id }}" [step]="1" [decimals]="2" [min]="0" [ngModel]="detail.amount" (ngModelChange)="updateBundleDetailAmount(detail.id, $event)" /></label><label>Collegamento <select name="detail-lot-{{ detail.id }}" [(ngModel)]="detail.lotId"><option [ngValue]="undefined">Nessun collegamento</option>@for (lot of lots(); track lot.id) { <option [value]="lot.id">{{ lot.name }}</option> }</select></label></div> }
             </section>
           }
+          @if (mode() === 'fair' && draft.type === 'sale') {
+            @if (!fairPaymentOpen()) { <button class="fair-payment-trigger" type="button" (click)="openFairPayment()">Paga @if (paymentDraft.amount != null) { {{ paymentDraft.amount.toFixed(2) }} € }</button> } @else { <div class="fair-payment"><strong>Pagamento</strong><label>Importo <app-number-stepper name="fairPaymentAmount" [step]="1" [decimals]="2" [min]="0" [max]="draft.amount ?? 0" [ngModel]="paymentDraft.amount" (ngModelChange)="updateFairPaymentAmount($event)" /></label><label>Modalita <select name="fairPaymentMethod" [(ngModel)]="paymentDraft.paymentMethodId">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label></div> }
+          }
           @if (mode() !== 'fair') {
             @if (isBundleChild()) {
               <p class="bundle-child-note">Importo e pagamento sono gestiti dal <a routerLink="/sales" [queryParams]="{ open: draft.parentOperationId, returnWork: editingId() }">pacchetto collegato</a>.</p>
@@ -213,6 +215,27 @@
       <h2 id="quick-customer-prompt-title">Inserire il cliente in anagrafica?</h2>
       <p>Il cliente <strong>{{ draft.customerName }}</strong> verrà collegato a questa vendita.</p>
       <div class="quick-customer-actions"><button class="text-button" type="button" (click)="goBackFromQuickCustomerPrompt()">Indietro</button><button class="text-button" type="button" (click)="decideQuickCustomerRegistration(false)">No, solo questa vendita</button><button class="primary-button" type="button" (click)="decideQuickCustomerRegistration(true)">Sì, inserisci</button></div>
+    </dialog>
+  }
+  @if (quickSaleSettlementOpen()) {
+    <dialog #quickSaleSettlementDialog class="quick-sale-settlement-dialog" aria-labelledby="quick-sale-settlement-title" (cancel)="$event.preventDefault()">
+      <h2 id="quick-sale-settlement-title">Riepilogo vendite</h2>
+      <div class="quick-sale-settlement-toolbar"><span>{{ quickSaleSettlementItems().length }} vendite</span><button class="text-button" type="button" (click)="removeAllQuickSaleSettlementItems()">Cancella tutte</button></div>
+      <div class="quick-sale-settlement-list">
+        @for (item of quickSaleSettlementItems(); track item.operation.id; let index = $index) {
+          <div class="quick-sale-settlement-row"><button class="settlement-delete-button" type="button" aria-label="Cancella vendita" title="Cancella vendita" (click)="removeQuickSaleSettlementItem(index)">×</button><span>{{ item.operation.title }}</span><app-number-stepper name="settlement-amount-{{ item.operation.id }}" [step]="1" [decimals]="2" [min]="0" [ngModel]="item.amount" (ngModelChange)="updateQuickSaleSettlementAmount(index, $event)" /></div>
+        }
+      </div>
+      <p class="quick-sale-settlement-total">Totale: <strong>{{ quickSaleSettlementTotal().toFixed(2) }} €</strong></p>
+      @if (quickSaleSettlementPaymentOpen()) {
+        <div class="quick-sale-settlement-payment">
+          <div class="quick-sale-settlement-payment-fields"><label>Modalità <select name="settlement-payment-method" [ngModel]="quickSaleSettlementPaymentMethodId()" (ngModelChange)="quickSaleSettlementPaymentMethodId.set($event)">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label><label>Importo <app-number-stepper name="settlement-payment-amount" [step]="1" [decimals]="2" [min]="0" [max]="quickSaleSettlementTotal()" [ngModel]="quickSaleSettlementPaymentAmount()" (ngModelChange)="quickSaleSettlementPaymentAmount.set($event ?? 0)" /></label></div>
+          <p>Scostamento pagamento: <strong>{{ quickSaleSettlementDifference().toFixed(2) }} €</strong></p>
+          <div class="quick-sale-settlement-actions"><button class="primary-button" type="button" (click)="payQuickSaleSettlement()">Conferma</button><button class="text-button" type="button" (click)="continueQuickSaleWithoutPayment()">Senza pagamento</button></div>
+        </div>
+      } @else {
+        <div class="quick-sale-settlement-actions"><button class="primary-button" type="button" (click)="openQuickSaleSettlementPayment()">Paga</button><button class="text-button" type="button" (click)="continueQuickSaleWithoutPayment()">Senza pagamento</button></div>
+      }
     </dialog>
   }
 </section>

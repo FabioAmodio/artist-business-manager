@@ -4,7 +4,7 @@
 
 Fotografia dello stato reale dell'applicazione rispetto ai documenti di dominio e architettura.
 
-Ultimo aggiornamento: 2026-09-01.
+Ultimo aggiornamento: 2026-09-09.
 
 ## Sintesi
 
@@ -19,7 +19,7 @@ Ultimo aggiornamento: 2026-09-01.
 | Modalita Fiera | Implementata V1 | Rilevamento automatico, forzatura persistente, indicatore globale e uscita confermata |
 | Eventi / Fiere | Implementata V1 | Serie/edizioni, CRUD, validazioni, costi, ricavi, bilancio e copertura |
 | Operazioni | Implementata V1 | Vendite, lavorazioni e bundle sulla stessa aggregate root |
-| Pagamenti | Implementata V1 | Payment 1:N, acconti/saldi, modalita di pagamento e registrazione rapida |
+| Pagamenti | Implementata V1 | Payment 1:N, acconti/saldi, registrazione rapida e pagamento raggruppato delle vendite consecutive |
 | Catalogo | Implementata V1 | Prodotti, servizi e bundle, disponibilita derivata e collegamenti agli acquisti |
 | Anagrafiche | Implementata V1 | Clienti e fornitori con ricerca, filtri e soft delete |
 | Acquisti e collegamenti | Implementata V1 | Acquisti, lotti/collegamenti, alias e bilancio per acquisto |

@@ -182,7 +182,9 @@ La Modalita Fiera mostra nella selezione iniziale un unico elenco con Prodotti e
 
 ### Vincoli fiera
 
-Il wizard rapido non richiede Lotto e non obbliga alla creazione di un Party. Il cliente puo essere assente, soft o selezionato tra quelli esistenti. La fiera in corso e proposta automaticamente anche se il campo non e visibile. Il pagamento rapido e una sola riga facoltativa: importo uguale alla vendita e Contanti come default, oppure zero per non registrare alcun incasso.
+Il wizard rapido non richiede Lotto e non obbliga alla creazione di un Party. Il cliente puo essere assente, soft o selezionato tra quelli esistenti. La fiera in corso e proposta automaticamente anche se il campo non e visibile. Il pagamento rapido e facoltativo: il pulsante `Paga` apre l'importo totale precompilato e Contanti come modalita predefinita; se non viene premuto non viene registrato alcun incasso. La pressione prolungata del comando di conferma consente inserimenti consecutivi mantenendo il cliente.
+
+Al termine degli inserimenti consecutivi senza pagamenti, l'app apre un riepilogo delle vendite dello stesso cliente. Ogni riga puo essere eliminata con conferma o modificata nell'importo; e possibile cancellare tutte le righe con conferma. Il totale viene ricalcolato e il pagamento aggregato e opzionale: l'importo pagato puo essere inferiore al totale, mai superiore, e usa la data odierna. La ripartizione registra prima prodotti e bundle composti solo da prodotti, poi servizi e bundle con servizi.
 
 Quando l'artista digita un nome cliente, l'app puo mostrare Party esistenti simili e l'opzione di continuare con Cliente soft. Non deve mai associare automaticamente un Party basandosi solo sul nome digitato.
 

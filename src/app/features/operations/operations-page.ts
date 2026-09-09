@@ -45,6 +45,12 @@ interface BundleDetailDraft {
   amount: number;
 }
 
+interface QuickSaleSettlementItem {
+  operation: Operation;
+  amount: number;
+  originalAmount: number;
+}
+
 interface OfferChoice {
   readonly key: string;
   readonly label: string;
@@ -83,6 +89,7 @@ interface SalesFilterDraft {
 })
 export class OperationsPage implements OnInit {
   @ViewChild('quickCustomerDialog') private quickCustomerDialog?: ElementRef<HTMLDialogElement>;
+    @ViewChild('quickSaleSettlementDialog') private quickSaleSettlementDialog?: ElementRef<HTMLDialogElement>;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly activeFairMode = inject(ActiveFairService);
@@ -96,6 +103,7 @@ export class OperationsPage implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly serviceService = inject(ServiceService);
   private readonly bundleService = inject(BundleService);
+  private saveAndCreateAnother = false;
 
   protected readonly operations = signal<readonly Operation[]>([]);
   private allOperations: readonly Operation[] = [];
@@ -111,6 +119,14 @@ export class OperationsPage implements OnInit {
   protected readonly bundles = signal<readonly Bundle[]>([]);
   protected readonly bundleDetails = signal<BundleDetailDraft[]>([]);
   protected readonly bundleParentMode = signal(false);
+  protected readonly fairPaymentOpen = signal(false);
+    protected readonly quickSaleSettlementOpen = signal(false);
+    protected readonly quickSaleSettlementItems = signal<QuickSaleSettlementItem[]>([]);
+    protected readonly quickSaleSettlementPaymentOpen = signal(false);
+    protected readonly quickSaleSettlementPaymentAmount = signal(0);
+    protected readonly quickSaleSettlementPaymentMethodId = signal('');
+    private quickSaleSequence: Operation[] = [];
+    private quickSaleSequenceCustomerKey = '';
   protected readonly offerSelection = signal('');
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -481,6 +497,119 @@ export class OperationsPage implements OnInit {
     return this.persistence.listInteractionMode() === 'swipe' && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
   }
 
+  protected isMobileQuickSale(): boolean {
+    return this.mode() === 'fair' && this.salesOnly && !this.editingId() && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
+  }
+
+  protected saveAndCreateAnotherSale(): void {
+    if (!this.isMobileQuickSale() || this.saving()) return;
+    this.mode.set('fair');
+    this.saveAndCreateAnother = true;
+    void this.save();
+  }
+
+  private quickSaleCustomerKey(input: OperationInput): string { return input.partyId ? `party:${input.partyId}` : `name:${input.customerName?.trim().toLocaleLowerCase() ?? ''}`; }
+
+  protected updateQuickSaleSettlementAmount(index: number, amount: number | null): void {
+    this.quickSaleSettlementItems.update((items) => {
+      const updated = items.map((item, itemIndex) => itemIndex === index ? { ...item, amount: Math.max(0, amount ?? 0) } : item);
+      const total = updated.reduce((sum, item) => sum + item.amount, 0);
+      if (this.quickSaleSettlementPaymentAmount() > total) this.quickSaleSettlementPaymentAmount.set(total);
+      return updated;
+    });
+  }
+
+  protected async removeQuickSaleSettlementItem(index: number): Promise<void> {
+    const item = this.quickSaleSettlementItems()[index];
+    if (!item || !window.confirm(`Cancellare la vendita "${item.operation.title}"?`)) return;
+    await this.deleteSettlementOperation(item.operation);
+    const remaining = this.quickSaleSettlementItems().filter((_, itemIndex) => itemIndex !== index);
+    this.quickSaleSettlementItems.set(remaining);
+    this.quickSaleSequence = remaining.map((entry) => entry.operation);
+    if (!remaining.length) this.closeQuickSaleSettlement();
+    else await this.loadOperations();
+  }
+
+  protected async removeAllQuickSaleSettlementItems(): Promise<void> {
+    const items = this.quickSaleSettlementItems();
+    if (!items.length || !window.confirm('Cancellare tutte le vendite?')) return;
+    for (const item of items) await this.deleteSettlementOperation(item.operation);
+    this.closeQuickSaleSettlement();
+    await this.loadOperations();
+  }
+
+  private async deleteSettlementOperation(operation: Operation): Promise<void> {
+    await this.service.delete(operation.id);
+    if (operation.type === 'bundle') {
+      for (const detail of this.allOperations.filter((item) => item.parentOperationId === operation.id)) await this.service.delete(detail.id);
+    }
+  }
+
+  protected quickSaleSettlementTotal(): number { return this.quickSaleSettlementItems().reduce((total, item) => total + item.amount, 0); }
+  protected quickSaleSettlementDifference(): number { return this.quickSaleSettlementPaymentAmount() - this.quickSaleSettlementTotal(); }
+
+  protected openQuickSaleSettlementPayment(): void {
+    this.quickSaleSettlementPaymentAmount.set(this.quickSaleSettlementTotal());
+    this.quickSaleSettlementPaymentMethodId.set(this.defaultPaymentMethodId());
+    this.quickSaleSettlementPaymentOpen.set(true);
+  }
+
+  protected closeQuickSaleSettlement(): void {
+    const dialog = this.quickSaleSettlementDialog?.nativeElement;
+    if (dialog?.open) dialog.close();
+    this.quickSaleSettlementOpen.set(false);
+    this.quickSaleSettlementPaymentOpen.set(false);
+    this.quickSaleSequence = [];
+    this.quickSaleSequenceCustomerKey = '';
+  }
+
+  protected async continueQuickSaleWithoutPayment(): Promise<void> { this.closeQuickSaleSettlement(); }
+
+  protected async payQuickSaleSettlement(): Promise<void> {
+    const amount = this.quickSaleSettlementPaymentAmount();
+    const total = this.quickSaleSettlementTotal();
+    if (amount <= 0 || amount > total + 0.005 || !this.quickSaleSettlementPaymentMethodId()) return;
+    const items = [...this.quickSaleSettlementItems()];
+    try {
+      for (const item of items) await this.service.update(item.operation.id, { type: item.operation.type, title: item.operation.title, amount: item.amount });
+      let remaining = amount;
+      const productFirst = [...items].sort((first, second) => this.quickSalePaymentPriority(first.operation) - this.quickSalePaymentPriority(second.operation));
+      for (const item of productFirst) {
+        if (remaining <= 0) break;
+        const payment = Math.min(item.amount, remaining);
+        if (payment > 0) {
+          await this.paymentService.create({ operationId: item.operation.id, amount: payment, paymentDate: this.today(), paymentMethodId: this.quickSaleSettlementPaymentMethodId() });
+          remaining -= payment;
+        }
+      }
+      this.payments.set(await this.paymentService.list());
+      this.successMessage.set('Pagamenti registrati.');
+      await this.loadOperations();
+      this.closeQuickSaleSettlement();
+    } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile registrare i pagamenti.'); }
+  }
+
+  private quickSalePaymentPriority(operation: Operation): number {
+    if (operation.type === 'bundle') return this.allOperations.some((item) => item.parentOperationId === operation.id && Boolean(item.serviceId)) ? 1 : 0;
+    return operation.productId ? 0 : 1;
+  }
+
+  private openQuickSaleSettlement(): void {
+    this.quickSaleSettlementItems.set(this.quickSaleSequence.map((operation) => ({ operation, amount: operation.amount ?? 0, originalAmount: operation.amount ?? 0 })));
+    this.quickSaleSettlementOpen.set(true);
+    setTimeout(() => {
+      const dialog = this.quickSaleSettlementDialog?.nativeElement;
+      if (dialog && !dialog.open) dialog.showModal();
+    });
+  }
+
+  private startAnotherQuickSale(customerId?: string, customerName?: string): void {
+    this.mode.set('fair');
+    this.startCreating('sale');
+    this.draft = { ...this.draft, partyId: customerId, customerName };
+    this.customerMode.set(customerId ? 'existing' : customerName?.trim() ? 'soft' : 'none');
+  }
+
   protected operationRightActions(operation: Operation): SwipeAction[] {
     const busy = this.transitioningWorkId() === operation.id;
     const actions: SwipeAction[] = [];
@@ -682,6 +811,7 @@ export class OperationsPage implements OnInit {
     if (!this.fairPaymentManuallyEdited) this.paymentDraft = { ...this.paymentDraft, amount: amount ?? undefined, paymentMethodId: this.defaultPaymentMethodId() };
   }
   protected updateFairPaymentAmount(amount: number | null): void { this.fairPaymentManuallyEdited = true; this.paymentDraft = { ...this.paymentDraft, amount: amount ?? undefined }; }
+  protected openFairPayment(): void { this.fairPaymentOpen.set(true); }
   protected updateCustomerName(value: string): void {
     this.draft = { ...this.draft, customerName: value, partyId: undefined };
     this.customerMode.set(value.trim() ? 'soft' : 'none');
@@ -759,6 +889,7 @@ export class OperationsPage implements OnInit {
     this.paymentDraft = this.emptyPaymentDraft();
     this.bundleDetails.set([]);
     this.bundleParentMode.set(false);
+    this.fairPaymentOpen.set(false);
     this.fairPaymentManuallyEdited = false;
     this.quickCustomerDecision = null;
     this.closeQuickCustomerPrompt();
@@ -771,6 +902,7 @@ export class OperationsPage implements OnInit {
     this.customerMode.set(operation.partyId ? 'existing' : (operation.customerName ? 'soft' : 'none'));
     this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, customerName: operation.partyId ? this.partyName(operation.partyId) : operation.customerName, operationDate: this.dateTimeInputValue(operation.operationDate ?? operation.createdAt), type: this.salesOnly ? 'sale' : operation.type };
     this.paymentDraft = this.emptyPaymentDraft();
+    this.fairPaymentOpen.set(false);
     this.fairPaymentManuallyEdited = false;
     this.offerSelection.set(operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : '');
     this.bundleParentMode.set(operation.type === 'bundle');
@@ -802,10 +934,11 @@ export class OperationsPage implements OnInit {
       this.openQuickCustomerPrompt();
       return;
     }
+    const createAnother = this.saveAndCreateAnother && this.mode() === 'fair' && this.salesOnly;
     this.saving.set(true); this.resetMessages();
     const input = this.prepareInput();
     try {
-      const fairPaymentAmount = this.mode() === 'fair' && this.fairPaymentManuallyEdited ? this.paymentDraft.amount ?? 0 : 0;
+      const fairPaymentAmount = this.mode() === 'fair' && this.fairPaymentOpen() ? this.paymentDraft.amount ?? 0 : 0;
       const paymentAmount = this.mode() === 'fair' ? fairPaymentAmount : (this.paymentDraft.amount ?? 0);
       if (paymentAmount > 0) this.ensurePaymentDoesNotExceedTotal(input.amount ?? 0, this.paymentTotal(this.editingId()), paymentAmount);
       const operation = (input.bundleId && this.bundleParentMode()) ? await this.saveBundleSale(input) : this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
@@ -815,13 +948,31 @@ export class OperationsPage implements OnInit {
         await this.paymentService.create({ operationId: operation.id, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       }
       this.payments.set(await this.paymentService.list());
+      const customerId = input.partyId;
+      const customerName = input.customerName;
+      const sameQuickSaleCustomer = !this.quickSaleSequence.length || this.quickSaleSequenceCustomerKey === this.quickSaleCustomerKey(input);
+      if (createAnother && fairPaymentAmount <= 0) {
+        this.quickSaleSequenceCustomerKey ||= this.quickSaleCustomerKey(input);
+        this.quickSaleSequence = [...this.quickSaleSequence, operation];
+      } else if (createAnother) {
+        this.quickSaleSequence = [];
+        this.quickSaleSequenceCustomerKey = '';
+      } else if (this.quickSaleSequence.length && sameQuickSaleCustomer && fairPaymentAmount <= 0) {
+        this.quickSaleSequence = [...this.quickSaleSequence, operation];
+      } else if (this.quickSaleSequence.length && !sameQuickSaleCustomer) {
+        this.quickSaleSequence = [];
+        this.quickSaleSequenceCustomerKey = '';
+      }
+      this.saveAndCreateAnother = false;
       const returnToDashboard = this.returnToDashboardAfterSave;
       const returnWorkId = this.returnWorkId;
-      await this.cancelForm();
-      if (returnWorkId) return;
+      if (!createAnother) await this.cancelForm();
+      if (returnWorkId && !createAnother) return;
       this.successMessage.set('Operazione salvata localmente.'); await this.loadOperations();
+      if (createAnother) setTimeout(() => this.startAnotherQuickSale(customerId, customerName));
+      else if (this.quickSaleSequence.length && sameQuickSaleCustomer && fairPaymentAmount <= 0) setTimeout(() => this.openQuickSaleSettlement());
       if (returnToDashboard) await this.router.navigate(['/dashboard']);
-    } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare l\'operazione.'); }
+    } catch (error) { this.saveAndCreateAnother = false; this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare l\'operazione.'); }
     finally { this.saving.set(false); }
   }
 
@@ -944,7 +1095,7 @@ export class OperationsPage implements OnInit {
     return operations;
   }
 
-  protected hasPaymentDraft(): boolean { return typeof this.paymentDraft.amount === 'number' || Boolean(this.paymentDraft.paymentMethodId); }
+  protected hasPaymentDraft(): boolean { return typeof this.paymentDraft.amount === 'number' && this.paymentDraft.amount > 0 && Boolean(this.paymentDraft.paymentDate) && Boolean(this.paymentDraft.paymentMethodId); }
   private ensurePaymentDoesNotExceedTotal(total: number, alreadyPaid: number, paymentAmount: number): void {
     if (alreadyPaid + paymentAmount > total + 0.005) throw new Error('La somma dei pagamenti non puo superare l\'importo della vendita.');
   }
