@@ -2,6 +2,17 @@
   <h1 id="settings-title">Impostazioni</h1>
 
   <fieldset>
+    <legend>Interazione liste (mobile)</legend>
+    <label>Azioni sulle card
+      <select [ngModel]="persistence.listInteractionMode()" (ngModelChange)="selectListInteractionMode($event)">
+        <option value="swipe">Swipe (scorri la card per rivelare le azioni)</option>
+        <option value="buttons">Pulsanti (come oggi, sempre visibili)</option>
+      </select>
+    </label>
+    <p class="status">Su desktop i pulsanti restano sempre visibili indipendentemente da questa scelta.</p>
+  </fieldset>
+
+  <fieldset>
     <legend>Persistenza dati</legend>
     <label>Modalità dati
       <select [ngModel]="persistence.mode()" (ngModelChange)="selectPersistenceMode($event)">

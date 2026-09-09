@@ -7,10 +7,12 @@ import type { Payment } from '../../domain/models/payment';
 import type { PaymentMethod } from '../../domain/models/payment-method';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-payment-methods-page',
   templateUrl: './payment-methods-page.html',
   styleUrl: './payment-methods-page.scss',
@@ -26,7 +28,16 @@ export class PaymentMethodsPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly openRowId = signal<string | null>(null);
   protected draft: PaymentMethodInput = this.emptyDraft();
+
+  protected paymentMethodRightActions(paymentMethod: PaymentMethod): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(paymentMethod) }];
+  }
+
+  protected paymentMethodLeftActions(paymentMethod: PaymentMethod): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: paymentMethod.system || this.isPaymentMethodUsed(paymentMethod), run: () => this.remove(paymentMethod) }];
+  }
 
   ngOnInit(): void { void this.load(); }
 

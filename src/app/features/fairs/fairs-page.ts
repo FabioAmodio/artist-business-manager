@@ -11,13 +11,15 @@ import type { Operation } from '../../domain/models/operation';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 type FairSortKey = 'name' | 'year' | 'startDate' | 'balance';
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-fairs-page',
   templateUrl: './fairs-page.html',
   styleUrl: './fairs-page.scss',
@@ -43,6 +45,15 @@ export class FairsPage implements OnInit {
   protected readonly standCoverageFilter = signal<CoverageFilter>('all');
   protected readonly travelCoverageFilter = signal<CoverageFilter>('all');
   protected readonly hotelCoverageFilter = signal<CoverageFilter>('all');
+  protected readonly openRowId = signal<string | null>(null);
+
+  protected fairRightActions(fair: Fair): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(fair) }];
+  }
+
+  protected fairLeftActions(fair: Fair): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isFairUsed(fair), run: () => this.remove(fair) }];
+  }
   protected readonly otherCoverageFilter = signal<CoverageFilter>('all');
   protected readonly costsMin = signal<number | null>(null);
   protected readonly costsMax = signal<number | null>(null);

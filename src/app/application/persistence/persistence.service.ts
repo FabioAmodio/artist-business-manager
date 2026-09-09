@@ -1,7 +1,7 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
 import { APP_ENVIRONMENT, STORAGE_PROVIDER } from '../../core/configuration/environment.tokens';
 import type { IStorageProvider } from '../../core/storage/storage-provider';
-import type { PersistedDataset, PersistenceMode, PersistenceSettings } from '../../core/persistence/persistence.models';
+import type { ListInteractionMode, PersistedDataset, PersistenceMode, PersistenceSettings } from '../../core/persistence/persistence.models';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { PaymentMethodService } from '../payment-methods/payment-method.service';
 import { ServiceService } from '../services/service.service';
@@ -44,6 +44,7 @@ export class PersistenceService {
   private readonly firebaseAuth = inject(FirebaseAuthService);
   private readonly firestore = inject(FirestoreProvider);
   readonly mode = signal<PersistenceMode>(this.environment.defaultPersistenceMode);
+  readonly listInteractionMode = signal<ListInteractionMode>('swipe');
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
   readonly status = signal('');
@@ -78,6 +79,7 @@ export class PersistenceService {
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
     this.mode.set(settings?.mode ?? this.environment.defaultPersistenceMode);
+    this.listInteractionMode.set(settings?.listInteractionMode ?? 'swipe');
     this.storage.setMode?.(this.mode());
     this.source.set(this.environment.environmentName === 'release' || this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
     this.directoryHandle = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.directoryHandle;
@@ -90,6 +92,12 @@ export class PersistenceService {
     if (this.source() === 'google-drive' && this.driveFolderId && this.driveClientId) {
       void this.restoreDriveSession();
     }
+  }
+
+  async setListInteractionMode(listInteractionMode: ListInteractionMode): Promise<void> {
+    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, listInteractionMode, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    this.listInteractionMode.set(listInteractionMode);
   }
 
   async setMode(mode: PersistenceMode): Promise<void> {

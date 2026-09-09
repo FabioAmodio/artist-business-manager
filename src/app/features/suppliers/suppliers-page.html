@@ -26,6 +26,7 @@
   } @else {
     <div class="supplier-list">
       @for (supplier of visibleSuppliers(); track supplier.id) {
+        <app-swipe-row [id]="supplier.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="supplierRightActions(supplier)" [leftActions]="supplierLeftActions(supplier)">
         <article class="supplier-row">
           <div>
             <h3>{{ supplier.displayName }}</h3>
@@ -39,6 +40,7 @@
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica fornitore" title="Modifica fornitore" (click)="startEditing(supplier)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina fornitore" [disabled]="isSupplierUsed(supplier)" [title]="isSupplierUsed(supplier) ? 'Fornitore usato in un acquisto' : 'Elimina fornitore'" (click)="remove(supplier)">🗑</button></div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

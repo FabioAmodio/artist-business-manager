@@ -9,12 +9,14 @@ import type { Party } from '../../domain/models/party';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 type ClientSortKey = 'name' | 'purchases' | 'spending';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-clients-page',
   templateUrl: './clients-page.html',
   styleUrl: './clients-page.scss',
@@ -38,6 +40,15 @@ export class ClientsPage implements OnInit {
   protected readonly spendingMax = signal<number | null>(null);
   protected readonly filtersOpen = signal(false);
   protected readonly sortOpen = signal(false);
+  protected readonly openRowId = signal<string | null>(null);
+
+  protected clientRightActions(client: Party): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(client) }];
+  }
+
+  protected clientLeftActions(client: Party): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isClientUsed(client), run: () => this.remove(client) }];
+  }
   protected readonly sortKey = signal<ClientSortKey>('name');
   protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
   protected readonly errorMessage = signal('');

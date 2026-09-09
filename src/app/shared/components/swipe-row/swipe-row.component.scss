@@ -1,0 +1,18 @@
+:host { display: block; }
+.swipe-row-inner.swipe-active { overflow: hidden; position: relative; touch-action: pan-y; }
+.swipe-content { position: relative; }
+.swipe-active .swipe-content { background: var(--color-surface, #fff); touch-action: pan-y; will-change: transform; z-index: 1; }
+.swipe-content.swipe-snapping { transition: transform .22s ease-out; }
+.swipe-actions { align-items: center; bottom: 0; display: flex; gap: 6px; overflow: hidden; position: absolute; top: 0; z-index: 0; }
+.swipe-actions-start { justify-content: flex-start; left: 0; padding-right: 6px; }
+.swipe-actions-end { flex-direction: row-reverse; justify-content: flex-start; padding-left: 6px; right: 0; }
+.swipe-action-button { align-items: center; background: var(--color-accent, #555); border: none; border-radius: var(--radius-base, .5rem); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; font: inherit; gap: .1rem; height: 100%; justify-content: center; max-height: 50px; overflow: hidden; padding: 0; }
+.swipe-action-button.swipe-action-danger { background: var(--color-status-error, #c0392b); }
+.swipe-action-button.swipe-action-neutral { background: var(--color-surface, #fff); border: 1px solid var(--color-border, #d8dcd9); color: var(--color-text-primary, #1f2926); }
+.swipe-action-button.swipe-action-neutral-warning { background: var(--color-surface, #fff); border: 1px solid var(--color-border, #d8dcd9); border-bottom: 3px solid var(--color-status-error, #c0392b); color: var(--color-text-primary, #1f2926); }
+.swipe-action-button.swipe-action-neutral-success { background: var(--color-surface, #fff); border: 1px solid var(--color-border, #d8dcd9); border-bottom: 3px solid var(--color-status-success, #2f9e5b); color: var(--color-text-primary, #1f2926); }
+.swipe-action-button.swipe-action-armed { filter: brightness(1.15); }
+.swipe-action-icon { font-size: 1.1rem; }
+.swipe-action-label { font-size: .65rem; white-space: nowrap; }
+/* i pulsanti standard della pagina restano quelli reali: li nascondiamo solo quando lo swipe è realmente attivo (mobile + modalità swipe) */
+.swipe-active .swipe-content ::ng-deep .row-actions { display: none; }

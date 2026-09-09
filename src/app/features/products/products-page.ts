@@ -13,10 +13,12 @@ import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-products-page',
   templateUrl: './products-page.html',
   styleUrl: './products-page.scss',
@@ -38,6 +40,15 @@ export class ProductsPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly activeFilter = signal<'all' | 'active' | 'inactive'>('all');
+  protected readonly openRowId = signal<string | null>(null);
+
+  protected productRightActions(product: Product): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(product) }];
+  }
+
+  protected productLeftActions(product: Product): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isProductUsed(product), run: () => this.remove(product) }];
+  }
   protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');

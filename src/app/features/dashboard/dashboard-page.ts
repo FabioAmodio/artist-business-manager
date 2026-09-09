@@ -23,6 +23,8 @@ import { annualDashboardMetrics, availableYearRange } from '../../domain/shared/
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ActiveFairService } from '../../core/event/active-fair.service';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 interface PaymentDraft {
   amount?: number;
@@ -32,7 +34,7 @@ interface PaymentDraft {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, PageHeaderComponent, RouterLink],
+  imports: [FormsModule, PageHeaderComponent, RouterLink, SwipeRowComponent],
   selector: 'app-dashboard-page',
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
@@ -68,6 +70,14 @@ export class DashboardPage implements OnInit {
   protected readonly savingPayment = signal(false);
   protected readonly forceFairDialogOpen = signal(false);
   protected readonly fairEconomicsDialogOpen = signal(false);
+  protected readonly openRowId = signal<string | null>(null);
+
+  protected saleRightActions(sale: Operation): SwipeAction[] {
+    const actions: SwipeAction[] = [];
+    if (!this.isFullyPaid(sale)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openPaymentDialog(sale) });
+    actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.editOperation(sale) });
+    return actions;
+  }
   protected readonly expandedWorks = signal<ReadonlySet<string>>(new Set());
   protected readonly expandedSales = signal<ReadonlySet<string>>(new Set());
   protected readonly statusDragX = signal(0);
@@ -199,7 +209,24 @@ export class DashboardPage implements OnInit {
   protected workNextStatusIcon(operation: Operation): string { const nextStatus = this.workNextStatus(operation); return this.workStatusIconFor(nextStatus); }
   protected workPreviousStatusIcon(operation: Operation): string { return this.workStatusIconFor(this.workPreviousStatus(operation)); }
   protected workPreviousStatus(operation: Operation): NonNullable<Operation['workStatus']> | null {
-    return operation.workStatus === 'delivered' ? 'completed' : operation.workStatus === 'completed' ? 'in-progress' : operation.workStatus === 'in-progress' ? 'requested' : null;
+    return operation.workStatus === 'delivered' ? 'completed' : operation.workStatus === 'completed' ? 'in-progress' : operation.workStatus === 'in-progress' ? 'requested' : operation.workStatus === 'requested' ? 'cancelled' : null;
+  }
+  /** Etichetta sintetica per il pulsante di swipe, non l'etichetta lunga usata altrove. */
+  protected workStatusLabelFor(status: Operation['workStatus'] | null): string {
+    return status === 'completed' ? 'Terminata' : status === 'delivered' ? 'Cons/sped' : status === 'in-progress' ? 'In corso' : status === 'requested' ? 'Richiesta' : status === 'cancelled' ? 'Cancellata' : 'Non indicata';
+  }
+  protected workRightActions(work: Operation): SwipeAction[] {
+    const actions: SwipeAction[] = [];
+    const next = this.workNextStatus(work);
+    if (next) actions.push({ key: 'advance', icon: this.workStatusIconFor(next), label: this.workStatusLabelFor(next), variant: 'neutral', run: () => this.advanceWork(work) });
+    if (!this.isFullyPaid(work)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openPaymentDialog(work) });
+    actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.editOperation(work) });
+    return actions;
+  }
+  protected workLeftActions(work: Operation): SwipeAction[] {
+    const previous = this.workPreviousStatus(work);
+    if (!previous) return [];
+    return [{ key: 'regress', icon: this.workStatusIconFor(previous), label: this.workStatusLabelFor(previous), variant: previous === 'cancelled' ? 'neutral-warning' : 'neutral', run: () => this.transitionWork(work, previous) }];
   }
   protected statusDragStart(operation: Operation, event: PointerEvent): void {
     this.statusDragOperationId = operation.id;

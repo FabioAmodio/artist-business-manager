@@ -15,6 +15,7 @@
   } @else {
     <div class="lot-list">
       @for (lot of visibleLots(); track lot.id) {
+        <app-swipe-row [id]="lot.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="lotRightActions(lot)" [leftActions]="lotLeftActions(lot)">
         <article class="lot-row">
           <div>
             <h3>{{ lot.name }}</h3>
@@ -27,6 +28,7 @@
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica collegamento" title="Modifica collegamento" (click)="startEditing(lot)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina collegamento" [disabled]="isLotUsed(lot)" [title]="isLotUsed(lot) ? 'Collegamento usato in un\'operazione' : 'Elimina collegamento'" (click)="remove(lot)">🗑</button></div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

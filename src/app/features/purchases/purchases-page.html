@@ -26,6 +26,7 @@
   } @else {
     <div class="purchase-list">
       @for (purchase of visiblePurchases(); track purchase.id) {
+        <app-swipe-row [id]="purchase.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="purchaseRightActions(purchase)" [leftActions]="purchaseLeftActions(purchase)">
         <article class="purchase-row">
           <div>
             <h3>{{ purchase.description }}</h3>
@@ -40,6 +41,7 @@
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica acquisto" title="Modifica acquisto" (click)="startEditing(purchase)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina acquisto" [disabled]="isPurchaseUsed(purchase)" [title]="isPurchaseUsed(purchase) ? 'Acquisto usato da prodotti collegati' : 'Elimina acquisto'" (click)="remove(purchase)">🗑</button></div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

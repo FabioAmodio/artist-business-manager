@@ -27,6 +27,7 @@
   } @else {
     <div class="client-list">
       @for (client of visibleClients(); track client.id) {
+        <app-swipe-row [id]="client.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="clientRightActions(client)" [leftActions]="clientLeftActions(client)">
         <article class="client-row">
           <div>
             <h3><span class="client-type-icon" aria-hidden="true">{{ client.type === 'person' ? '👤' : '🏢' }}</span>{{ client.displayName }}</h3>
@@ -41,6 +42,7 @@
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica cliente" title="Modifica cliente" (click)="startEditing(client)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina cliente" [disabled]="isClientUsed(client)" [title]="isClientUsed(client) ? 'Cliente usato in un\'operazione' : 'Elimina cliente'" (click)="remove(client)">🗑</button></div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

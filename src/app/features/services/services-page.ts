@@ -5,10 +5,12 @@ import { ServiceService, type ServiceInput } from '../../application/services/se
 import type { Operation } from '../../domain/models/operation';
 import type { Service } from '../../domain/models/service';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule],
+  imports: [FormActionsComponent, FormsModule, SwipeRowComponent],
   selector: 'app-services-page',
   templateUrl: './services-page.html',
   styleUrl: './services-page.scss',
@@ -24,7 +26,16 @@ export class ServicesPage implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly openRowId = signal<string | null>(null);
   protected draft: ServiceInput = this.emptyDraft();
+
+  protected serviceRightActions(service: Service): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', disabled: service.system, run: () => this.startEditing(service) }];
+  }
+
+  protected serviceLeftActions(service: Service): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: service.system || this.isServiceUsed(service), run: () => this.remove(service) }];
+  }
 
   ngOnInit(): void { void this.load(); }
   protected isServiceUsed(service: Service): boolean { return this.operations().some((operation) => operation.serviceId === service.id); }

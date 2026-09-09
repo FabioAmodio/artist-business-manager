@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PersistenceService } from '../../application/persistence/persistence.service';
-import type { PersistenceMode, PersistenceSource } from '../../core/persistence/persistence.models';
+import type { PersistenceMode, PersistenceSource, ListInteractionMode } from '../../core/persistence/persistence.models';
 import type { WorkspaceRole } from '../../domain/models/workspace';
 import { APP_ENVIRONMENT } from '../../core/configuration/environment.tokens';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
@@ -67,6 +67,11 @@ export class SettingsPage implements OnInit {
   protected async selectPersistenceMode(mode: PersistenceMode): Promise<void> {
     try { await this.persistence.setMode(mode); }
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile cambiare modalità di persistenza.'); }
+  }
+
+  protected async selectListInteractionMode(mode: ListInteractionMode): Promise<void> {
+    try { await this.persistence.setListInteractionMode(mode); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile cambiare la modalità di interazione delle liste.'); }
   }
 
   protected async signInWithGoogle(): Promise<void> {

@@ -1,5 +1,6 @@
 export type PersistenceMode = 'offline' | 'firestore';
 export type PersistenceSource = 'none' | 'file-system' | 'google-drive';
+export type ListInteractionMode = 'swipe' | 'buttons';
 
 export interface PersistenceSettings {
   readonly id: 'current';
@@ -8,6 +9,7 @@ export interface PersistenceSettings {
   readonly directoryHandle?: FileSystemDirectoryHandle;
   readonly driveFolderId?: string;
   readonly driveClientId?: string;
+  readonly listInteractionMode?: ListInteractionMode;
   readonly updatedAt: string;
 }
 

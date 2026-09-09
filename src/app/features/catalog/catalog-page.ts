@@ -18,6 +18,8 @@ import { completeAmountsToTotal } from '../../domain/shared/money';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 interface BundleDraftItem {
   id: string;
@@ -31,7 +33,7 @@ type CatalogSortKey = 'name' | 'price' | 'sold' | 'revenue';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DecimalPipe, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
+  imports: [CurrencyPipe, DecimalPipe, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-catalog-page',
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',
@@ -63,6 +65,31 @@ export class CatalogPage implements OnInit {
   protected readonly successMessage = signal('');
   protected readonly filtersOpen = signal(false);
   protected readonly catalogTypeFilter = signal<'all' | 'product' | 'service' | 'bundle'>('all');
+  protected readonly openRowId = signal<string | null>(null);
+
+  protected productRightActions(product: Product): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditingProduct(product) }];
+  }
+
+  protected productLeftActions(product: Product): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', run: () => this.removeProduct(product) }];
+  }
+
+  protected serviceRightActions(service: Service): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditingService(service) }];
+  }
+
+  protected serviceLeftActions(service: Service): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', run: () => this.removeService(service) }];
+  }
+
+  protected bundleRightActions(bundle: Bundle): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditingBundle(bundle) }];
+  }
+
+  protected bundleLeftActions(bundle: Bundle): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', run: () => this.removeBundle(bundle) }];
+  }
   protected readonly activeFilter = signal<'all' | 'active' | 'inactive'>('all');
   protected readonly priceMin = signal<number | null>(null);
   protected readonly priceMax = signal<number | null>(null);

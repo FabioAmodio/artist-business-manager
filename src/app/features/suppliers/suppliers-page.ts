@@ -7,12 +7,14 @@ import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 type SupplierSortKey = 'name' | 'type';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-suppliers-page',
   templateUrl: './suppliers-page.html',
   styleUrl: './suppliers-page.scss',
@@ -34,7 +36,16 @@ export class SuppliersPage implements OnInit {
   protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly openRowId = signal<string | null>(null);
   protected draft: SupplierInput = this.emptyDraft();
+
+  protected supplierRightActions(supplier: Party): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(supplier) }];
+  }
+
+  protected supplierLeftActions(supplier: Party): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isSupplierUsed(supplier), run: () => this.remove(supplier) }];
+  }
 
   ngOnInit(): void { void this.load(); }
 

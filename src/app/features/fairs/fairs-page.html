@@ -50,6 +50,7 @@
   } @else {
     <div class="fair-list">
       @for (fair of visibleFairs(); track fair.id) {
+        <app-swipe-row [id]="fair.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="fairRightActions(fair)" [leftActions]="fairLeftActions(fair)">
         <article class="fair-row">
           <div class="fair-main">
             <h3>{{ fair.name }} · {{ fair.edition || fair.year }}</h3>
@@ -70,6 +71,7 @@
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica fiera" title="Modifica fiera" (click)="startEditing(fair)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina fiera" [disabled]="isFairUsed(fair)" [title]="isFairUsed(fair) ? 'Fiera usata in operazioni' : 'Elimina fiera'" (click)="remove(fair)">🗑</button></div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

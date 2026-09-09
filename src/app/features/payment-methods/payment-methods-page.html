@@ -7,7 +7,9 @@
   @else {
     <div class="payment-method-list">
       @for (paymentMethod of paymentMethods(); track paymentMethod.id) {
+        <app-swipe-row [id]="paymentMethod.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="paymentMethodRightActions(paymentMethod)" [leftActions]="paymentMethodLeftActions(paymentMethod)">
         <article class="payment-method-row"><h3>{{ paymentMethod.name }}</h3><div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica modalità" title="Modifica modalità" (click)="startEditing(paymentMethod)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina modalità" [disabled]="paymentMethod.system || isPaymentMethodUsed(paymentMethod)" [title]="paymentMethod.system ? 'Modalita di sistema non eliminabile' : (isPaymentMethodUsed(paymentMethod) ? 'Modalita usata in una vendita' : 'Elimina modalita')" (click)="remove(paymentMethod)">🗑</button></div></article>
+        </app-swipe-row>
       }
     </div>
   }

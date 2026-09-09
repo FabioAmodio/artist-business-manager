@@ -80,6 +80,7 @@
         }
         @if (!worksOnly || !group.parent || !isBundleGroupCollapsed(group)) {
         @for (operation of group.operations; track operation.id) {
+        <app-swipe-row [id]="operation.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="operationRightActions(operation)" [leftActions]="operationLeftActions(operation)">
         <article class="operation-row" [class.works-row]="worksOnly">
           <div><h3>{{ operationDisplayName(operation) }}</h3><p>{{ typeLabel(operation.type) }} · {{ operation.quantity ?? 1 }} unita · {{ operation.description || 'Nessuna descrizione' }}</p><p>{{ formatDateTime(operation.operationDate ?? operation.createdAt) }}</p></div>
           <div class="context-grid"><span><strong>Cliente</strong>{{ customerLabel(operation) }}</span><span><strong>Fiera</strong>{{ fairName(operation.fairEditionId) }}</span><span><strong>Importo</strong>{{ operation.amount != null ? (operation.amount.toFixed(2) + ' €') : 'n.d.' }}</span>@if (worksOnly) { <span><strong>Consegna</strong>{{ formatDate(operation.deliveryDate) }}</span> } <span><strong>Pagato</strong>{{ paymentTotalFor(operation).toFixed(2) }} €</span></div>
@@ -92,6 +93,7 @@
           }
           <div class="row-actions">@if (canAdvanceWork(operation)) { <button class="work-advance-button list-action" type="button" [disabled]="transitioningWorkId() === operation.id" [attr.aria-label]="workAdvanceLabel(operation)" [attr.title]="workAdvanceLabel(operation)" (click)="advanceWork(operation)">{{ workAdvanceIcon(operation) }}</button> }@if (canQuickPay(operation)) { <button class="quick-payment-button list-action" type="button" aria-label="Registra pagamento rapido" [title]="operation.parentOperationId ? 'Registra pagamento sul pacchetto' : 'Registra pagamento'" (click)="openQuickPayment(operation)">€</button> }<button class="text-button list-action" type="button" aria-label="Modifica operazione" title="Modifica operazione" (click)="startEditing(operation)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina operazione" title="Elimina operazione" (click)="remove(operation)">🗑</button></div>
         </article>
+        </app-swipe-row>
         }
         }
       }

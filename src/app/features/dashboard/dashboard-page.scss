@@ -46,8 +46,11 @@ h3 { font-size: 1.15rem; }
 .quick-status:hover, .quick-status:focus-visible { background: var(--color-accent-light); outline: none; }
 .quick-status:disabled { cursor: wait; opacity: .55; }
 .dashboard .row-actions { align-items: center; display: inline-flex; flex-wrap: nowrap; gap: .35rem; justify-content: flex-end; }
-.work-status-actions, .work-payment-actions, .work-edit-actions { align-items: center; display: inline-flex; gap: .35rem; }
-.work-status-actions { background: color-mix(in srgb, var(--color-accent) 10%, transparent); border-radius: var(--radius-full); padding: .15rem .25rem; }
+.work-status-actions { align-items: center; background: color-mix(in srgb, var(--color-accent) 10%, transparent); border-radius: var(--radius-full); display: inline-flex; gap: .35rem; padding: .15rem .25rem; }
+.mobile-card-row { display: none; }
+.status-pill, .work-amount, .sale-remaining { align-items: center; border-radius: var(--radius-full); display: inline-flex; font-size: var(--font-size-xs); font-weight: 700; gap: .3rem; padding: .25rem .55rem; white-space: nowrap; }
+.status-pill, .work-amount { background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary); }
+.sale-remaining { background: var(--color-surface-secondary); border: 1px solid var(--color-status-error); color: var(--color-status-error); }
 .work-payment-summary { background: var(--color-surface-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-full); display: none; color: var(--color-text-primary); font-size: var(--font-size-xs); font-weight: 700; padding: .3rem .55rem; white-space: nowrap; }
 .work-payment-summary.payment-settled { color: var(--color-status-success); }
 .work-payment-button.work-payment-button { background: var(--color-status-error); border-radius: var(--radius-full); color: #fff; gap: .2rem; min-width: 4rem; }
@@ -154,40 +157,31 @@ h3 { font-size: 1.15rem; }
   .dashboard-row { grid-template-columns: minmax(0, 1fr) auto; }
   .dashboard-row > :first-child, .dashboard-row > .row-facts { grid-column: 1 / -1; }
   .work-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: .35rem; }
-  .work-row > .row-facts { grid-column: 1; grid-row: 2; }
-  .work-row > .status-badge { align-self: center; grid-column: 1; grid-row: 3; height: 1.75rem; justify-content: center; padding: var(--spacing-1); width: 1.75rem; }
-  .work-row > .row-actions { align-self: center; grid-column: 1 / -1; grid-row: 3; }
   .work-row > .row-facts { display: none; }
-  .work-row.work-expanded > .row-facts { display: block; grid-column: 1 / -1; grid-row: 3; }
+  .work-row.work-expanded > .row-facts { display: block; grid-column: 1 / -1; }
   .work-row.work-expanded > .row-facts span:first-child { border: 0; display: inline; padding: 0; }
   .work-row.work-expanded > .row-facts span:first-child strong { display: inline; margin-right: .25rem; }
   .work-row.work-expanded > .row-facts span:nth-child(2) { display: none; }
-  .work-row.work-expanded > .row-actions { grid-row: 4; }
-  .work-summary-toggle p { display: none; }
+  .work-summary-toggle h3, .work-summary-toggle p { display: none; }
+  .work-summary-toggle { display: block; width: 100%; }
   .work-row > .row-actions .payment-button, .work-row > .row-actions .text-button { margin-left: .35rem; }
-  .work-row > .row-actions .status-badge .badge-label { display: none; }
-  .work-row > .row-actions { display: grid; grid-template-columns: 1fr auto 1fr; width: 100%; }
-  .work-row > .row-actions .work-status-actions { gap: .7rem; justify-self: start; }
-  .work-row > .row-actions .work-payment-actions { justify-self: center; }
-  .work-row > .row-actions .work-edit-actions { justify-self: end; }
-  .work-payment-summary { display: inline-flex; }
+  .work-row > .row-actions, .sale-row > .row-actions { display: flex; flex-wrap: nowrap; gap: .35rem; grid-column: 1 / -1; justify-content: flex-end; }
+  .mobile-card-row { align-items: center; display: flex; gap: .5rem; justify-content: space-between; width: 100%; }
+  .mobile-card-row + .mobile-card-row { margin-top: .3rem; }
+  .mobile-card-start { color: var(--color-text-secondary); font-size: var(--font-size-xs); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-card-title .mobile-card-start { color: var(--color-heading); font: 400 1.05rem var(--font-serif); }
+  .mobile-card-end { align-items: center; display: inline-flex; flex-shrink: 0; gap: .3rem; }
   .status-slide { max-width: calc(100vw - 10rem); }
   .quick-status { min-height: 2rem; padding: 0; width: 2rem; }
-  .sale-row > .row-facts { grid-column: 1; grid-row: 2; }
-  .sale-row > .row-actions { align-self: center; grid-column: 2; grid-row: 2; }
-  .sale-row > .row-actions .payment-button { min-height: 2rem; padding: 0; width: 2rem; }
-  .sale-row > .sale-actions .work-payment-button { min-height: 2rem; padding: .25rem .45rem; width: auto; }
-  .work-row > .row-actions .work-payment-button { min-height: 2rem; padding: .25rem .45rem; width: auto; }
+  .work-row > .row-actions .work-payment-button, .sale-row > .row-actions .work-payment-button { min-height: 2rem; padding: .25rem .45rem; width: auto; }
   .action-label { display: none; }
   .sale-row { grid-template-columns: minmax(0, 1fr) auto; }
   .sale-row .work-summary-toggle p { display: none; }
   .sale-row > .row-facts { display: none; }
   .sale-row > .sale-mobile-details { display: none; }
-  .sale-row.sale-expanded > .sale-mobile-details { display: grid; gap: .35rem; grid-column: 1 / -1; grid-row: 2; }
+  .sale-row.sale-expanded > .sale-mobile-details { display: grid; gap: .35rem; grid-column: 1 / -1; }
   .sale-mobile-details span { color: var(--color-text-secondary); display: inline; font-size: var(--font-size-xs); }
   .sale-mobile-details strong { color: var(--color-text-primary); margin-right: .25rem; }
-  .sale-row > .sale-actions { display: flex; flex-wrap: nowrap; gap: .35rem; grid-column: 1 / -1; grid-row: 2; justify-content: flex-end; }
-  .sale-row.sale-expanded > .sale-actions { grid-row: 3; }
   .sale-quantity, .sale-price { align-items: center; background: var(--color-surface-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-full); color: var(--color-text-primary); display: inline-flex; font-size: var(--font-size-xs); font-weight: 700; min-height: 2rem; padding: .25rem .5rem; }
   .sale-quantity::before { content: 'x'; margin-right: .15rem; }
   .payment-form-grid { grid-template-columns: 1fr; }

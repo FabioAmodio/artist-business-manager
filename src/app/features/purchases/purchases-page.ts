@@ -14,12 +14,14 @@ import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 type PurchaseSortKey = 'date' | 'description' | 'supplier' | 'amount' | 'balance';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent],
+  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-purchases-page',
   templateUrl: './purchases-page.html',
   styleUrl: './purchases-page.scss',
@@ -53,6 +55,15 @@ export class PurchasesPage implements OnInit {
   protected readonly sortKey = signal<PurchaseSortKey>('date');
   protected readonly sortDirection = signal<'asc' | 'desc'>('desc');
   protected readonly errorMessage = signal('');
+  protected readonly openRowId = signal<string | null>(null);
+
+  protected purchaseRightActions(purchase: Purchase): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(purchase) }];
+  }
+
+  protected purchaseLeftActions(purchase: Purchase): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isPurchaseUsed(purchase), run: () => this.remove(purchase) }];
+  }
   protected readonly successMessage = signal('');
   protected draft: PurchaseInput = this.emptyDraft();
   protected readonly lotDialogOpen = signal(false);

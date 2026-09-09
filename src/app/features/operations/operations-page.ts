@@ -24,6 +24,8 @@ import { isBundleAvailable } from '../../domain/shared/catalog-availability';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ActiveFairService } from '../../core/event/active-fair.service';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 interface PaymentDraft {
   amount?: number;
@@ -72,7 +74,7 @@ interface SalesFilterDraft {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent, RouterLink],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent, RouterLink, SwipeRowComponent],
   selector: 'app-operations-page',
   templateUrl: './operations-page.html',
   styleUrl: './operations-page.scss',
@@ -112,6 +114,7 @@ export class OperationsPage implements OnInit {
   protected readonly savingQuickPayment = signal(false);
   protected readonly quickPaymentOperation = signal<Operation | null>(null);
   protected readonly transitioningWorkId = signal<string | null>(null);
+  protected readonly openRowId = signal<string | null>(null);
   protected readonly creating = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly mode = signal<'fair' | 'backoffice'>('backoffice');
@@ -414,30 +417,68 @@ export class OperationsPage implements OnInit {
     return this.workStatusOptions.find((status) => group.operations.some((operation) => operation.workStatus === status));
   }
   protected bundlePaid(group: WorkGroup): number { return group.parent ? this.paymentTotal(group.parent.id) : 0; }
-  protected canAdvanceWork(operation: Operation): boolean {
-    return this.worksOnly && (operation.workStatus === 'requested' || operation.workStatus === 'in-progress' || operation.workStatus === 'completed');
+  /** Catena lineare di stato usata per swipe avanti/indietro: "cancellata" precede "richiesta". */
+  private readonly workStatusChain: readonly NonNullable<Operation['workStatus']>[] = ['cancelled', 'requested', 'in-progress', 'completed', 'delivered'];
+  protected workNextStatus(operation: Operation): NonNullable<Operation['workStatus']> | null {
+    const index = this.workStatusChain.indexOf(operation.workStatus ?? 'requested');
+    return index >= 0 && index < this.workStatusChain.length - 1 ? this.workStatusChain[index + 1] : null;
   }
-  protected workAdvanceLabel(operation: Operation): string {
-    return operation.workStatus === 'in-progress' ? 'Segna come terminata' : operation.workStatus === 'completed' ? 'Segna come consegnata' : 'Inizia lavorazione';
+  protected workPreviousStatus(operation: Operation): NonNullable<Operation['workStatus']> | null {
+    const index = this.workStatusChain.indexOf(operation.workStatus ?? 'requested');
+    return index > 0 ? this.workStatusChain[index - 1] : null;
   }
-  protected workAdvanceIcon(operation: Operation): string {
-    return operation.workStatus === 'in-progress' ? '✓' : operation.workStatus === 'completed' ? '📦' : '▶';
+  protected canAdvanceWork(operation: Operation): boolean { return this.worksOnly && this.workNextStatus(operation) !== null; }
+  protected canRegressWork(operation: Operation): boolean { return this.worksOnly && this.workPreviousStatus(operation) !== null; }
+  protected workAdvanceLabel(operation: Operation): string { return this.workStatusLabel(this.workNextStatus(operation) ?? undefined); }
+  protected workAdvanceIcon(operation: Operation): string { return this.workStatusIcon(this.workNextStatus(operation) ?? undefined); }
+  protected workRegressLabel(operation: Operation): string { return this.workStatusLabel(this.workPreviousStatus(operation) ?? undefined); }
+  protected workRegressIcon(operation: Operation): string { return this.workStatusIcon(this.workPreviousStatus(operation) ?? undefined); }
+  /** Solo per il pulsante di swipe: "Consegnata/Spedita" è troppo lungo per il pulsante compatto. */
+  private workStatusSwipeLabel(status: NonNullable<Operation['workStatus']> | null): string {
+    return status === 'delivered' ? 'Cons/sped' : this.workStatusLabel(status ?? undefined);
   }
-  protected async advanceWork(operation: Operation): Promise<void> {
+  protected async regressWork(operation: Operation): Promise<void> {
+    const previous = this.workPreviousStatus(operation);
+    if (!previous) return;
+    await this.setWorkStatus(operation, previous, 'Impossibile tornare allo stato precedente.');
+  }
+  private async setWorkStatus(operation: Operation, status: NonNullable<Operation['workStatus']>, errorText: string): Promise<void> {
     this.transitioningWorkId.set(operation.id);
     this.resetMessages();
     try {
-      const updated = await this.service.advanceWorkStatus(operation.id);
+      const updated = await this.service.transitionWorkStatus(operation.id, status);
       this.allOperations = this.allOperations.map((item) => item.id === updated.id ? updated : item);
       this.operations.update((operations) => operations.map((item) => item.id === updated.id ? updated : item));
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile avanzare la lavorazione.');
+      this.errorMessage.set(error instanceof Error ? error.message : errorText);
     } finally {
       this.transitioningWorkId.set(null);
     }
   }
+  protected async advanceWork(operation: Operation): Promise<void> {
+    const next = this.workNextStatus(operation);
+    if (!next) return;
+    await this.setWorkStatus(operation, next, 'Impossibile avanzare la lavorazione.');
+  }
   protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
   protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
+
+  protected operationRightActions(operation: Operation): SwipeAction[] {
+    const busy = this.transitioningWorkId() === operation.id;
+    const actions: SwipeAction[] = [];
+    if (this.canAdvanceWork(operation)) actions.push({ key: 'advance', icon: this.workAdvanceIcon(operation), label: this.workStatusSwipeLabel(this.workNextStatus(operation)), variant: 'neutral', disabled: busy, run: () => this.advanceWork(operation) });
+    if (this.canQuickPay(operation)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openQuickPayment(operation) });
+    actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(operation) });
+    return actions;
+  }
+
+  protected operationLeftActions(operation: Operation): SwipeAction[] {
+    const busy = this.transitioningWorkId() === operation.id;
+    const actions: SwipeAction[] = [];
+    if (this.canRegressWork(operation)) actions.push({ key: 'regress', icon: this.workRegressIcon(operation), label: this.workStatusSwipeLabel(this.workPreviousStatus(operation)), variant: this.workPreviousStatus(operation) === 'cancelled' ? 'neutral-warning' : 'neutral', disabled: busy, run: () => this.regressWork(operation) });
+    actions.push({ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', run: () => this.remove(operation) });
+    return actions;
+  }
   protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || typeof operation.amount === 'number'; }
   protected activeFair(): Fair | null { return this.activeFairMode.activeFair(); }
   protected availableOfferChoices(): readonly OfferChoice[] {

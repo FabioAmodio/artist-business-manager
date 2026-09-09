@@ -22,6 +22,7 @@
   } @else {
     <div class="product-list">
       @for (product of visibleProducts(); track product.id) {
+        <app-swipe-row [id]="product.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="productRightActions(product)" [leftActions]="productLeftActions(product)">
         <article class="product-row compact-product-row">
           <div class="product-main">
             <h3>{{ product.name }}</h3>
@@ -37,6 +38,7 @@
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica prodotto" title="Modifica prodotto" (click)="startEditing(product)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina prodotto" [disabled]="isProductUsed(product)" [title]="isProductUsed(product) ? 'Prodotto usato in operazioni o collegamenti' : 'Elimina prodotto'" (click)="remove(product)">🗑</button></div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

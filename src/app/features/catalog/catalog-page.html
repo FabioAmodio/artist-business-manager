@@ -27,6 +27,7 @@
   } @else {
     <div class="catalog-list">
       @for (product of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'product' ? visibleProducts() : []; track product.id) {
+        <app-swipe-row [id]="product.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="productRightActions(product)" [leftActions]="productLeftActions(product)">
         <article class="catalog-item catalog-product-item">
           <div class="item-header">
             <span class="kind-badge" aria-label="Prodotto" title="Prodotto"><span class="badge-icon" aria-hidden="true">🏷️</span><span class="badge-label">Prodotto</span></span>
@@ -45,9 +46,11 @@
             <button class="danger-button list-action" type="button" aria-label="Elimina prodotto" title="Elimina prodotto" (click)="removeProduct(product)">🗑</button>
           </div>
         </article>
+        </app-swipe-row>
       }
 
       @for (service of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'service' ? visibleServices() : []; track service.id) {
+        <app-swipe-row [id]="service.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="serviceRightActions(service)" [leftActions]="serviceLeftActions(service)">
         <article class="catalog-item catalog-service-item">
           <div class="item-header">
             <span class="kind-badge service" aria-label="Servizio" title="Servizio"><span class="badge-icon" aria-hidden="true">🛠️</span><span class="badge-label">Servizio</span></span>
@@ -60,9 +63,11 @@
             <button class="danger-button list-action" type="button" aria-label="Elimina servizio" title="Elimina servizio" (click)="removeService(service)">🗑</button>
           </div>
         </article>
+        </app-swipe-row>
       }
 
       @for (bundle of catalogTypeFilter() === 'all' || catalogTypeFilter() === 'bundle' ? visibleBundles() : []; track bundle.id) {
+        <app-swipe-row [id]="bundle.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="bundleRightActions(bundle)" [leftActions]="bundleLeftActions(bundle)">
         <article class="catalog-item catalog-bundle-item bundle">
           <div class="item-header">
             <span class="kind-badge bundle" aria-label="Pacchetto" title="Pacchetto"><span class="badge-icon" aria-hidden="true">🎁</span><span class="badge-label">Pacchetto</span></span>
@@ -79,6 +84,7 @@
             <button class="danger-button list-action" type="button" aria-label="Elimina pacchetto" title="Elimina pacchetto" (click)="removeBundle(bundle)">🗑</button>
           </div>
         </article>
+        </app-swipe-row>
       }
     </div>
   }

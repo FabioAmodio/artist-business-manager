@@ -9,10 +9,12 @@ import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent],
+  imports: [FormActionsComponent, FormsModule, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-lots-page',
   templateUrl: './lots-page.html',
   styleUrl: './lots-page.scss',
@@ -34,8 +36,17 @@ export class LotsPage implements OnInit {
   protected readonly filtersOpen = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly openRowId = signal<string | null>(null);
   protected draft: LotInput = this.emptyDraft();
   protected aliasText = '';
+
+  protected lotRightActions(lot: Lot): SwipeAction[] {
+    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(lot) }];
+  }
+
+  protected lotLeftActions(lot: Lot): SwipeAction[] {
+    return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isLotUsed(lot), run: () => this.remove(lot) }];
+  }
 
   ngOnInit(): void { void this.loadAll(); }
 
