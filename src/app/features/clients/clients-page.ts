@@ -9,6 +9,7 @@ import type { Party } from '../../domain/models/party';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
@@ -16,7 +17,7 @@ type ClientSortKey = 'name' | 'purchases' | 'spending';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, NumberStepperComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-clients-page',
   templateUrl: './clients-page.html',
   styleUrl: './clients-page.scss',

@@ -14,10 +14,10 @@
         <option value="organization">Organizzazioni</option>
       </select>
     </label>
-    <label>Acquisti minimi <input type="number" min="0" step="1" [ngModel]="purchasesMin() ?? ''" (ngModelChange)="purchasesMin.set($event === '' ? null : +$event)" /></label>
-    <label>Acquisti massimi <input type="number" min="0" step="1" [ngModel]="purchasesMax() ?? ''" (ngModelChange)="purchasesMax.set($event === '' ? null : +$event)" /></label>
-    <label>Spesa minima <input type="number" min="0" step="0.01" [ngModel]="spendingMin() ?? ''" (ngModelChange)="spendingMin.set($event === '' ? null : +$event)" /></label>
-    <label>Spesa massima <input type="number" min="0" step="0.01" [ngModel]="spendingMax() ?? ''" (ngModelChange)="spendingMax.set($event === '' ? null : +$event)" /></label>
+    <label>Acquisti minimi <app-number-stepper [step]="1" [min]="0" [integer]="true" [ngModel]="purchasesMin()" (ngModelChange)="purchasesMin.set($event)" /></label>
+    <label>Acquisti massimi <app-number-stepper [step]="1" [min]="0" [integer]="true" [ngModel]="purchasesMax()" (ngModelChange)="purchasesMax.set($event)" /></label>
+    <label>Spesa minima <app-number-stepper [step]="1" [decimals]="2" [min]="0" [ngModel]="spendingMin()" (ngModelChange)="spendingMin.set($event)" /></label>
+    <label>Spesa massima <app-number-stepper [step]="1" [decimals]="2" [min]="0" [ngModel]="spendingMax()" (ngModelChange)="spendingMax.set($event)" /></label>
   </app-list-filter-panel> }
   @if (sortOpen()) { <div class="sort-backdrop sheet-backdrop" aria-hidden="true"></div><div class="toolbar sort-panel" role="dialog" aria-label="Ordinamento clienti"><div class="sort-control-row"><select aria-label="Colonna da ordinare" [ngModel]="sortKey()" (ngModelChange)="sortKey.set($event)"><option value="name">Nome</option><option value="purchases">Acquisti</option><option value="spending">Spesa</option></select><button class="sort-direction-button" type="button" [attr.aria-label]="sortDirection() === 'asc' ? 'Discendente' : 'Ascendente'" title="Cambia direzione" (click)="changeSortDirection()">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSort()">↺</button></div></div> }
   @if (loading()) {

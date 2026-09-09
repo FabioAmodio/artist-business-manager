@@ -13,6 +13,22 @@
   </fieldset>
 
   <fieldset>
+    <legend>Scadenze</legend>
+    <label>Considera “in scadenza” entro
+      <input type="number" min="1" max="365" step="1" [ngModel]="persistence.dueSoonDays()" (ngModelChange)="selectDueSoonDays($event)" />
+    </label>
+    <p class="status">Numero di giorni prima della consegna.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Inserimento guidato vendite</legend>
+    <label>Numero di fiere concluse da considerare
+      <input type="number" min="1" max="100" step="1" [ngModel]="persistence.catalogUsageFairCount()" (ngModelChange)="selectCatalogUsageFairCount($event)" />
+    </label>
+    <p class="status">Le offerte più usate in queste fiere vengono mostrate prima.</p>
+  </fieldset>
+
+  <fieldset>
     <legend>Persistenza dati</legend>
     <label>Modalità dati
       <select [ngModel]="persistence.mode()" (ngModelChange)="selectPersistenceMode($event)">

@@ -74,6 +74,20 @@ export class SettingsPage implements OnInit {
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile cambiare la modalità di interazione delle liste.'); }
   }
 
+  protected async selectDueSoonDays(value: number | string): Promise<void> {
+    const days = Number(value);
+    if (!Number.isFinite(days)) return;
+    try { await this.persistence.setDueSoonDays(days); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare la soglia delle scadenze.'); }
+  }
+
+  protected async selectCatalogUsageFairCount(value: number | string): Promise<void> {
+    const count = Number(value);
+    if (!Number.isFinite(count)) return;
+    try { await this.persistence.setCatalogUsageFairCount(count); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare il numero di fiere considerate.'); }
+  }
+
   protected async signInWithGoogle(): Promise<void> {
     if (this.authenticating()) return;
     this.authenticating.set(true);

@@ -45,6 +45,8 @@ export class PersistenceService {
   private readonly firestore = inject(FirestoreProvider);
   readonly mode = signal<PersistenceMode>(this.environment.defaultPersistenceMode);
   readonly listInteractionMode = signal<ListInteractionMode>('swipe');
+  readonly dueSoonDays = signal(7);
+  readonly catalogUsageFairCount = signal(10);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
   readonly status = signal('');
@@ -80,6 +82,8 @@ export class PersistenceService {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
     this.mode.set(settings?.mode ?? this.environment.defaultPersistenceMode);
     this.listInteractionMode.set(settings?.listInteractionMode ?? 'swipe');
+    this.dueSoonDays.set(this.normalizeDueSoonDays(settings?.dueSoonDays));
+    this.catalogUsageFairCount.set(this.normalizeCatalogUsageFairCount(settings?.catalogUsageFairCount));
     this.storage.setMode?.(this.mode());
     this.source.set(this.environment.environmentName === 'release' || this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
     this.directoryHandle = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.directoryHandle;
@@ -98,6 +102,20 @@ export class PersistenceService {
     const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
     await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, listInteractionMode, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
     this.listInteractionMode.set(listInteractionMode);
+  }
+
+  async setDueSoonDays(days: number): Promise<void> {
+    const dueSoonDays = this.normalizeDueSoonDays(days);
+    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, dueSoonDays, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    this.dueSoonDays.set(dueSoonDays);
+  }
+
+  async setCatalogUsageFairCount(value: number): Promise<void> {
+    const catalogUsageFairCount = this.normalizeCatalogUsageFairCount(value);
+    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, catalogUsageFairCount, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    this.catalogUsageFairCount.set(catalogUsageFairCount);
   }
 
   async setMode(mode: PersistenceMode): Promise<void> {
@@ -762,7 +780,10 @@ export class PersistenceService {
 
   private async saveSettings(source: PersistenceSettings['source'], directoryHandle?: FileSystemDirectoryHandle, driveFolderId?: string, driveClientId?: string): Promise<void> {
     this.driveFolderId = driveFolderId ?? (source === 'google-drive' ? this.driveFolderId : undefined);
-    await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source, directoryHandle, driveFolderId: this.driveFolderId, driveClientId: driveClientId ?? this.driveClientId, updatedAt: new Date().toISOString() });
+    await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source, directoryHandle, driveFolderId: this.driveFolderId, driveClientId: driveClientId ?? this.driveClientId, dueSoonDays: this.dueSoonDays(), catalogUsageFairCount: this.catalogUsageFairCount(), updatedAt: new Date().toISOString() });
     this.source.set(source);
   }
+
+  private normalizeDueSoonDays(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 365) : 7; }
+  private normalizeCatalogUsageFairCount(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 100) : 10; }
 }

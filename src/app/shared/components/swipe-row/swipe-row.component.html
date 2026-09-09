@@ -1,6 +1,6 @@
 <div class="swipe-row-inner" [class.swipe-active]="swipeEnabled()">
   @if (swipeEnabled()) {
-    <div class="swipe-actions swipe-actions-start" [style.width.px]="maxTotalWidth('right')" aria-hidden="true">
+    <div class="swipe-actions swipe-actions-start" [style.width.px]="containerWidth('right')" aria-hidden="true">
       @for (action of rightActions(); track action.key) {
         @if (!action.disabled) {
           <button type="button" class="swipe-action-button" [class.swipe-action-danger]="action.variant === 'danger'" [class.swipe-action-neutral]="action.variant === 'neutral'" [class.swipe-action-neutral-warning]="action.variant === 'neutral-warning'" [class.swipe-action-neutral-success]="action.variant === 'neutral-success'" [class.swipe-action-armed]="armedAction() === action" [style.width.px]="actionWidth('right', action)" [attr.aria-label]="action.label" [title]="action.label" (pointerdown)="$event.stopPropagation()" (click)="runAction(action)">
@@ -10,7 +10,7 @@
         }
       }
     </div>
-    <div class="swipe-actions swipe-actions-end" [style.width.px]="maxTotalWidth('left')" aria-hidden="true">
+    <div class="swipe-actions swipe-actions-end" [style.width.px]="containerWidth('left')" aria-hidden="true">
       @for (action of leftActions(); track action.key) {
         @if (!action.disabled) {
           <button type="button" class="swipe-action-button" [class.swipe-action-danger]="action.variant === 'danger'" [class.swipe-action-neutral]="action.variant === 'neutral'" [class.swipe-action-neutral-warning]="action.variant === 'neutral-warning'" [class.swipe-action-neutral-success]="action.variant === 'neutral-success'" [class.swipe-action-armed]="armedAction() === action" [style.width.px]="actionWidth('left', action)" [attr.aria-label]="action.label" [title]="action.label" (pointerdown)="$event.stopPropagation()" (click)="runAction(action)">

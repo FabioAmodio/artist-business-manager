@@ -50,7 +50,7 @@
         <div class="form-heading"><app-form-actions [disabled]="productForm.invalid === true" [saving]="saving()" saveLabel="Salva prodotto" (cancel)="cancelForm()"><h2 id="product-form-title">{{ editingId() ? 'Modifica prodotto' : 'Nuovo prodotto' }}</h2></app-form-actions></div>
         <div class="form-grid">
           <label class="wide">Nome <input name="name" required [(ngModel)]="draft.name" /></label>
-          <label>Prezzo suggerito <input name="suggestedPrice" type="number" min="0" step="0.01" [(ngModel)]="draft.suggestedPrice" /></label>
+          <label>Prezzo suggerito <app-number-stepper name="suggestedPrice" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.suggestedPrice" /></label>
           <label class="checkbox-label"><input name="active" type="checkbox" [(ngModel)]="draft.active" /> Disponibile</label>
           <label class="full-width">Tag <input name="tags" [(ngModel)]="tagText" placeholder="fiera, novita, personalizzabile" /></label>
           <label class="full-width">Descrizione <textarea name="description" rows="4" [(ngModel)]="draft.description"></textarea></label>

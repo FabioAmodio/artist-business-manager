@@ -11,12 +11,15 @@ import type { Product } from '../../domain/models/product';
 import type { Service } from '../../domain/models/service';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
+import { PersistenceService } from '../../application/persistence/persistence.service';
+import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
+import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
 type DeadlineSortKey = 'date' | 'offer' | 'customer' | 'status';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, ListFilterPanelComponent, PageHeaderComponent],
+  imports: [FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-deadlines-page',
   templateUrl: './deadlines-page.html',
   styleUrl: './deadlines-page.scss',
@@ -27,6 +30,7 @@ export class DeadlinesPage implements OnInit {
   private readonly clientService = inject(ClientService);
   private readonly productService = inject(ProductService);
   private readonly serviceService = inject(ServiceService);
+  private readonly persistence = inject(PersistenceService);
 
   protected readonly works = signal<readonly Operation[]>([]);
   protected readonly parties = signal<readonly Party[]>([]);
@@ -39,17 +43,21 @@ export class DeadlinesPage implements OnInit {
   protected readonly statusFilter = signal<'all' | 'overdue' | 'due-soon'>('all');
   protected readonly sortKey = signal<DeadlineSortKey>('date');
   protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
+  protected readonly openRowId = signal<string | null>(null);
 
   ngOnInit(): void { void this.load(); }
 
   protected offerName(work: Operation): string { return work.serviceId ? this.services().find((service) => service.id === work.serviceId)?.description ?? 'Servizio non trovato' : this.products().find((product) => product.id === work.productId)?.name ?? 'Prodotto non indicato'; }
   protected customerName(work: Operation): string { return work.partyId ? this.parties().find((party) => party.id === work.partyId)?.displayName ?? 'Cliente non trovato' : work.customerName || 'Cliente non indicato'; }
-  protected formatDate(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT').format(new Date(`${value}T00:00:00`)) : 'Non indicata'; }
+  protected isMobileSwipeMode(): boolean { return this.persistence.listInteractionMode() === 'swipe' && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true; }
+  protected workRightActions(work: Operation): SwipeAction[] { return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) }]; }
+  protected formatDateDay(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT', { day: 'numeric' }).format(new Date(`${value}T00:00:00`)) : 'nd'; }
+  protected formatDateMonth(value: string): string { return new Intl.DateTimeFormat('it-IT', { month: 'short' }).format(new Date(`${value}T00:00:00`)).replace('.', ''); }
   protected isOverdue(work: Operation): boolean { return Boolean(work.deliveryDate && work.deliveryDate < this.today()); }
   protected isDueSoon(work: Operation): boolean {
     if (!work.deliveryDate || this.isOverdue(work)) return false;
     const limit = new Date();
-    limit.setDate(limit.getDate() + 7);
+    limit.setDate(limit.getDate() + this.persistence.dueSoonDays());
     return work.deliveryDate <= limit.toISOString().slice(0, 10);
   }
   protected openWork(work: Operation): void { void this.router.navigate(['/works'], { queryParams: { open: work.id } }); }

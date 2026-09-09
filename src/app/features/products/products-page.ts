@@ -11,6 +11,7 @@ import type { Operation } from '../../domain/models/operation';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
@@ -18,7 +19,7 @@ import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.mo
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, FormActionsComponent, FormsModule, PageHeaderComponent, SwipeRowComponent],
+  imports: [CurrencyPipe, FormActionsComponent, FormsModule, NumberStepperComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-products-page',
   templateUrl: './products-page.html',
   styleUrl: './products-page.scss',

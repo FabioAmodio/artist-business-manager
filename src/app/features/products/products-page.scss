@@ -16,10 +16,10 @@ h3 { font-size: 1.2rem; }
 .success { background: color-mix(in srgb, var(--color-status-success) 12%, transparent); color: var(--color-status-success); }
 .toolbar { display: grid; grid-template-columns: minmax(18rem, 1fr) minmax(10rem, 14rem); gap: 1rem; margin: 1rem 0; }
 .product-note { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0 0 1rem; }
-label { color: var(--color-text-primary); display: grid; gap: .4rem; font-weight: 600; }
+label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); gap: .4rem; font-weight: 600; }
 .checkbox-label { align-items: center; align-self: end; display: flex; gap: .5rem; }
 .checkbox-label input { width: auto; }
-input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; padding: .7rem; width: 100%; }
+input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); padding: .7rem; width: 100%; }
 input:focus, textarea:focus, select:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .list-heading { border-bottom: 1px solid var(--color-border); padding-bottom: .75rem; }
 .list-heading span, .product-row p { color: var(--color-text-secondary); }
@@ -52,10 +52,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .dialog-backdrop { background: rgba(31, 41, 38, .35); bottom: 0; left: 0; position: fixed; right: 0; top: 0; z-index: var(--z-modal-backdrop); }
 .product-dialog { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); left: 50%; max-height: calc(100vh - 3rem); max-width: min(60rem, calc(100vw - 3rem)); overflow-y: auto; padding: 1.5rem; position: fixed; top: 50%; transform: translate(-50%, -50%); width: 60rem; z-index: var(--z-modal); }
 .product-form { display: grid; }
-.form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1.5rem 0; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .full-width { grid-column: 1 / -1; }
 .wide { grid-column: span 1; }
-.product-form .form-heading { background: var(--color-surface); margin: -1.5rem -1.5rem 1rem; padding: 1.25rem 1.5rem .75rem; position: sticky; top: -1.5rem; z-index: 2; }
+.product-form .form-heading { background: var(--color-surface); margin: -1.5rem -1.5rem .5rem; padding: 1.25rem 1.5rem .75rem; position: sticky; top: -1.5rem; z-index: 2; }
 .close-button { background: transparent; border: 0; color: var(--color-text-secondary); cursor: pointer; font: 400 1.5rem/1 var(--font-sans); height: 2rem; width: 2rem; }
 @media (max-width: 1180px) { .product-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .relation-badges { grid-column: 1 / -2; } .product-row > * { min-width: 0; } .context-grid span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .toolbar { grid-template-columns: 1fr; } }

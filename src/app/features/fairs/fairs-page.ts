@@ -9,6 +9,7 @@ import type { Fair } from '../../domain/models/fair';
 import type { FairSeries } from '../../domain/models/fair';
 import type { Operation } from '../../domain/models/operation';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
@@ -19,7 +20,7 @@ type CoverageFilter = 'all' | 'covered' | 'not-covered';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
+  imports: [FormActionsComponent, FormsModule, ListFilterPanelComponent, NumberStepperComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-fairs-page',
   templateUrl: './fairs-page.html',
   styleUrl: './fairs-page.scss',

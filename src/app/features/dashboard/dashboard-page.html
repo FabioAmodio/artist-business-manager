@@ -42,7 +42,7 @@
             <article class="dashboard-row work-row" [class.work-expanded]="isWorkExpanded(work)">
               <button class="work-summary-toggle" type="button" [attr.aria-expanded]="isWorkExpanded(work)" (click)="toggleWorkDetails(work)"><h3>{{ workSummary(work) }}</h3><p>{{ customerLabel(work) }} · {{ formatDateTime(work.operationDate ?? work.createdAt) }}</p><span class="mobile-card-row mobile-card-title"><span class="mobile-card-start">{{ operationDisplayName(work) }}</span><span class="mobile-card-end"><span class="status-pill" [attr.aria-label]="workStatusLabel(work)" [title]="workStatusLabel(work)"><span aria-hidden="true">{{ workStatusIcon(work) }}</span>{{ workStatusLabel(work) }}</span><span class="work-amount">{{ formatMoney(work.amount) }}</span></span></span><span class="mobile-card-row mobile-card-subtitle"><span class="mobile-card-start">{{ work.description || 'Nessuna descrizione' }}</span>@if (!isFullyPaid(work)) { <span class="mobile-card-end sale-remaining">{{ formatMoney(paymentRemaining(work)) }}</span> }</span></button>
               <div class="row-facts"><span><strong>Consegna</strong>{{ formatDate(work.deliveryDate) }}</span><span><strong>Importo</strong>{{ formatMoney(work.amount) }}</span></div>
-              <div class="row-actions">@if (!isFullyPaid(work)) { <button class="payment-button work-payment-button" type="button" [attr.aria-label]="'Registra pagamento di ' + formatMoney(paymentRemaining(work))" title="Registra pagamento lavorazione" (click)="openPaymentDialog(work)"><span aria-hidden="true">€</span><span>{{ formatMoney(paymentRemaining(work)) }}</span></button> }<button class="text-button" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="editOperation(work)">✎</button></div>
+              <div class="row-actions">@if (!isFullyPaid(work)) { <button class="payment-button work-payment-button" type="button" [attr.aria-label]="'Registra pagamento di ' + formatMoney(paymentRemaining(work))" title="Registra pagamento lavorazione" (click)="openPaymentDialog(work)"><span aria-hidden="true">€</span><span>{{ formatMoney(paymentRemaining(work)) }}</span></button> }<button class="text-button" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="editWork(work)">✎</button></div>
             </article>
             </app-swipe-row>
           }
@@ -57,7 +57,7 @@
           @for (sale of fairSales(); track sale.id) {
             <app-swipe-row [id]="sale.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="saleRightActions(sale)">
             <article class="dashboard-row sale-row" [class.sale-expanded]="isSaleExpanded(sale)">
-              <button class="work-summary-toggle" type="button" [attr.aria-expanded]="isSaleExpanded(sale)" (click)="handleSaleSummaryClick(sale, $event)"><h3>{{ workSummary(sale) }}</h3><p>@if (sale.partyId) { <span class="customer-link" role="link" tabindex="0" [attr.aria-label]="'Apri vendite di ' + customerLabel(sale)" title="Apri vendite del cliente" (keydown.enter)="$event.stopPropagation(); openFairCustomerSales(sale)" (keydown.space)="$event.preventDefault(); $event.stopPropagation(); openFairCustomerSales(sale)">{{ customerLabel(sale) }}</span> } @else { {{ customerLabel(sale) }} } · {{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</p><span class="mobile-card-row mobile-card-title"><span class="mobile-card-start">{{ operationDisplayName(sale) }}</span><span class="mobile-card-end"><span class="sale-quantity">{{ sale.quantity ?? 1 }}</span><span class="sale-price">{{ formatMoney(sale.amount) }}</span></span></span><span class="mobile-card-row mobile-card-subtitle"><span class="mobile-card-start">{{ sale.description || 'Nessuna descrizione' }}</span>@if (!isFullyPaid(sale)) { <span class="mobile-card-end sale-remaining">{{ formatMoney(paymentRemaining(sale)) }}</span> }</span></button>
+              <button class="work-summary-toggle" type="button" [attr.aria-expanded]="isSaleExpanded(sale)" (click)="handleSaleSummaryClick(sale, $event)"><h3><span class="offer-type-icon" aria-hidden="true">{{ offerTypeIcon(sale) }}</span>{{ workSummary(sale) }}</h3><p>@if (sale.partyId) { <span class="customer-link" role="link" tabindex="0" [attr.aria-label]="'Apri vendite di ' + customerLabel(sale)" title="Apri vendite del cliente" (keydown.enter)="$event.stopPropagation(); openFairCustomerSales(sale)" (keydown.space)="$event.preventDefault(); $event.stopPropagation(); openFairCustomerSales(sale)">{{ customerLabel(sale) }}</span> } @else { {{ customerLabel(sale) }} } · {{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</p><span class="mobile-card-row mobile-card-title"><span class="mobile-card-start"><span class="offer-type-icon" aria-hidden="true">{{ offerTypeIcon(sale) }}</span>{{ operationDisplayName(sale) }}</span><span class="mobile-card-end"><span class="sale-quantity">{{ sale.quantity ?? 1 }}</span><span class="sale-price">{{ formatMoney(sale.amount) }}</span></span></span><span class="mobile-card-row mobile-card-subtitle"><span class="mobile-card-start">{{ sale.description || 'Nessuna descrizione' }}</span>@if (!isFullyPaid(sale)) { <span class="mobile-card-end sale-remaining">{{ formatMoney(paymentRemaining(sale)) }}</span> }</span></button>
               <div class="row-facts"><span><strong>Quantità</strong>{{ sale.quantity ?? 1 }}</span><span><strong>Importo</strong>{{ formatMoney(sale.amount) }}</span><span><strong>Pagato</strong>{{ formatMoney(paymentTotal(sale.id)) }}</span></div>
               <div class="sale-mobile-details"><span><strong>Cliente</strong>@if (sale.partyId) { <span class="customer-link" role="link" tabindex="0" [attr.aria-label]="'Apri vendite di ' + customerLabel(sale)" title="Apri vendite del cliente" (click)="openFairCustomerSales(sale)" (keydown.enter)="openFairCustomerSales(sale)" (keydown.space)="$event.preventDefault(); openFairCustomerSales(sale)">{{ customerLabel(sale) }}</span> } @else { {{ customerLabel(sale) }} }</span><span><strong>Acquisto</strong>{{ formatDateTime(sale.operationDate ?? sale.createdAt) }}</span></div>
               <div class="row-actions">@if (!isFullyPaid(sale)) { <button class="payment-button work-payment-button" type="button" [attr.aria-label]="'Registra pagamento di ' + formatMoney(paymentRemaining(sale))" title="Registra pagamento" (click)="openPaymentDialog(sale)"><span aria-hidden="true">€</span><span>{{ formatMoney(paymentRemaining(sale)) }}</span></button> }<button class="text-button" type="button" aria-label="Modifica vendita" title="Modifica vendita" (click)="editOperation(sale)">✎</button></div>
@@ -128,19 +128,21 @@
     <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
       <form (ngSubmit)="addPayment()" #paymentForm="ngForm">
-        <div class="dialog-heading"><div><h2 id="payment-dialog-title">Registra pagamento</h2><p>{{ sale.title }}</p></div><button class="save-icon-button" type="submit" aria-label="Registra pagamento" title="Registra pagamento" [disabled]="paymentForm.invalid || savingPayment()">{{ savingPayment() ? '…' : '↑' }}</button><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingPayment()" (click)="closePaymentDialog()">×</button></div>
+        <div class="dialog-heading"><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingPayment()" (click)="closePaymentDialog()">×</button><div class="dialog-heading-title"><h2 id="payment-dialog-title">Registra pagamento</h2><p>{{ sale.title }}</p></div><button class="save-icon-button" type="submit" aria-label="Registra pagamento" title="Registra pagamento" [disabled]="paymentForm.invalid || savingPayment()">{{ savingPayment() ? '…' : '↑' }}</button></div>
         <p class="payment-summary">Residuo: <strong>{{ formatMoney(paymentRemaining(sale)) }}</strong></p>
         <div class="payment-form-grid">
-          <label>Importo
-            <input name="paymentAmount" type="number" min="0.01" [max]="paymentRemaining(sale)" step="0.01" required [(ngModel)]="paymentDraft.amount" />
-          </label>
+          <div class="payment-amount-method-row">
+            <label>Importo
+              <app-number-stepper name="paymentAmount" [step]="1" [decimals]="2" [min]="0.01" [max]="paymentRemaining(sale)" required [(ngModel)]="paymentDraft.amount" />
+            </label>
+            <label>Modalità
+              <select name="paymentMethodId" required [(ngModel)]="paymentDraft.paymentMethodId">
+                @for (method of paymentMethods(); track method.id) { <option [value]="method.id">{{ method.name }}</option> }
+              </select>
+            </label>
+          </div>
           <label>Data
             <input name="paymentDate" type="date" required [(ngModel)]="paymentDraft.paymentDate" />
-          </label>
-          <label>Modalità
-            <select name="paymentMethodId" required [(ngModel)]="paymentDraft.paymentMethodId">
-              @for (method of paymentMethods(); track method.id) { <option [value]="method.id">{{ method.name }}</option> }
-            </select>
           </label>
         </div>
       </form>
@@ -151,7 +153,7 @@
     <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="payment-dialog force-fair-dialog" role="dialog" aria-modal="true" aria-labelledby="force-fair-dialog-title">
       <form (ngSubmit)="forceSelectedFair()">
-        <div class="dialog-heading"><div><h2 id="force-fair-dialog-title">Forza modalità fiera</h2><p>Scegli la fiera da usare come contesto attivo.</p></div><button class="save-icon-button" type="submit" aria-label="Forza modalità" title="Forza modalità" [disabled]="!forcedFairSelection || forcingFair()">{{ forcingFair() ? '…' : '↑' }}</button><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="forcingFair()" (click)="closeForceFairDialog()">×</button></div>
+        <div class="dialog-heading"><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="forcingFair()" (click)="closeForceFairDialog()">×</button><div class="dialog-heading-title"><h2 id="force-fair-dialog-title">Forza modalità fiera</h2><p>Scegli la fiera da usare come contesto attivo.</p></div><button class="save-icon-button" type="submit" aria-label="Forza modalità" title="Forza modalità" [disabled]="!forcedFairSelection || forcingFair()">{{ forcingFair() ? '…' : '↑' }}</button></div>
         <label class="force-fair-field">Fiera
           <select name="forcedFairSelection" required [(ngModel)]="forcedFairSelection">
             @for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }} · {{ fair.startDate }}</option> }

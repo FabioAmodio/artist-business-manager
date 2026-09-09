@@ -64,6 +64,12 @@ export class SwipeRowComponent {
     return this.totalWidth(side) + (this.hasAutoAction(actions) ? ACTION_WIDTH : 0);
   }
 
+  /** Il lato non coinvolto dal drag corrente deve restare a larghezza 0: essendo posizionato in absolute (left/right: 0), altrimenti resterebbe sovrapposto all'altro lato e ne intercetterebbe i click quando le azioni combinate superano la larghezza della riga. */
+  protected containerWidth(side: 'right' | 'left'): number {
+    const matchesDirection = side === 'right' ? this.dragX() > 0 : this.dragX() < 0;
+    return matchesDirection ? this.maxTotalWidth(side) : 0;
+  }
+
   protected actionWidth(side: 'right' | 'left', action: SwipeAction): number {
     const matchesDirection = side === 'right' ? this.dragX() > 0 : this.dragX() < 0;
     if (!matchesDirection) return 0;
@@ -112,6 +118,7 @@ export class SwipeRowComponent {
   protected onPointerUp(event: PointerEvent): void {
     if (this.pointerId !== event.pointerId) return;
     this.pointerId = null;
+    (event.target as Element).releasePointerCapture?.(event.pointerId);
     if (this.axisLocked !== 'x') { this.axisLocked = null; return; }
     this.axisLocked = null;
     const armed = this.armedAction();
@@ -128,6 +135,7 @@ export class SwipeRowComponent {
   protected onPointerCancel(event: PointerEvent): void {
     if (this.pointerId !== event.pointerId) return;
     this.pointerId = null;
+    (event.target as Element).releasePointerCapture?.(event.pointerId);
     this.axisLocked = null;
     this.snapToNearestThreshold(this.dragX());
   }

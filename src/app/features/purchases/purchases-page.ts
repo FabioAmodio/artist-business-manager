@@ -12,6 +12,7 @@ import type { Party } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
@@ -21,7 +22,7 @@ type PurchaseSortKey = 'date' | 'description' | 'supplier' | 'amount' | 'balance
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
+  imports: [CurrencyPipe, DatePipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, NumberStepperComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-purchases-page',
   templateUrl: './purchases-page.html',
   styleUrl: './purchases-page.scss',

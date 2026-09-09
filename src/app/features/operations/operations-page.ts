@@ -22,8 +22,10 @@ import type { Service } from '../../domain/models/service';
 import type { Fair } from '../../domain/models/fair';
 import { isBundleAvailable } from '../../domain/shared/catalog-availability';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ActiveFairService } from '../../core/event/active-fair.service';
+import { PersistenceService } from '../../application/persistence/persistence.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
@@ -74,7 +76,7 @@ interface SalesFilterDraft {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormActionsComponent, FormsModule, PageHeaderComponent, RouterLink, SwipeRowComponent],
+  imports: [FormActionsComponent, FormsModule, NumberStepperComponent, PageHeaderComponent, RouterLink, SwipeRowComponent],
   selector: 'app-operations-page',
   templateUrl: './operations-page.html',
   styleUrl: './operations-page.scss',
@@ -84,6 +86,7 @@ export class OperationsPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly activeFairMode = inject(ActiveFairService);
+  private readonly persistence = inject(PersistenceService);
   private readonly service = inject(OperationService);
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly paymentService = inject(PaymentService);
@@ -292,8 +295,8 @@ export class OperationsPage implements OnInit {
     if (this.salesOnly) this.updateFilterDraft('payment', payment === 'paid' || payment === 'partial' || payment === 'unpaid' ? payment : 'all');
     else void this.router.navigate([], { relativeTo: this.route, queryParams: { payment: payment === 'all' ? null : payment }, queryParamsHandling: 'merge' });
   }
-  protected changeAmountFilter(kind: 'min' | 'max', value: string): void {
-    const amount = this.parseAmountFilter(value);
+  protected changeAmountFilter(kind: 'min' | 'max', value: number | null): void {
+    const amount = value != null && Number.isFinite(value) && value >= 0 ? value : null;
     if (this.salesOnly) this.updateFilterDraft(kind === 'min' ? 'amountMin' : 'amountMax', amount);
     else void this.router.navigate([], { relativeTo: this.route, queryParams: { [kind === 'min' ? 'amountMin' : 'amountMax']: amount }, queryParamsHandling: 'merge' });
   }
@@ -323,6 +326,7 @@ export class OperationsPage implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { fairScope: scope || null }, queryParamsHandling: 'merge' });
   }
   protected typeLabel(type: OperationType): string { return type === 'sale' ? 'Vendita' : type === 'bundle' ? 'Pacchetto' : 'Lavorazione'; }
+  protected offerTypeIcon(operation: Operation): string { return operation.serviceId ? '🛠️' : operation.productId ? '🏷️' : operation.bundleId || operation.type === 'bundle' ? '🎁' : '🏷️'; }
   protected customerLabel(operation: Operation): string { return operation.partyId ? this.partyName(operation.partyId) : (operation.customerName || 'Cliente non indicato'); }
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }
   protected fairName(id?: string): string { const fair = this.fairs().find((item) => item.id === id); return fair ? `${fair.name} · ${fair.edition || fair.year}` : 'Fiera non indicata'; }
@@ -361,6 +365,12 @@ export class OperationsPage implements OnInit {
   }
   protected canQuickPay(operation: Operation): boolean {
     return (this.salesOnly || this.worksOnly) && this.quickPaymentRemaining(operation) >= 0.005;
+  }
+  protected paymentIncomplete(operation: Operation): boolean {
+    return (operation.amount ?? 0) > 0 && this.paymentTotalFor(operation) + 0.005 < (operation.amount ?? 0);
+  }
+  protected operationRemaining(operation: Operation): number {
+    return Math.max((operation.amount ?? 0) - this.paymentTotalFor(operation), 0);
   }
   protected openQuickPayment(operation: Operation): void {
     if (!this.quickPaymentTarget(operation)) {
@@ -417,6 +427,10 @@ export class OperationsPage implements OnInit {
     return this.workStatusOptions.find((status) => group.operations.some((operation) => operation.workStatus === status));
   }
   protected bundlePaid(group: WorkGroup): number { return group.parent ? this.paymentTotal(group.parent.id) : 0; }
+  protected bundlePaymentIncomplete(group: WorkGroup): boolean {
+    const amount = group.parent?.amount ?? 0;
+    return amount > 0 && this.bundlePaid(group) + 0.005 < amount;
+  }
   /** Catena lineare di stato usata per swipe avanti/indietro: "cancellata" precede "richiesta". */
   private readonly workStatusChain: readonly NonNullable<Operation['workStatus']>[] = ['cancelled', 'requested', 'in-progress', 'completed', 'delivered'];
   protected workNextStatus(operation: Operation): NonNullable<Operation['workStatus']> | null {
@@ -462,12 +476,18 @@ export class OperationsPage implements OnInit {
   }
   protected lotName(id?: string): string { return this.lots().find((lot) => lot.id === id)?.name ?? 'Collegamento non assegnato'; }
   protected hasWork(operation: Operation): boolean { return Boolean(operation.workStatus); }
+  /** Su mobile in modalita swipe il badge "Lavorazione" e ridondante con l'azione di swipe equivalente. */
+  protected isMobileSwipeMode(): boolean {
+    return this.persistence.listInteractionMode() === 'swipe' && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
+  }
 
   protected operationRightActions(operation: Operation): SwipeAction[] {
     const busy = this.transitioningWorkId() === operation.id;
     const actions: SwipeAction[] = [];
     if (this.canAdvanceWork(operation)) actions.push({ key: 'advance', icon: this.workAdvanceIcon(operation), label: this.workStatusSwipeLabel(this.workNextStatus(operation)), variant: 'neutral', disabled: busy, run: () => this.advanceWork(operation) });
     if (this.canQuickPay(operation)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openQuickPayment(operation) });
+    if (this.salesOnly && this.hasWork(operation)) actions.push({ key: 'open-work', icon: '🛠️', label: 'Lavorazione', variant: 'neutral', run: () => this.openWork(operation) });
+    if (this.worksOnly && this.hasLinkedSale(operation)) actions.push({ key: 'open-sale', icon: '💶', label: 'Vendita', variant: 'neutral', run: () => this.openSale(operation) });
     actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(operation) });
     return actions;
   }
@@ -480,6 +500,8 @@ export class OperationsPage implements OnInit {
     return actions;
   }
   protected hasSale(operation: Operation): boolean { return operation.type === 'sale' || typeof operation.amount === 'number'; }
+  /** A companion sale record is only actually fetchable/editable on /sales when the operation is itself a sale or linked to a bundle (see OperationRepository.list 'sale' filter). */
+  protected hasLinkedSale(operation: Operation): boolean { return operation.type === 'sale' || Boolean(operation.bundleId); }
   protected activeFair(): Fair | null { return this.activeFairMode.activeFair(); }
   protected availableOfferChoices(): readonly OfferChoice[] {
     return this.offerChoices().filter((offer) => offer.available);
@@ -515,7 +537,7 @@ export class OperationsPage implements OnInit {
     const concludedFairIds = this.fairs()
       .filter((fair) => fair.endDate < new Date().toISOString().slice(0, 10))
       .sort((first, second) => second.endDate.localeCompare(first.endDate))
-      .slice(0, 10)
+      .slice(0, this.persistence.catalogUsageFairCount())
       .map((fair) => fair.id);
     const usage = new Map<string, number>();
     for (const operation of this.operations()) {
@@ -532,6 +554,7 @@ export class OperationsPage implements OnInit {
 
   protected openFairWizard(): void { this.mode.set('fair'); this.startCreating('sale'); }
   protected openWork(operation: Operation): void { void this.router.navigate(['/works'], { queryParams: { open: operation.id } }); }
+  protected openSale(operation: Operation): void { void this.router.navigate(['/sales'], { queryParams: { open: operation.id } }); }
   protected visibleOperations(): readonly Operation[] {
     let operations = this.salesOnly ? this.operations().filter((operation) => !operation.parentOperationId) : [...this.operations()];
     const year = this.yearFilter();
@@ -649,6 +672,10 @@ export class OperationsPage implements OnInit {
     if (this.mode() === 'fair') this.paymentDraft = { ...this.paymentDraft, amount: product?.suggestedPrice, paymentMethodId: this.defaultPaymentMethodId() };
   }
   protected changeOffer(key: string): void { this.selectOffer(key); }
+  protected selectedBundleHasService(): boolean {
+    const bundle = this.bundles().find((item) => item.id === this.draft.bundleId);
+    return Boolean(bundle?.items.some((item) => item.catalogKind === 'service'));
+  }
   protected clearSelectedProduct(): void { this.offerSelection.set(''); this.draft = { ...this.draft, productId: undefined, serviceId: undefined, bundleId: undefined, title: '', amount: undefined, workStatus: undefined }; }
   protected updateFairAmount(amount: number | null): void {
     this.draft = { ...this.draft, amount: amount ?? undefined };

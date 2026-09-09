@@ -18,6 +18,7 @@ import { completeAmountsToTotal } from '../../domain/shared/money';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
@@ -34,7 +35,7 @@ type CatalogSortKey = 'name' | 'price' | 'sold' | 'revenue';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DecimalPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, PageHeaderComponent, SwipeRowComponent],
+  imports: [CurrencyPipe, DecimalPipe, FormActionsComponent, FormsModule, ListFilterPanelComponent, NumberStepperComponent, PageHeaderComponent, SwipeRowComponent],
   selector: 'app-catalog-page',
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',

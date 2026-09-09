@@ -21,6 +21,7 @@ import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 import { annualDashboardMetrics, availableYearRange } from '../../domain/shared/annual-dashboard';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { ActiveFairService } from '../../core/event/active-fair.service';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
@@ -34,7 +35,7 @@ interface PaymentDraft {
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, PageHeaderComponent, RouterLink, SwipeRowComponent],
+  imports: [FormsModule, NumberStepperComponent, PageHeaderComponent, RouterLink, SwipeRowComponent],
   selector: 'app-dashboard-page',
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
@@ -220,7 +221,7 @@ export class DashboardPage implements OnInit {
     const next = this.workNextStatus(work);
     if (next) actions.push({ key: 'advance', icon: this.workStatusIconFor(next), label: this.workStatusLabelFor(next), variant: 'neutral', run: () => this.advanceWork(work) });
     if (!this.isFullyPaid(work)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openPaymentDialog(work) });
-    actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.editOperation(work) });
+    actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.editWork(work) });
     return actions;
   }
   protected workLeftActions(work: Operation): SwipeAction[] {
@@ -256,6 +257,7 @@ export class DashboardPage implements OnInit {
     await this.advanceWork(operation);
   }
   protected workSummary(operation: Operation): string { const name = this.operationDisplayName(operation); return operation.description?.trim() ? `${name} - ${operation.description.trim()}` : name; }
+  protected offerTypeIcon(operation: Operation): string { return operation.serviceId ? '🛠️' : operation.productId ? '🏷️' : operation.bundleId || operation.type === 'bundle' ? '🎁' : '🏷️'; }
   protected isWorkExpanded(operation: Operation): boolean { return this.expandedWorks().has(operation.id); }
   protected toggleWorkDetails(operation: Operation): void {
     const expanded = new Set(this.expandedWorks());
@@ -299,6 +301,10 @@ export class DashboardPage implements OnInit {
 
   protected editOperation(operation: Operation): void {
     void this.router.navigate([operation.type === 'work' ? '/works' : '/sales'], { queryParams: { open: operation.id } });
+  }
+
+  protected editWork(operation: Operation): void {
+    void this.router.navigate(['/works'], { queryParams: { open: operation.id } });
   }
 
   protected changeDashboardView(value: string): void {
