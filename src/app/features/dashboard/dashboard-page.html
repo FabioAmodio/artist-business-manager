@@ -128,7 +128,7 @@
     <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
       <form (ngSubmit)="addPayment()" #paymentForm="ngForm">
-        <div class="dialog-heading"><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingPayment()" (click)="closePaymentDialog()">×</button><div class="dialog-heading-title"><h2 id="payment-dialog-title">Registra pagamento</h2><p>{{ sale.title }}</p></div><button class="save-icon-button" type="submit" aria-label="Registra pagamento" title="Registra pagamento" [disabled]="paymentForm.invalid || savingPayment()">{{ savingPayment() ? '…' : '↑' }}</button></div>
+        <div class="dialog-heading"><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="savingPayment()" (click)="closePaymentDialog()">×</button><div class="dialog-heading-title"><h2 id="payment-dialog-title">Registra pagamento</h2><p>{{ sale.title }}</p></div><button class="save-icon-button" type="submit" aria-label="Registra pagamento" title="Registra pagamento" [disabled]="paymentForm.invalid || savingPayment()">{{ savingPayment() ? '…' : '✓' }}</button></div>
         <p class="payment-summary">Residuo: <strong>{{ formatMoney(paymentRemaining(sale)) }}</strong></p>
         <div class="payment-form-grid">
           <div class="payment-amount-method-row">
@@ -153,7 +153,7 @@
     <div class="dialog-backdrop" aria-hidden="true"></div>
     <section class="payment-dialog force-fair-dialog" role="dialog" aria-modal="true" aria-labelledby="force-fair-dialog-title">
       <form (ngSubmit)="forceSelectedFair()">
-        <div class="dialog-heading"><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="forcingFair()" (click)="closeForceFairDialog()">×</button><div class="dialog-heading-title"><h2 id="force-fair-dialog-title">Forza modalità fiera</h2><p>Scegli la fiera da usare come contesto attivo.</p></div><button class="save-icon-button" type="submit" aria-label="Forza modalità" title="Forza modalità" [disabled]="!forcedFairSelection || forcingFair()">{{ forcingFair() ? '…' : '↑' }}</button></div>
+        <div class="dialog-heading"><button class="close-button" type="button" aria-label="Chiudi" title="Chiudi" [disabled]="forcingFair()" (click)="closeForceFairDialog()">×</button><div class="dialog-heading-title"><h2 id="force-fair-dialog-title">Forza modalità fiera</h2><p>Scegli la fiera da usare come contesto attivo.</p></div><button class="save-icon-button" type="submit" aria-label="Forza modalità" title="Forza modalità" [disabled]="!forcedFairSelection || forcingFair()">{{ forcingFair() ? '…' : '✓' }}</button></div>
         <label class="force-fair-field">Fiera
           <select name="forcedFairSelection" required [(ngModel)]="forcedFairSelection">
             @for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition || fair.year }} · {{ fair.startDate }}</option> }

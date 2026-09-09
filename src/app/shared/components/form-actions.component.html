@@ -4,6 +4,6 @@
   </button>
   <div class="form-actions-title"><ng-content /></div>
   <button class="save-button" type="submit" [disabled]="disabled() || saving()" [attr.aria-label]="saving() ? 'Salvataggio...' : saveLabel()" [title]="saving() ? 'Salvataggio...' : saveLabel()">
-    <span aria-hidden="true">{{ saving() ? '…' : '↑' }}</span>
+    <span aria-hidden="true">{{ saving() ? '…' : '✓' }}</span>
   </button>
 </div>
