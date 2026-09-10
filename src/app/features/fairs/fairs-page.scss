@@ -34,7 +34,7 @@ button:disabled { cursor: wait; opacity: .6; }
 .form-row-location { grid-template-columns: minmax(0, 1fr); }
 .form-row-money { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); gap: .4rem; font-weight: 600; min-width: 0; }
-input, textarea { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); min-width: 0; padding: .7rem; width: 100%; }
+input, textarea { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: 1rem; min-width: 0; padding: .7rem; width: 100%; }
 input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .full-width { grid-column: 1 / -1; }
 .economic-section { border-top: 1px solid var(--color-border); display: grid; gap: 1rem; margin-top: .5rem; padding-top: 1rem; }
@@ -47,7 +47,7 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
 .series-suggestion div { display: flex; gap: .5rem; }
 .fair-filter-panel { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
 .fair-filter-panel label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); font-weight: 600; gap: .4rem; }
-.fair-filter-panel select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); padding: .7rem; width: 100%; }
+.fair-filter-panel select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; font-size: 1rem; padding: .7rem; width: 100%; }
 .fair-filter-panel select:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .list-heading { border-bottom: 1px solid var(--color-border); margin-top: 1rem; padding-bottom: .75rem; }
 .fair-list { display: grid; gap: .75rem; }

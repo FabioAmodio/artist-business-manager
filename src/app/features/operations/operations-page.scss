@@ -27,7 +27,7 @@ h3 { font-size: 1.2rem; }
 label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); gap: .4rem; font-weight: 600; }
 .filter-label { display: inline-block; }
 .filter-label sup { color: var(--color-accent); font-size: 1em; margin-left: .15rem; }
-input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); padding: .7rem; width: 100%; }
+input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: 1rem; padding: .7rem; width: 100%; }
 input:focus, textarea:focus, select:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .customer-box { display: grid; gap: .5rem; }
 .customer-box p { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0; }
@@ -94,7 +94,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .payment-form-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
 .payment-amount-method-row { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .payment-form-grid label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); font-weight: 600; gap: .4rem; }
-.payment-form-grid input, .payment-form-grid select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); padding: .7rem; width: 100%; }
+.payment-form-grid input, .payment-form-grid select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font: inherit; font-size: 1rem; padding: .7rem; width: 100%; }
 .dialog-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.25rem; }
 .payment-dialog .dialog-actions .cancel-button { width: auto; }
 .save-button { background: var(--color-primary-action-bg); border: 0; border-radius: var(--radius-base); color: var(--color-primary-action-text); cursor: pointer; font: 600 .9rem var(--font-sans); padding: .7rem 1rem; }

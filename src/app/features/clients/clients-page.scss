@@ -17,7 +17,7 @@ h3 { font-size: 1.2rem; }
 .success { background: color-mix(in srgb, var(--color-status-success) 12%, transparent); color: var(--color-status-success); }
 .soft-customer-note { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0 0 1rem; }
 label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); gap: .4rem; font-weight: 600; }
-input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); padding: .7rem; width: 100%; }
+input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: 1rem; padding: .7rem; width: 100%; }
 input:focus, textarea:focus, select:focus { border-color: var(--color-accent); outline: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .list-heading { border-bottom: 1px solid var(--color-border); padding-bottom: .75rem; }
 .list-heading span, .client-row p { color: var(--color-text-secondary); }

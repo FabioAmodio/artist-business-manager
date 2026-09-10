@@ -36,7 +36,7 @@
 label { color: var(--color-text-primary); display: grid; font-size: var(--font-size-xs); gap: .4rem; font-weight: 600; }
 .checkbox-label { align-items: center; align-self: end; display: flex; gap: .5rem; }
 .checkbox-label input { width: auto; }
-input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: var(--font-size-sm); padding: .7rem; width: 100%; }
+input, textarea, select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-sizing: border-box; color: var(--color-text-primary); font: inherit; font-size: 1rem; padding: .7rem; width: 100%; }
 .wide { grid-column: span 2; }
 .full-width { grid-column: 1 / -1; }
 .bundle-items { display: grid; gap: .75rem; }
