@@ -1,5 +1,5 @@
-<div class="number-stepper" [class.disabled]="isDisabled">
+<div class="number-stepper" [class.disabled]="isDisabled" [class.has-paid]="paidAmount() != null && paidAmount()! > 0">
   <button class="stepper-button stepper-decrement" type="button" [attr.aria-label]="'Diminuisci' + (ariaLabel() ? ' ' + ariaLabel() : '')" [disabled]="!canDecrement" (click)="decrement()">−</button>
-  <input class="stepper-input" type="number" step="any" [attr.inputmode]="inputMode" [attr.aria-label]="ariaLabel()" [attr.min]="min()" [attr.max]="max()" [value]="displayValue" [disabled]="isDisabled" (input)="onInputChange($any($event.target).value)" (focus)="onFocus()" (blur)="touched()" />
+  <span class="stepper-center"><input class="stepper-input" type="number" step="any" [attr.inputmode]="inputMode" [attr.aria-label]="ariaLabel()" [attr.min]="min()" [attr.max]="max()" [value]="displayValue" [disabled]="isDisabled" (input)="onInputChange($any($event.target).value)" (focus)="onFocus()" (blur)="touched()" />@if (paidAmount() != null && paidAmount()! > 0) { <small class="paid-amount">{{ paidAmount()!.toFixed(2) }} €</small> }</span>
   <button class="stepper-button stepper-increment" type="button" [attr.aria-label]="'Aumenta' + (ariaLabel() ? ' ' + ariaLabel() : '')" [disabled]="!canIncrement" (click)="increment()">+</button>
 </div>

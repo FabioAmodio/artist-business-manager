@@ -3,6 +3,7 @@
     <span aria-hidden="true">×</span>
   </button>
   <div class="form-actions-title"><ng-content /></div>
+  <ng-content select="[form-action-before-save]" />
   <button class="save-button" [class.long-press-enabled]="longPressEnabled()" [class.holding]="holding()" [attr.type]="longPressEnabled() ? 'button' : 'submit'" [disabled]="disabled() || saving()" [attr.aria-label]="saving() ? 'Salvataggio...' : saveLabel()" [title]="saving() ? 'Salvataggio...' : saveLabel()" (pointerdown)="startHold($event)" (pointerup)="endHold($event)" (pointercancel)="endHold($event)" (pointerleave)="endHold($event)" (contextmenu)="blockLongPressContextMenu($event)" (click)="handleSaveClick($event)">
     <span aria-hidden="true">{{ saving() ? '…' : '✓' }}</span>
   </button>

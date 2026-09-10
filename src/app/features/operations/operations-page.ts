@@ -50,6 +50,7 @@ interface QuickSaleSettlementItem {
   operation: Operation;
   amount: number;
   originalAmount: number;
+  paidAmount: number;
 }
 
 interface OfferChoice {
@@ -122,6 +123,7 @@ export class OperationsPage implements OnInit {
   protected readonly bundleDetails = signal<BundleDetailDraft[]>([]);
   protected readonly bundleParentMode = signal(false);
   protected readonly fairPaymentOpen = signal(false);
+  protected readonly backofficePaymentOpen = signal(false);
     protected readonly quickSaleSettlementOpen = signal(false);
     protected readonly quickSaleSettlementItems = signal<QuickSaleSettlementItem[]>([]);
     protected readonly quickSaleSettlementPaymentOpen = signal(false);
@@ -129,6 +131,8 @@ export class OperationsPage implements OnInit {
     protected readonly quickSaleSettlementPaymentMethodId = signal('');
     private quickSaleSequence: Operation[] = [];
     private quickSaleSequenceCustomerKey = '';
+    private returnToQuickSaleSettlement = false;
+    private settlementEditingCustomerKey = '';
   protected readonly offerSelection = signal('');
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -514,9 +518,12 @@ export class OperationsPage implements OnInit {
 
   protected updateQuickSaleSettlementAmount(index: number, amount: number | null): void {
     this.quickSaleSettlementItems.update((items) => {
-      const updated = items.map((item, itemIndex) => itemIndex === index ? { ...item, amount: Math.max(0, amount ?? 0) } : item);
+      const item = items[index];
+      const minimum = item ? this.paymentTotalFor(item.operation) : 0;
+      const updated = items.map((current, itemIndex) => itemIndex === index ? { ...current, amount: Math.max(minimum, amount ?? minimum) } : current);
       const total = updated.reduce((sum, item) => sum + item.amount, 0);
-      if (this.quickSaleSettlementPaymentAmount() > total) this.quickSaleSettlementPaymentAmount.set(total);
+      const due = Math.max(total - this.quickSaleSettlementPaid(), 0);
+      if (this.quickSaleSettlementPaymentAmount() > due) this.quickSaleSettlementPaymentAmount.set(due);
       return updated;
     });
   }
@@ -536,6 +543,33 @@ export class OperationsPage implements OnInit {
     return [{ key: 'delete-settlement-sale', icon: '🗑', label: 'Cancella', kind: 'auto', variant: 'danger', run: () => void this.removeQuickSaleSettlementItem(index) }];
   }
 
+  protected quickSaleSettlementRightActions(index: number): SwipeAction[] {
+    return [{ key: 'edit-settlement-sale', icon: '✎', label: 'Modifica', kind: 'auto', variant: 'neutral', run: () => this.editQuickSaleSettlementItem(index) }];
+  }
+
+  private editQuickSaleSettlementItem(index: number): void {
+    const item = this.quickSaleSettlementItems()[index];
+    if (!item) return;
+    this.returnToQuickSaleSettlement = true;
+    this.settlementEditingCustomerKey = this.quickSaleCustomerKey(item.operation);
+    const dialog = this.quickSaleSettlementDialog?.nativeElement;
+    if (dialog?.open) dialog.close();
+    this.quickSaleSettlementOpen.set(false);
+    this.startEditing(item.operation);
+  }
+
+  protected addQuickSaleSettlementItem(): void {
+    const operation = this.quickSaleSettlementItems()[0]?.operation;
+    if (!operation) return;
+    this.returnToQuickSaleSettlement = true;
+    const customerId = operation.partyId;
+    const customerName = operation.customerName;
+    const dialog = this.quickSaleSettlementDialog?.nativeElement;
+    if (dialog?.open) dialog.close();
+    this.quickSaleSettlementOpen.set(false);
+    this.startAnotherQuickSale(customerId, customerName);
+  }
+
   protected async removeAllQuickSaleSettlementItems(): Promise<void> {
     const items = this.quickSaleSettlementItems();
     if (!items.length || !(await this.confirmation.confirm('Cancellare tutte le vendite?'))) return;
@@ -552,10 +586,16 @@ export class OperationsPage implements OnInit {
   }
 
   protected quickSaleSettlementTotal(): number { return this.quickSaleSettlementItems().reduce((total, item) => total + item.amount, 0); }
-  protected quickSaleSettlementDifference(): number { return this.quickSaleSettlementPaymentAmount() - this.quickSaleSettlementTotal(); }
+  protected quickSaleSettlementCustomer(): string {
+    const operation = this.quickSaleSettlementItems()[0]?.operation;
+    return operation ? this.customerLabel(operation) : 'Cliente non indicato';
+  }
+  protected quickSaleSettlementPaid(): number { return this.quickSaleSettlementItems().reduce((total, item) => total + Math.min(item.amount, item.paidAmount), 0); }
+  protected quickSaleSettlementDue(): number { return this.quickSaleSettlementItems().reduce((total, item) => total + Math.max(item.amount - item.paidAmount, 0), 0); }
+  protected quickSaleSettlementDifference(): number { return this.quickSaleSettlementPaymentAmount() - this.quickSaleSettlementDue(); }
 
   protected openQuickSaleSettlementPayment(): void {
-    this.quickSaleSettlementPaymentAmount.set(this.quickSaleSettlementTotal());
+    this.quickSaleSettlementPaymentAmount.set(this.quickSaleSettlementDue());
     this.quickSaleSettlementPaymentMethodId.set(this.defaultPaymentMethodId());
     this.quickSaleSettlementPaymentOpen.set(true);
   }
@@ -567,13 +607,15 @@ export class OperationsPage implements OnInit {
     this.quickSaleSettlementPaymentOpen.set(false);
     this.quickSaleSequence = [];
     this.quickSaleSequenceCustomerKey = '';
+    this.returnToQuickSaleSettlement = false;
+    this.settlementEditingCustomerKey = '';
   }
 
   protected async continueQuickSaleWithoutPayment(): Promise<void> { this.closeQuickSaleSettlement(); }
 
   protected async payQuickSaleSettlement(): Promise<void> {
     const amount = this.quickSaleSettlementPaymentAmount();
-    const total = this.quickSaleSettlementTotal();
+    const total = this.quickSaleSettlementDue();
     if (amount <= 0 || amount > total + 0.005 || !this.quickSaleSettlementPaymentMethodId()) return;
     const items = [...this.quickSaleSettlementItems()];
     try {
@@ -582,7 +624,7 @@ export class OperationsPage implements OnInit {
       const productFirst = [...items].sort((first, second) => this.quickSalePaymentPriority(first.operation) - this.quickSalePaymentPriority(second.operation));
       for (const item of productFirst) {
         if (remaining <= 0) break;
-        const payment = Math.min(item.amount, remaining);
+        const payment = Math.min(Math.max(item.amount - this.paymentTotalFor(item.operation), 0), remaining);
         if (payment > 0) {
           await this.paymentService.create({ operationId: item.operation.id, amount: payment, paymentDate: this.today(), paymentMethodId: this.quickSaleSettlementPaymentMethodId() });
           remaining -= payment;
@@ -600,8 +642,9 @@ export class OperationsPage implements OnInit {
     return operation.productId ? 0 : 1;
   }
 
-  private openQuickSaleSettlement(): void {
-    this.quickSaleSettlementItems.set(this.quickSaleSequence.map((operation) => ({ operation, amount: operation.amount ?? 0, originalAmount: operation.amount ?? 0 })));
+  private async openQuickSaleSettlement(): Promise<void> {
+    this.payments.set(await this.paymentService.list());
+    this.quickSaleSettlementItems.set(this.quickSaleSequence.map((operation) => ({ operation, amount: operation.amount ?? 0, originalAmount: operation.amount ?? 0, paidAmount: this.paymentTotalFor(operation) })));
     this.quickSaleSettlementOpen.set(true);
     setTimeout(() => {
       const dialog = this.quickSaleSettlementDialog?.nativeElement;
@@ -611,6 +654,7 @@ export class OperationsPage implements OnInit {
 
   private startAnotherQuickSale(customerId?: string, customerName?: string): void {
     this.mode.set('fair');
+    this.returnToQuickSaleSettlement = true;
     this.startCreating('sale');
     this.draft = { ...this.draft, partyId: customerId, customerName };
     this.customerMode.set(customerId ? 'existing' : customerName?.trim() ? 'soft' : 'none');
@@ -818,6 +862,11 @@ export class OperationsPage implements OnInit {
   }
   protected updateFairPaymentAmount(amount: number | null): void { this.fairPaymentManuallyEdited = true; this.paymentDraft = { ...this.paymentDraft, amount: amount ?? undefined }; }
   protected openFairPayment(): void { this.fairPaymentOpen.set(true); }
+  protected openBackofficePayment(): void {
+    const remaining = this.editingId() ? this.remainingPaymentAmount() : (this.draft.amount ?? 0);
+    this.paymentDraft = { amount: remaining, paymentDate: this.today(), paymentMethodId: this.defaultPaymentMethodId() };
+    this.backofficePaymentOpen.set(true);
+  }
   protected updateCustomerName(value: string): void {
     this.draft = { ...this.draft, customerName: value, partyId: undefined };
     this.customerMode.set(value.trim() ? 'soft' : 'none');
@@ -896,6 +945,7 @@ export class OperationsPage implements OnInit {
     this.bundleDetails.set([]);
     this.bundleParentMode.set(false);
     this.fairPaymentOpen.set(false);
+    this.backofficePaymentOpen.set(false);
     this.fairPaymentManuallyEdited = false;
     this.quickCustomerDecision = null;
     this.closeQuickCustomerPrompt();
@@ -909,6 +959,7 @@ export class OperationsPage implements OnInit {
     this.draft = { ...this.emptyDraft(this.salesOnly ? 'sale' : operation.type), ...operation, customerName: operation.partyId ? this.partyName(operation.partyId) : operation.customerName, operationDate: this.dateTimeInputValue(operation.operationDate ?? operation.createdAt), type: this.salesOnly ? 'sale' : operation.type };
     this.paymentDraft = this.emptyPaymentDraft();
     this.fairPaymentOpen.set(false);
+    this.backofficePaymentOpen.set(false);
     this.fairPaymentManuallyEdited = false;
     this.offerSelection.set(operation.serviceId ? `service:${operation.serviceId}` : operation.productId ? `product:${operation.productId}` : '');
     this.bundleParentMode.set(operation.type === 'bundle');
@@ -929,10 +980,18 @@ export class OperationsPage implements OnInit {
   protected isBundleChild(): boolean { return Boolean(this.draft.parentOperationId); }
   protected async cancelForm(): Promise<void> {
     const returnWorkId = this.returnWorkId;
+    const returnToSettlement = this.returnToQuickSaleSettlement;
     this.creating.set(false);
     this.editingId.set(null);
     this.returnToDashboardAfterSave = false;
     if (returnWorkId) await this.router.navigate(['/works'], { queryParams: { open: returnWorkId } });
+    if (returnToSettlement) {
+      const ids = new Set(this.quickSaleSequence.map((operation) => operation.id));
+      await this.loadOperations();
+      this.quickSaleSequence = this.allOperations.filter((operation) => ids.has(operation.id));
+      this.returnToQuickSaleSettlement = false;
+      setTimeout(() => this.openQuickSaleSettlement());
+    }
   }
 
   protected async save(): Promise<void> {
@@ -941,31 +1000,38 @@ export class OperationsPage implements OnInit {
       return;
     }
     const createAnother = this.saveAndCreateAnother && this.mode() === 'fair' && this.salesOnly;
+    const editingSettlement = this.returnToQuickSaleSettlement && Boolean(this.editingId());
+    const returningToSettlement = this.returnToQuickSaleSettlement;
     this.saving.set(true); this.resetMessages();
     const input = this.prepareInput();
     try {
+      const customerChanged = this.quickSaleSequence.length > 0 && this.quickSaleSequenceCustomerKey !== this.quickSaleCustomerKey(input);
+      const applyCustomerToAccount = customerChanged && await this.confirmation.confirm('Modificando il cliente verranno aggiornate tutte le vendite incluse nel conto. Continuare?');
       const fairPaymentAmount = this.mode() === 'fair' && this.fairPaymentOpen() ? this.paymentDraft.amount ?? 0 : 0;
-      const paymentAmount = this.mode() === 'fair' ? fairPaymentAmount : (this.paymentDraft.amount ?? 0);
+      const paymentAmount = this.mode() === 'fair' ? fairPaymentAmount : this.backofficePaymentOpen() ? (this.paymentDraft.amount ?? 0) : 0;
       if (paymentAmount > 0) this.ensurePaymentDoesNotExceedTotal(input.amount ?? 0, this.paymentTotal(this.editingId()), paymentAmount);
       const operation = (input.bundleId && this.bundleParentMode()) ? await this.saveBundleSale(input) : this.editingId() ? await this.service.update(this.editingId()!, input) : await this.service.create(input);
+      if (applyCustomerToAccount) {
+        for (const groupedOperation of this.quickSaleSequence.filter((item) => item.id !== operation.id)) {
+          await this.service.update(groupedOperation.id, { type: groupedOperation.type, title: groupedOperation.title, partyId: input.partyId, customerName: input.customerName });
+        }
+        this.quickSaleSequenceCustomerKey = this.quickSaleCustomerKey(input);
+      }
       if (this.mode() === 'fair' && (input.amount ?? 0) > 0 && fairPaymentAmount > 0) {
         await this.paymentService.create({ operationId: operation.id, amount: fairPaymentAmount, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId || this.defaultPaymentMethodId() });
-      } else if (this.mode() !== 'fair' && this.hasPaymentDraft() && !this.editingId()) {
+      } else if (this.mode() !== 'fair' && this.backofficePaymentOpen() && this.hasPaymentDraft() && !this.editingId()) {
         await this.paymentService.create({ operationId: operation.id, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       }
       this.payments.set(await this.paymentService.list());
       const customerId = input.partyId;
       const customerName = input.customerName;
       const sameQuickSaleCustomer = !this.quickSaleSequence.length || this.quickSaleSequenceCustomerKey === this.quickSaleCustomerKey(input);
-      if (createAnother && fairPaymentAmount <= 0) {
+      if (createAnother) {
         this.quickSaleSequenceCustomerKey ||= this.quickSaleCustomerKey(input);
         this.quickSaleSequence = [...this.quickSaleSequence, operation];
-      } else if (createAnother) {
-        this.quickSaleSequence = [];
-        this.quickSaleSequenceCustomerKey = '';
-      } else if (this.quickSaleSequence.length && sameQuickSaleCustomer && fairPaymentAmount <= 0) {
+      } else if (!editingSettlement && this.quickSaleSequence.length && sameQuickSaleCustomer) {
         this.quickSaleSequence = [...this.quickSaleSequence, operation];
-      } else if (this.quickSaleSequence.length && !sameQuickSaleCustomer) {
+      } else if (this.quickSaleSequence.length && !sameQuickSaleCustomer && !applyCustomerToAccount && !editingSettlement) {
         this.quickSaleSequence = [];
         this.quickSaleSequenceCustomerKey = '';
       }
@@ -976,7 +1042,7 @@ export class OperationsPage implements OnInit {
       if (returnWorkId && !createAnother) return;
       this.successMessage.set('Operazione salvata localmente.'); await this.loadOperations();
       if (createAnother) setTimeout(() => this.startAnotherQuickSale(customerId, customerName));
-      else if (this.quickSaleSequence.length && sameQuickSaleCustomer && fairPaymentAmount <= 0) setTimeout(() => this.openQuickSaleSettlement());
+      else if (!returningToSettlement && !editingSettlement && this.quickSaleSequence.length && (sameQuickSaleCustomer || applyCustomerToAccount)) setTimeout(() => this.openQuickSaleSettlement());
       if (returnToDashboard) await this.router.navigate(['/dashboard']);
     } catch (error) { this.saveAndCreateAnother = false; this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile salvare l\'operazione.'); }
     finally { this.saving.set(false); }
@@ -1000,6 +1066,7 @@ export class OperationsPage implements OnInit {
       this.ensurePaymentDoesNotExceedTotal(this.draft.amount ?? 0, this.paymentTotal(this.editingId()), this.paymentDraft.amount ?? 0);
       await this.paymentService.create({ operationId: this.editingId()!, amount: this.paymentDraft.amount!, paymentDate: this.paymentDraft.paymentDate, paymentMethodId: this.paymentDraft.paymentMethodId });
       this.paymentDraft = this.emptyPaymentDraft();
+      this.backofficePaymentOpen.set(false);
       this.payments.set(await this.paymentService.list());
     } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile aggiungere il pagamento.'); }
     finally { this.saving.set(false); }

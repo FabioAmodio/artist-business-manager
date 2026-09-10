@@ -19,6 +19,7 @@ export class NumberStepperComponent implements ControlValueAccessor, Validator {
   readonly decimals = input<number | undefined>(undefined);
   readonly disabled = input(false);
   readonly ariaLabel = input<string | undefined>(undefined);
+  readonly paidAmount = input<number | undefined>(undefined);
 
   protected value: number | null = null;
   protected displayValue = '';

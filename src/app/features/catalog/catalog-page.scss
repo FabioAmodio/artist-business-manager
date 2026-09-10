@@ -3,7 +3,7 @@
 .page-header { background: var(--color-surface); border-top: 3px solid var(--color-accent); padding: 1.25rem 0 .75rem; position: sticky; top: 0; z-index: var(--z-sticky); }
 .page-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .list-heading { border-bottom: 1px solid var(--color-border); margin-top: 1rem; padding-bottom: .75rem; }
-.catalog-form .form-heading { background: var(--color-surface); margin: -1.25rem -1.25rem .5rem; padding: 1rem 1.25rem .75rem; position: sticky; top: -1.25rem; z-index: 2; }
+.catalog-form .form-heading { background: var(--color-surface); margin: -1.25rem -1.25rem .5rem; padding: 0; position: sticky; top: -1.25rem; z-index: 2; }
 .list-heading span { color: var(--color-text-secondary); }
 .primary-button, .secondary-button, .danger-button, .text-button { border: 0; border-radius: var(--radius-base); cursor: pointer; font: 600 .9rem var(--font-sans); padding: .75rem 1rem; }
 .primary-button { background: var(--color-primary-action-bg); color: var(--color-primary-action-text); }

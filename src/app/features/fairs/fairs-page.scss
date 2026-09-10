@@ -69,7 +69,7 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: 2px so
 .indicator-success { border-color: var(--color-status-success); color: var(--color-status-success); }
 .indicator-error { border-color: var(--color-status-error); color: var(--color-status-error); }
 .row-actions { display: flex; gap: .25rem; flex-shrink: 0; }
-.fair-form .form-heading { background: var(--color-surface); margin: -1.5rem -1.5rem .5rem; padding: 1.25rem 1.5rem .75rem; position: sticky; top: -1.5rem; z-index: 2; }
+.fair-form .form-heading { background: var(--color-surface); margin: -1.5rem -1.5rem .5rem; padding: 0; position: sticky; top: -1.5rem; z-index: 2; }
 @media (max-width: 1180px) { .fair-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .fair-indicators { grid-column: 1 / -2; } .fair-row > * { min-width: 0; } .fair-money span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } .fair-row { grid-template-columns: 1fr; } .fair-indicators { grid-column: auto; } .fair-money { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 699px) {

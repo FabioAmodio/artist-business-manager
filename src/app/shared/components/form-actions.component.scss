@@ -7,9 +7,14 @@
 
 .form-actions-bar {
   align-items: center;
+  background: color-mix(in srgb, var(--color-accent-lighter) 22%, var(--color-surface-secondary));
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   display: flex;
   gap: .75rem;
   justify-content: space-between;
+  min-height: 2.75rem;
+  padding: .35rem .5rem;
   width: 100%;
 }
 
@@ -20,10 +25,14 @@
 }
 
 .form-actions-title ::ng-deep h2 {
+  color: var(--color-heading);
+  font-size: 1.05rem;
+  line-height: 1.2;
   margin: 0;
+  max-height: 2.52em;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .form-actions-bar button {
@@ -38,28 +47,39 @@
   width: 2.25rem;
 }
 
-.cancel-button {
+.form-actions-bar .quick-sale-add-button {
   background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  flex: 0 0 2rem;
+  font: 700 1.35rem/1 var(--font-sans);
+  height: 2rem;
+  margin: 0;
+  width: 2rem;
+}
+
+.cancel-button {
+  background: var(--color-primary-action-bg);
+  border: 1px solid var(--color-primary-action-bg);
+  color: var(--color-primary-action-text);
 }
 
 .cancel-button:hover, .cancel-button:focus-visible {
-  background: var(--color-surface-tertiary);
-  border-color: var(--color-focus-ring);
+  background: var(--color-primary-action-bg-hover);
+  border-color: var(--color-primary-action-bg-hover);
 }
 
 .save-button {
   overflow: visible;
   position: relative;
   isolation: isolate;
-  background: var(--color-primary-action-bg);
-  border: 1px solid var(--color-primary-action-bg);
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
   color: var(--color-primary-action-text);
 }
 
 .save-button.long-press-enabled::after {
-  background: color-mix(in srgb, var(--color-primary-action-bg) 32%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 32%, transparent);
   border-radius: 50%;
   content: '';
   inset: 0;
@@ -84,7 +104,7 @@
 }
 
 .save-button:hover, .save-button:focus-visible {
-  background: var(--color-primary-action-bg-hover);
+  background: var(--color-accent-light);
 }
 
 .save-button:disabled {
