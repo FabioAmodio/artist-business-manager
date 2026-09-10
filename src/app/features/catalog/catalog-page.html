@@ -98,9 +98,9 @@
           <div class="form-grid">
             <label class="wide">Nome <input name="name" required [(ngModel)]="productDraft.name" /></label>
             <label>Prezzo suggerito <app-number-stepper name="suggestedPrice" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="productDraft.suggestedPrice" /></label>
-            <label class="checkbox-label"><input name="active" type="checkbox" [(ngModel)]="productDraft.active" /> Disponibile</label>
-            <label class="full-width">Tag <input name="tags" [(ngModel)]="productTagText" placeholder="fiera, novita" /></label>
-            <label class="full-width">Descrizione <textarea name="description" rows="4" [(ngModel)]="productDraft.description"></textarea></label>
+            <label class="checkbox-label"><span class="checkbox-label-spacer" aria-hidden="true">&nbsp;</span><span class="checkbox-label-control"><input name="active" type="checkbox" [(ngModel)]="productDraft.active" /> Disponibile</span></label>
+            <label class="full-width product-tags-field">Tag <input name="tags" [(ngModel)]="productTagText" placeholder="fiera, novita" /></label>
+            <label class="wide">Descrizione <textarea name="description" rows="4" [(ngModel)]="productDraft.description"></textarea></label>
           </div>
           @if (editingId()) {
             <section class="linked-lots" aria-labelledby="catalog-product-linked-lots-title">
@@ -121,7 +121,7 @@
           <div class="form-grid">
             <label>Codice <input name="code" required [(ngModel)]="serviceDraft.code" /></label>
             <label class="wide">Descrizione <input name="description" required [(ngModel)]="serviceDraft.description" /></label>
-            <label class="checkbox-label"><input name="serviceActive" type="checkbox" [(ngModel)]="serviceDraft.active" /> Disponibile</label>
+            <label class="checkbox-label"><span class="checkbox-label-spacer" aria-hidden="true">&nbsp;</span><span class="checkbox-label-control"><input name="serviceActive" type="checkbox" [(ngModel)]="serviceDraft.active" /> Disponibile</span></label>
           </div>
         </form>
       }
@@ -132,7 +132,7 @@
           <div class="form-grid">
             <label class="wide">Nome <input name="bundleName" required [(ngModel)]="bundleDraft.name" /></label>
             <label>Prezzo pacchetto <app-number-stepper name="bundlePrice" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="bundleDraft.bundlePrice" /></label>
-            <label class="checkbox-label"><input name="bundleActive" type="checkbox" [(ngModel)]="bundleDraft.active" /> Disponibile</label>
+            <label class="checkbox-label"><span class="checkbox-label-spacer" aria-hidden="true">&nbsp;</span><span class="checkbox-label-control"><input name="bundleActive" type="checkbox" [(ngModel)]="bundleDraft.active" /> Disponibile</span></label>
             <label class="full-width">Descrizione <textarea name="bundleDescription" rows="3" [(ngModel)]="bundleDraft.description"></textarea></label>
           </div>
 
