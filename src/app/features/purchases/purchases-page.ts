@@ -17,6 +17,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 type PurchaseSortKey = 'date' | 'description' | 'supplier' | 'amount' | 'balance';
 
@@ -28,6 +29,7 @@ type PurchaseSortKey = 'date' | 'description' | 'supplier' | 'amount' | 'balance
   styleUrl: './purchases-page.scss',
 })
 export class PurchasesPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(PurchaseService);
@@ -186,7 +188,7 @@ export class PurchasesPage implements OnInit {
   }
 
   protected async remove(purchase: Purchase): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${purchase.description}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${purchase.description}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(purchase.id);
@@ -242,7 +244,7 @@ export class PurchasesPage implements OnInit {
   }
 
   protected async removeLot(lot: Lot): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${lot.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${lot.name}"?`))) return;
     await this.lotService.delete(lot.id);
     this.lots.set(await this.lotService.list());
   }

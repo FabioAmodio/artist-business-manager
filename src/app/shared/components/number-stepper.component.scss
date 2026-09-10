@@ -26,6 +26,7 @@
   flex: 0 0 2.5rem;
   font: 700 1.1rem/1 var(--font-sans);
   min-height: 2.5rem;
+  max-width: 2.0rem;
 }
 
 .stepper-decrement { border-right: 1px solid var(--color-border); }
@@ -66,4 +67,8 @@
 .stepper-input:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: -2px;
+}
+
+@media (max-width: 699px) {
+  .stepper-input { font-size: 16px !important; }
 }

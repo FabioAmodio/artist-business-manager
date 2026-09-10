@@ -1,0 +1,10 @@
+@if (confirmation.request(); as request) {
+  <dialog #dialog class="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message" (cancel)="cancel($event)">
+    <h2 id="confirm-dialog-title">{{ request.title }}</h2>
+    <p id="confirm-dialog-message">{{ request.message }}</p>
+    <div class="confirm-dialog-actions">
+      <button type="button" class="text-button" (click)="confirmation.answer(false)">Annulla</button>
+      <button type="button" class="primary-button" (click)="confirmation.answer(true)">Conferma</button>
+    </div>
+  </dialog>
+}

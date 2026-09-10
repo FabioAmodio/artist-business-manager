@@ -11,6 +11,7 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,6 +21,7 @@ import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.mo
   styleUrl: './lots-page.scss',
 })
 export class LotsPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly service = inject(LotService);
   private readonly operationService = inject(OperationService);
   private readonly productService = inject(ProductService);
@@ -112,7 +114,7 @@ export class LotsPage implements OnInit {
   }
 
   protected async remove(lot: Lot): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${lot.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${lot.name}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(lot.id);

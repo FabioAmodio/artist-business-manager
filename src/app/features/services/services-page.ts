@@ -7,6 +7,7 @@ import type { Service } from '../../domain/models/service';
 import { FormActionsComponent } from '../../shared/components/form-actions.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,6 +17,7 @@ import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.mo
   styleUrl: './services-page.scss',
 })
 export class ServicesPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly service = inject(ServiceService);
   private readonly operationService = inject(OperationService);
   protected readonly services = signal<readonly Service[]>([]);
@@ -53,7 +55,7 @@ export class ServicesPage implements OnInit {
   }
 
   protected async remove(service: Service): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${service.description}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${service.description}"?`))) return;
     this.resetMessages();
     try { await this.service.delete(service.id); this.successMessage.set('Servizio eliminato logicamente.'); await this.load(); }
     catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare il servizio.'); }

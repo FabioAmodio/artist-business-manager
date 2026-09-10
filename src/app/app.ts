@@ -11,9 +11,11 @@ import { ActiveFairService } from './core/event/active-fair.service';
 import { APP_ENVIRONMENT } from './core/configuration/environment.tokens';
 import { PersistenceService } from './application/persistence/persistence.service';
 import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
+import { ConfirmDialogComponent } from './shared/components/confirm-dialog.component';
+import { ConfirmDialogService } from './shared/components/confirm-dialog.service';
 
 @Component({
-  imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent],
+  imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent, ConfirmDialogComponent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -26,6 +28,7 @@ export class App {
   protected readonly environment = inject(APP_ENVIRONMENT);
   protected readonly persistence = inject(PersistenceService);
   protected readonly firebaseAuth = inject(FirebaseAuthService);
+  private readonly confirmation = inject(ConfirmDialogService);
   protected readonly menuOpen = signal(false);
   protected readonly pullDistance = signal(0);
   protected readonly refreshing = signal(false);
@@ -82,7 +85,7 @@ export class App {
   }
   protected async leaveForcedFairMode(): Promise<void> {
     const fair = this.activeFair.forcedFair();
-    if (!fair || !window.confirm(`Uscire dalla modalità fiera forzata "${fair.name}"?`)) return;
+    if (!fair || !(await this.confirmation.confirm(`Uscire dalla modalità fiera forzata "${fair.name}"?`))) return;
     await this.activeFair.clearForcedFair();
   }
   protected async updateApp(): Promise<void> {

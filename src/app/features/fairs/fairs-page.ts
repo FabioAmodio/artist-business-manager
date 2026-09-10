@@ -14,6 +14,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 type FairSortKey = 'name' | 'year' | 'startDate' | 'balance';
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
@@ -26,6 +27,7 @@ type CoverageFilter = 'all' | 'covered' | 'not-covered';
   styleUrl: './fairs-page.scss',
 })
 export class FairsPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(FairService);
@@ -185,7 +187,7 @@ export class FairsPage implements OnInit {
   }
 
   protected async remove(fair: Fair): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente la fiera "${fair.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente la fiera "${fair.name}"?`))) return;
     this.resetMessages();
     try { await this.service.delete(fair.id); this.successMessage.set('Fiera eliminata logicamente.'); await this.load(); }
     catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile eliminare la fiera.'); }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DatePipe } from '@angular/common';
 import { TrashService, type TrashEntry } from '../../application/trash/trash.service';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 import { AppStateService } from '../../core/state/app-state.service';
 
 @Component({
@@ -12,6 +13,7 @@ import { AppStateService } from '../../core/state/app-state.service';
   styleUrl: './trash-page.scss',
 })
 export class TrashPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly service = inject(TrashService);
   protected readonly appState = inject(AppStateService);
   protected readonly entries = signal<readonly TrashEntry[]>([]);
@@ -36,13 +38,13 @@ export class TrashPage implements OnInit {
   }
   protected async restore(entry: TrashEntry): Promise<void> { await this.runAction([entry], false); }
   protected async deletePermanent(entry: TrashEntry): Promise<void> {
-    if (!window.confirm(`Eliminare definitivamente "${entry.label}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare definitivamente "${entry.label}"?`))) return;
     await this.runAction([entry], true);
   }
   protected async restoreSelected(): Promise<void> { await this.runAction(this.selectedEntries(), false); }
   protected async deleteSelected(): Promise<void> {
     const selected = this.selectedEntries();
-    if (!selected.length || !window.confirm(`Eliminare definitivamente ${selected.length} elementi?`)) return;
+    if (!selected.length || !(await this.confirmation.confirm(`Eliminare definitivamente ${selected.length} elementi?`))) return;
     await this.runAction(selected, true);
   }
 

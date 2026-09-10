@@ -22,6 +22,7 @@ import { NumberStepperComponent } from '../../shared/components/number-stepper.c
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 interface BundleDraftItem {
   id: string;
@@ -41,6 +42,7 @@ type CatalogSortKey = 'name' | 'price' | 'sold' | 'revenue';
   styleUrl: './catalog-page.scss',
 })
 export class CatalogPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly productService = inject(ProductService);
   private readonly serviceService = inject(ServiceService);
   private readonly bundleService = inject(BundleService);
@@ -372,7 +374,7 @@ export class CatalogPage implements OnInit {
   }
 
   protected async removeLot(lot: Lot): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${lot.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${lot.name}"?`))) return;
     this.resetMessages();
     try {
       await this.lotService.delete(lot.id);
@@ -447,7 +449,7 @@ export class CatalogPage implements OnInit {
   }
 
   protected async removeBundle(bundle: Bundle): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${bundle.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${bundle.name}"?`))) return;
     this.resetMessages();
     try {
       await this.bundleService.delete(bundle.id);
@@ -463,7 +465,7 @@ export class CatalogPage implements OnInit {
       this.errorMessage.set(`Impossibile eliminare il ${type}: e ancora in uso.`);
       return;
     }
-    if (!window.confirm(`Eliminare logicamente "${name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${name}"?`))) return;
     this.resetMessages();
     try {
       await remove();

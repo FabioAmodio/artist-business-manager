@@ -21,6 +21,8 @@ export class FormActionsComponent {
 
   protected startHold(event: PointerEvent): void {
     if (!this.longPressEnabled() || this.disabled() || this.saving() || event.pointerType === 'mouse') return;
+    event.preventDefault();
+    event.stopPropagation();
     this.longPressConsumed = false;
     this.holding.set(true);
     this.holdTimer = setTimeout(() => {
@@ -33,6 +35,8 @@ export class FormActionsComponent {
 
   protected endHold(event: Event): void {
     if (!this.holding() && !this.holdTimer) return;
+    event.preventDefault();
+    event.stopPropagation();
     if (event.type === 'pointercancel' || event.type === 'pointerleave') this.longPressConsumed = false;
     this.clearHold();
   }
@@ -46,6 +50,12 @@ export class FormActionsComponent {
       return;
     }
     this.save.emit();
+  }
+
+  protected blockLongPressContextMenu(event: MouseEvent): void {
+    if (!this.longPressEnabled()) return;
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   private clearHold(): void {

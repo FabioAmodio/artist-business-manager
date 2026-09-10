@@ -28,6 +28,7 @@ import { ActiveFairService } from '../../core/event/active-fair.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 interface PaymentDraft {
   amount?: number;
@@ -103,6 +104,7 @@ export class OperationsPage implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly serviceService = inject(ServiceService);
   private readonly bundleService = inject(BundleService);
+  private readonly confirmation = inject(ConfirmDialogService);
   private saveAndCreateAnother = false;
 
   protected readonly operations = signal<readonly Operation[]>([]);
@@ -521,7 +523,7 @@ export class OperationsPage implements OnInit {
 
   protected async removeQuickSaleSettlementItem(index: number): Promise<void> {
     const item = this.quickSaleSettlementItems()[index];
-    if (!item || !window.confirm(`Cancellare la vendita "${item.operation.title}"?`)) return;
+    if (!item || !(await this.confirmation.confirm(`Cancellare la vendita "${item.operation.title}"?`))) return;
     await this.deleteSettlementOperation(item.operation);
     const remaining = this.quickSaleSettlementItems().filter((_, itemIndex) => itemIndex !== index);
     this.quickSaleSettlementItems.set(remaining);
@@ -530,9 +532,13 @@ export class OperationsPage implements OnInit {
     else await this.loadOperations();
   }
 
+  protected quickSaleSettlementLeftActions(index: number): SwipeAction[] {
+    return [{ key: 'delete-settlement-sale', icon: '🗑', label: 'Cancella', kind: 'auto', variant: 'danger', run: () => void this.removeQuickSaleSettlementItem(index) }];
+  }
+
   protected async removeAllQuickSaleSettlementItems(): Promise<void> {
     const items = this.quickSaleSettlementItems();
-    if (!items.length || !window.confirm('Cancellare tutte le vendite?')) return;
+    if (!items.length || !(await this.confirmation.confirm('Cancellare tutte le vendite?'))) return;
     for (const item of items) await this.deleteSettlementOperation(item.operation);
     this.closeQuickSaleSettlement();
     await this.loadOperations();
@@ -977,7 +983,7 @@ export class OperationsPage implements OnInit {
   }
 
   protected async remove(operation: Operation): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${operation.title}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${operation.title}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(operation.id);
@@ -1000,7 +1006,7 @@ export class OperationsPage implements OnInit {
   }
 
   protected async removePayment(payment: Payment): Promise<void> {
-    if (!window.confirm(`Eliminare il pagamento di ${payment.amount.toFixed(2)} €?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare il pagamento di ${payment.amount.toFixed(2)} €?`))) return;
     await this.paymentService.delete(payment.id);
     this.payments.set(await this.paymentService.list());
   }

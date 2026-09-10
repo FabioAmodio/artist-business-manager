@@ -9,6 +9,7 @@ import { FormActionsComponent } from '../../shared/components/form-actions.compo
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,6 +19,7 @@ import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.mo
   styleUrl: './payment-methods-page.scss',
 })
 export class PaymentMethodsPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly service = inject(PaymentMethodService);
   private readonly paymentService = inject(PaymentService);
   protected readonly paymentMethods = signal<readonly PaymentMethod[]>([]);
@@ -76,7 +78,7 @@ export class PaymentMethodsPage implements OnInit {
   }
 
   protected async remove(paymentMethod: PaymentMethod): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${paymentMethod.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${paymentMethod.name}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(paymentMethod.id);

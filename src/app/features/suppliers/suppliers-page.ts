@@ -9,6 +9,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 type SupplierSortKey = 'name' | 'type';
 
@@ -20,6 +21,7 @@ type SupplierSortKey = 'name' | 'type';
   styleUrl: './suppliers-page.scss',
 })
 export class SuppliersPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly service = inject(SupplierService);
   private readonly purchaseService = inject(PurchaseService);
   protected readonly suppliers = signal<readonly Party[]>([]);
@@ -110,7 +112,7 @@ export class SuppliersPage implements OnInit {
   }
 
   protected async remove(supplier: Party): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${supplier.displayName}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${supplier.displayName}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(supplier.id);

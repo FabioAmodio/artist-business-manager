@@ -12,6 +12,7 @@ import { ListFilterPanelComponent } from '../../shared/components/list-filter-pa
 import { NumberStepperComponent } from '../../shared/components/number-stepper.component';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 type ClientSortKey = 'name' | 'purchases' | 'spending';
 
@@ -23,6 +24,7 @@ type ClientSortKey = 'name' | 'purchases' | 'spending';
   styleUrl: './clients-page.scss',
 })
 export class ClientsPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(ClientService);
@@ -148,7 +150,7 @@ export class ClientsPage implements OnInit {
   }
 
   protected async remove(client: Party): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${client.displayName}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${client.displayName}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(client.id);

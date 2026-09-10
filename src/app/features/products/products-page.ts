@@ -16,6 +16,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,6 +26,7 @@ import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.mo
   styleUrl: './products-page.scss',
 })
 export class ProductsPage implements OnInit {
+  private readonly confirmation = inject(ConfirmDialogService);
   private readonly service = inject(ProductService);
   private readonly lotService = inject(LotService);
   private readonly operationService = inject(OperationService);
@@ -142,7 +144,7 @@ export class ProductsPage implements OnInit {
   }
 
   protected async remove(product: Product): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${product.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${product.name}"?`))) return;
     this.resetMessages();
     try {
       await this.service.delete(product.id);
@@ -197,7 +199,7 @@ export class ProductsPage implements OnInit {
   }
 
   protected async removeLot(lot: Lot): Promise<void> {
-    if (!window.confirm(`Eliminare logicamente "${lot.name}"?`)) return;
+    if (!(await this.confirmation.confirm(`Eliminare logicamente "${lot.name}"?`))) return;
     await this.lotService.delete(lot.id);
     if (this.isDefaultLot(lot)) await this.service.setDefaultLot(lot.productId, undefined);
     this.lots.set(await this.lotService.list());

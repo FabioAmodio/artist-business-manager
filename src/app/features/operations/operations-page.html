@@ -219,14 +219,13 @@
   }
   @if (quickSaleSettlementOpen()) {
     <dialog #quickSaleSettlementDialog class="quick-sale-settlement-dialog" aria-labelledby="quick-sale-settlement-title" (cancel)="$event.preventDefault()">
-      <h2 id="quick-sale-settlement-title">Riepilogo vendite</h2>
-      <div class="quick-sale-settlement-toolbar"><span>{{ quickSaleSettlementItems().length }} vendite</span><button class="text-button" type="button" (click)="removeAllQuickSaleSettlementItems()">Cancella tutte</button></div>
+      <h2 id="quick-sale-settlement-title">Riepilogo <strong>{{ quickSaleSettlementItems().length }}</strong> vendite</h2>
       <div class="quick-sale-settlement-list">
         @for (item of quickSaleSettlementItems(); track item.operation.id; let index = $index) {
-          <div class="quick-sale-settlement-row"><button class="settlement-delete-button" type="button" aria-label="Cancella vendita" title="Cancella vendita" (click)="removeQuickSaleSettlementItem(index)">×</button><span>{{ item.operation.title }}</span><app-number-stepper name="settlement-amount-{{ item.operation.id }}" [step]="1" [decimals]="2" [min]="0" [ngModel]="item.amount" (ngModelChange)="updateQuickSaleSettlementAmount(index, $event)" /></div>
+          <app-swipe-row class="quick-sale-settlement-swipe-row" [id]="'settlement-' + item.operation.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [leftActions]="quickSaleSettlementLeftActions(index)"><div class="quick-sale-settlement-row"><span>{{ item.operation.title }}</span><app-number-stepper name="settlement-amount-{{ item.operation.id }}" [step]="1" [decimals]="2" [min]="0" [ngModel]="item.amount" (ngModelChange)="updateQuickSaleSettlementAmount(index, $event)" /></div></app-swipe-row>
         }
       </div>
-      <p class="quick-sale-settlement-total">Totale: <strong>{{ quickSaleSettlementTotal().toFixed(2) }} €</strong></p>
+      <div class="quick-sale-settlement-total"><button class="text-button" type="button" (click)="removeAllQuickSaleSettlementItems()">Cancella tutte</button><span>Totale: <strong>{{ quickSaleSettlementTotal().toFixed(2) }} €</strong></span></div>
       @if (quickSaleSettlementPaymentOpen()) {
         <div class="quick-sale-settlement-payment">
           <div class="quick-sale-settlement-payment-fields"><label>Modalità <select name="settlement-payment-method" [ngModel]="quickSaleSettlementPaymentMethodId()" (ngModelChange)="quickSaleSettlementPaymentMethodId.set($event)">@for (paymentMethod of paymentMethods(); track paymentMethod.id) { <option [value]="paymentMethod.id">{{ paymentMethod.name }}</option> }</select></label><label>Importo <app-number-stepper name="settlement-payment-amount" [step]="1" [decimals]="2" [min]="0" [max]="quickSaleSettlementTotal()" [ngModel]="quickSaleSettlementPaymentAmount()" (ngModelChange)="quickSaleSettlementPaymentAmount.set($event ?? 0)" /></label></div>
