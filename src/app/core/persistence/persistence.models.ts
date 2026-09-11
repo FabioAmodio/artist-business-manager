@@ -10,8 +10,6 @@ export interface PersistenceSettings {
   readonly driveFolderId?: string;
   readonly driveClientId?: string;
   readonly listInteractionMode?: ListInteractionMode;
-  readonly dueSoonDays?: number;
-  readonly catalogUsageFairCount?: number;
   readonly updatedAt: string;
 }
 

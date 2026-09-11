@@ -10,9 +10,10 @@ import type { Product } from '../../domain/models/product';
 import type { Purchase } from '../../domain/models/purchase';
 import type { Service } from '../../domain/models/service';
 import type { SyncOperation } from '../../domain/models/sync-operation';
+import type { WorkflowSettings } from '../../domain/models/workflow-settings';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 23;
+export const DATABASE_VERSION = 24;
 
 interface LegacyFair {
   readonly id: string;
@@ -53,6 +54,7 @@ export class AppDatabase extends Dexie {
   readonly services!: Table<Service, string>;
   readonly syncOperations!: Table<SyncOperation, string>;
   readonly appSettings!: Table<{ id: string; source: string; directoryHandle?: FileSystemDirectoryHandle; updatedAt: string }, string>;
+  readonly workflowSettings!: Table<WorkflowSettings, string>;
 
   constructor(databaseName = DATABASE_NAME) {
     super(databaseName);
@@ -223,6 +225,7 @@ export class AppDatabase extends Dexie {
       purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
       services: 'id, code, description, system, updatedAt, deletedAt',
       appSettings: 'id, updatedAt',
+      workflowSettings: 'id, updatedAt',
       syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
     }).upgrade(async (transaction) => {
       const operations = await transaction.table('operations').toArray() as Operation[];

@@ -109,7 +109,7 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   private isSupportedCollection(collection: string): boolean {
-    return collection === 'appSettings' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services' || collection === 'syncOperations';
+    return collection === 'appSettings' || collection === 'workflowSettings' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services' || collection === 'syncOperations';
   }
 
   private async recordSyncOperation(collection: string, after: Record<string, unknown>, before?: Record<string, unknown>): Promise<void> {

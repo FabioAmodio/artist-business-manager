@@ -6,6 +6,7 @@ import { SyncStatusService } from '../../core/synchronization/sync-status.servic
 import { PaymentMethodService } from '../payment-methods/payment-method.service';
 import { ServiceService } from '../services/service.service';
 import type { SyncOperation } from '../../domain/models/sync-operation';
+import type { WorkflowSettings } from '../../domain/models/workflow-settings';
 import { IndexedDbProvider } from '../../core/storage/indexed-db.provider';
 import { WorkspaceService } from '../../core/firebase/workspace.service';
 import { FirebaseAuthService } from '../../core/firebase/firebase-auth.service';
@@ -14,9 +15,10 @@ import { mergeConcurrentRecord } from '../../domain/shared/concurrent-record-mer
 
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
+const WORKFLOW_SETTINGS_COLLECTION = 'workflowSettings';
 const TEST_DATASET_INITIALIZED_ID = 'test-dataset-initialized';
 const DATA_FILE_NAME = 'artist-business-manager-data.json';
-const DATA_COLLECTIONS = ['bundles', 'fairs', 'fairSeries', 'fairEditions', 'lots', 'operations', 'paymentMethods', 'payments', 'parties', 'products', 'purchases', 'services'];
+const DATA_COLLECTIONS = ['bundles', 'fairs', 'fairSeries', 'fairEditions', 'lots', 'operations', 'paymentMethods', 'payments', 'parties', 'products', 'purchases', 'services', WORKFLOW_SETTINGS_COLLECTION];
 const SYSTEM_COLLECTIONS = new Set(['paymentMethods', 'services']);
 const SYNC_OPERATIONS_COLLECTION = 'syncOperations';
 const DRIVE_FILE_MIME = 'application/json';
@@ -80,10 +82,11 @@ export class PersistenceService {
 
   async initialize(): Promise<void> {
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    const workflowSettings = await this.loadWorkflowSettings(settings as (PersistenceSettings & { dueSoonDays?: number; catalogUsageFairCount?: number }) | null);
     this.mode.set(settings?.mode ?? this.environment.defaultPersistenceMode);
     this.listInteractionMode.set(settings?.listInteractionMode ?? 'swipe');
-    this.dueSoonDays.set(this.normalizeDueSoonDays(settings?.dueSoonDays));
-    this.catalogUsageFairCount.set(this.normalizeCatalogUsageFairCount(settings?.catalogUsageFairCount));
+    this.dueSoonDays.set(workflowSettings.dueSoonDays);
+    this.catalogUsageFairCount.set(workflowSettings.catalogUsageFairCount);
     this.storage.setMode?.(this.mode());
     this.source.set(this.environment.environmentName === 'release' || this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
     this.directoryHandle = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.directoryHandle;
@@ -106,15 +109,15 @@ export class PersistenceService {
 
   async setDueSoonDays(days: number): Promise<void> {
     const dueSoonDays = this.normalizeDueSoonDays(days);
-    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
-    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, dueSoonDays, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    const current = await this.getWorkflowSettings();
+    await this.storage.put(WORKFLOW_SETTINGS_COLLECTION, { ...current, id: SETTINGS_ID, dueSoonDays, updatedAt: new Date().toISOString() } satisfies WorkflowSettings);
     this.dueSoonDays.set(dueSoonDays);
   }
 
   async setCatalogUsageFairCount(value: number): Promise<void> {
     const catalogUsageFairCount = this.normalizeCatalogUsageFairCount(value);
-    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
-    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, catalogUsageFairCount, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    const current = await this.getWorkflowSettings();
+    await this.storage.put(WORKFLOW_SETTINGS_COLLECTION, { ...current, id: SETTINGS_ID, catalogUsageFairCount, updatedAt: new Date().toISOString() } satisfies WorkflowSettings);
     this.catalogUsageFairCount.set(catalogUsageFairCount);
   }
 
@@ -780,8 +783,38 @@ export class PersistenceService {
 
   private async saveSettings(source: PersistenceSettings['source'], directoryHandle?: FileSystemDirectoryHandle, driveFolderId?: string, driveClientId?: string): Promise<void> {
     this.driveFolderId = driveFolderId ?? (source === 'google-drive' ? this.driveFolderId : undefined);
-    await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source, directoryHandle, driveFolderId: this.driveFolderId, driveClientId: driveClientId ?? this.driveClientId, dueSoonDays: this.dueSoonDays(), catalogUsageFairCount: this.catalogUsageFairCount(), updatedAt: new Date().toISOString() });
+    await this.storage.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source, directoryHandle, driveFolderId: this.driveFolderId, driveClientId: driveClientId ?? this.driveClientId, updatedAt: new Date().toISOString() });
     this.source.set(source);
+  }
+
+  private async loadWorkflowSettings(legacySettings: (PersistenceSettings & { dueSoonDays?: number; catalogUsageFairCount?: number }) | null): Promise<WorkflowSettings> {
+    const stored = await this.storage.get<WorkflowSettings>(WORKFLOW_SETTINGS_COLLECTION, SETTINGS_ID);
+    if (stored) return {
+      ...stored,
+      dueSoonDays: this.normalizeDueSoonDays(stored.dueSoonDays),
+      catalogUsageFairCount: this.normalizeCatalogUsageFairCount(stored.catalogUsageFairCount),
+    };
+    const workflowSettings: WorkflowSettings = {
+      id: SETTINGS_ID,
+      dueSoonDays: this.normalizeDueSoonDays(legacySettings?.dueSoonDays),
+      catalogUsageFairCount: this.normalizeCatalogUsageFairCount(legacySettings?.catalogUsageFairCount),
+      updatedAt: new Date().toISOString(),
+    };
+    await this.storage.put(WORKFLOW_SETTINGS_COLLECTION, workflowSettings);
+    return workflowSettings;
+  }
+
+  private async getWorkflowSettings(): Promise<WorkflowSettings> {
+    const stored = await this.storage.get<WorkflowSettings>(WORKFLOW_SETTINGS_COLLECTION, SETTINGS_ID);
+    if (stored) return stored;
+    const workflowSettings: WorkflowSettings = {
+      id: SETTINGS_ID,
+      dueSoonDays: this.dueSoonDays(),
+      catalogUsageFairCount: this.catalogUsageFairCount(),
+      updatedAt: new Date().toISOString(),
+    };
+    await this.storage.put(WORKFLOW_SETTINGS_COLLECTION, workflowSettings);
+    return workflowSettings;
   }
 
   private normalizeDueSoonDays(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 365) : 7; }
