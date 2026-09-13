@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { APP_NAVIGATION_ITEMS, NavigationItem } from './app-navigation-config';
 import { AppStateService } from '../state/app-state.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 import { SyncStatusService } from '../synchronization/sync-status.service';
+import { NotificationService } from '../../application/notifications/notification.service';
+import { ActiveFairService } from '../event/active-fair.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,8 +21,15 @@ export class MobileActionBarComponent {
   protected readonly persistence = inject(PersistenceService);
   protected readonly firebaseAuth = inject(FirebaseAuthService);
   protected readonly syncStatus = inject(SyncStatusService);
+  protected readonly notificationService = inject(NotificationService);
+  protected readonly activeFair = inject(ActiveFairService);
   protected readonly moreMenuOpen = signal(false);
-  protected readonly secondaryItems: readonly NavigationItem[] = APP_NAVIGATION_ITEMS.filter((item) => !['/dashboard', '/events', '/catalog', '/lots'].includes(item.path));
+  // In modalita fiera il Catalogo torna nel footer, quindi va escluso dal menu "Altro" (dove finiscono le Notifiche).
+  protected readonly secondaryItems = computed<readonly NavigationItem[]>(() => {
+    const hidden = new Set(['/dashboard', '/events', '/lots']);
+    if (this.activeFair.isForced()) hidden.add('/catalog');
+    return APP_NAVIGATION_ITEMS.filter((item) => !hidden.has(item.path));
+  });
 
   protected openQuickAction(): void {
     void this.router.navigate(['/sales'], { queryParams: { create: Date.now().toString() } });

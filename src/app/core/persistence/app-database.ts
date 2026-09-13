@@ -13,7 +13,7 @@ import type { SyncOperation } from '../../domain/models/sync-operation';
 import type { WorkflowSettings } from '../../domain/models/workflow-settings';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 24;
+export const DATABASE_VERSION = 25;
 
 interface LegacyFair {
   readonly id: string;
@@ -231,6 +231,27 @@ export class AppDatabase extends Dexie {
       const operations = await transaction.table('operations').toArray() as Operation[];
       await transaction.table('operations').bulkPut(operations.map((operation) => operation.workStatus && !operation.deliveryDate ? { ...operation, deliveryDate: operation.createdAt.slice(0, 10) } : operation));
     });
+    this.version(24).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
+      fairs: 'id, startDate, endDate, updatedAt, deletedAt',
+      fairSeries: 'id, name, updatedAt, deletedAt',
+      fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
+      lots: 'id, productId, purchaseId, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
+      paymentMethods: 'id, name, system, updatedAt, deletedAt',
+      payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
+      parties: 'id, type, displayName, email, updatedAt, deletedAt',
+      products: 'id, name, active, updatedAt, deletedAt',
+      purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
+      services: 'id, code, description, active, system, updatedAt, deletedAt',
+      appSettings: 'id, updatedAt',
+      workflowSettings: 'id, updatedAt',
+      syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
+    }).upgrade(async (transaction) => {
+      const services = await transaction.table('services').toArray() as Array<Service & { readonly active?: boolean }>;
+      await transaction.table('services').bulkPut(services.map((service) => ({ ...service, active: service.active ?? true })));
+    });
+    // v25: nuove tabelle notifiche, aggiunte come versione a se stante affinche i database gia migrati a v24 le ricevano.
     this.version(DATABASE_VERSION).stores({
       bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
@@ -245,10 +266,12 @@ export class AppDatabase extends Dexie {
       purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
       services: 'id, code, description, active, system, updatedAt, deletedAt',
       appSettings: 'id, updatedAt',
+      workflowSettings: 'id, updatedAt',
+      notifications: 'id, occurrenceKey, kind, entityId, updatedAt',
+      notificationStates: 'id, notificationId, status, snoozedUntil, updatedAt',
+      notificationEvaluationRuns: 'id, localDate, workspaceId, userId, status, updatedAt',
+      notificationStatsOutbox: 'id, localDate, workspaceId, updatedAt',
       syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
-    }).upgrade(async (transaction) => {
-      const services = await transaction.table('services').toArray() as Array<Service & { readonly active?: boolean }>;
-      await transaction.table('services').bulkPut(services.map((service) => ({ ...service, active: service.active ?? true })));
     });
   }
 

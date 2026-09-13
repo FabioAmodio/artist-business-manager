@@ -1,0 +1,36 @@
+<section class="notifications-page" aria-labelledby="notifications-title">
+  <app-page-header icon="🔔" title="Notifiche" />
+  <div class="list-heading"><h2 id="notifications-title">Notifiche</h2><span>{{ notificationService.notifications().length }} da gestire</span></div>
+  <p class="page-description">Scadenze rilevate durante l'ultimo controllo dell'applicazione.</p>
+
+  @if (notificationService.error()) {
+    <p class="status error" role="alert">{{ notificationService.error() }}</p>
+  }
+
+  @if (notificationService.evaluating()) {
+    <p class="status" role="status">Controllo notifiche in corso...</p>
+  } @else if (!notificationService.notifications().length) {
+    <p class="empty" role="status">Nessuna notifica da gestire.</p>
+  } @else {
+    <div class="notification-list">
+      @for (notification of notificationService.notifications(); track notification.id) {
+        <app-swipe-row [id]="notification.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="rightActions(notification.id)" [leftActions]="leftActions(notification.id)">
+          <article class="notification-item">
+            <div class="notification-copy">
+              <strong>{{ notification.title }}</strong>
+              <p>{{ notification.body }}</p>
+            </div>
+            @if (!isMobileSwipeMode()) {
+              <div class="notification-actions">
+                @if (notification.entityId) { <button class="icon-action" type="button" aria-label="Apri lavorazione" title="Apri lavorazione" (click)="openNotification(notification.id)">↗</button> }
+                <button class="icon-action" type="button" aria-label="Segna come fatta" title="Segna come fatta" (click)="markDone(notification.id)">✓</button>
+                <button class="icon-action" type="button" aria-label="Sposta a domani" title="Sposta a domani" (click)="snooze(notification.id)">◷</button>
+                <button class="icon-action" type="button" aria-label="Ignora notifica" title="Ignora notifica" (click)="dismiss(notification.id)">×</button>
+              </div>
+            }
+          </article>
+        </app-swipe-row>
+      }
+    </div>
+  }
+</section>

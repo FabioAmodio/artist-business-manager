@@ -7,6 +7,7 @@ import { APP_ENVIRONMENT } from '../../core/configuration/environment.tokens';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { FirebaseAuthService } from '../../core/firebase/firebase-auth.service';
 import { WorkspaceService } from '../../core/firebase/workspace.service';
+import { NotificationService } from '../../application/notifications/notification.service';
 
 type ResetTarget = 'local' | 'remote' | 'both';
 
@@ -23,6 +24,7 @@ export class SettingsPage implements OnInit {
   protected readonly firebaseAuth = inject(FirebaseAuthService);
   protected readonly workspace = inject(WorkspaceService);
   protected readonly environment = inject(APP_ENVIRONMENT);
+  private readonly notifications = inject(NotificationService);
   protected readonly resetStep = signal<0 | 1 | 2>(0);
   protected readonly resetCode = signal('');
   protected readonly resetError = signal('');
@@ -77,7 +79,10 @@ export class SettingsPage implements OnInit {
   protected async selectDueSoonDays(value: number | string): Promise<void> {
     const days = Number(value);
     if (!Number.isFinite(days)) return;
-    try { await this.persistence.setDueSoonDays(days); }
+    try {
+      await this.persistence.setDueSoonDays(days);
+      void this.notifications.recalculate().catch((error) => console.error('Notification recalculation failed:', error));
+    }
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare la soglia delle scadenze.'); }
   }
 

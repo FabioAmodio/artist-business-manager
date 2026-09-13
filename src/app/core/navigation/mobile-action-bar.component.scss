@@ -36,6 +36,48 @@
 
 .mobile-bar .more-trigger { background: transparent; }
 
+.notification-status-link,
+.notification-action { position: relative; }
+
+.notification-status-link {
+  align-items: center;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  font-size: 1.25rem;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.notification-badge {
+  align-items: center;
+  background: var(--color-status-error);
+  border: 2px solid var(--color-surface);
+  border-radius: 999px;
+  color: var(--color-text-inverse);
+  display: inline-flex;
+  font: 700 .62rem/1 var(--font-sans);
+  justify-content: center;
+  min-width: 1.05rem;
+  padding: .16rem .25rem;
+  position: absolute;
+  right: -.65rem;
+  top: -.55rem;
+}
+
+.notification-action .notification-badge {
+  border-color: var(--color-primary-action-bg);
+  right: .15rem;
+  top: -.1rem;
+}
+
+.notification-action > span:first-child { font-size: large; }
+
+.notification-action .notification-badge {
+  position: absolute;
+  right: 10px;
+  top: -7px;
+}
+
 .quick-status-dots { align-items: center; display: inline-flex; font: initial; gap: .28rem; height: 1.35rem; justify-content: center; line-height: 1; }
 .quick-status-dots i { background: var(--color-surface); border: 1px solid #fff; border-radius: 50%; display: block; height: .55rem; width: .55rem; }
 .quick-status-dots i.online, .quick-status-dots i.remote-synced { background: var(--color-status-success); }
@@ -48,6 +90,11 @@
   font: 600 .65rem var(--font-sans);
   line-height: 1;
   white-space: nowrap;
+}
+
+.mobile-bar > a.notification-action > span[aria-hidden="true"] {
+  font-size: large;
+  line-height: 1;
 }
 
 .mobile-bar .fab {
@@ -74,6 +121,20 @@
 .mobile-more-menu a { align-items: center; border: 1px solid transparent; border-radius: var(--radius-base); color: var(--color-text-primary); display: flex; gap: .65rem; min-height: 3rem; padding: .65rem .75rem; text-decoration: none; }
 .mobile-more-menu a:hover, .mobile-more-menu a:focus-visible { background: var(--color-surface-secondary); border-color: var(--color-border); }
 .mobile-more-menu a span { font-size: 1.2rem; width: 1.5rem; }
+
+.mobile-more-menu .notification-menu-item { grid-column: 1 / -1; }
+.notification-badge-inline {
+  align-items: center;
+  background: var(--color-status-error);
+  border-radius: 999px;
+  color: var(--color-text-inverse);
+  display: inline-flex;
+  font: 700 .68rem/1 var(--font-sans);
+  justify-content: center;
+  margin-left: .35rem;
+  min-width: 1.15rem;
+  padding: .18rem .3rem;
+}
 
 @media (max-width: 699px) {
   :host { display: block; }

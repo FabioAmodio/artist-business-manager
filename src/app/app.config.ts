@@ -18,6 +18,7 @@ import { PersistenceService } from './application/persistence/persistence.servic
 import { ActiveFairService } from './core/event/active-fair.service';
 import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
 import { WorkspaceService } from './core/firebase/workspace.service';
+import { NotificationService } from './application/notifications/notification.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -41,12 +42,14 @@ export const appConfig: ApplicationConfig = {
       const activeFair = inject(ActiveFairService);
       const firebaseAuth = inject(FirebaseAuthService);
       const workspace = inject(WorkspaceService);
+      const notifications = inject(NotificationService);
 
       return storage.open().then(
         async () => {
           await persistence.initialize();
           await activeFair.initialize();
           appState.notifyDatabaseReady();
+          void notifications.recalculate().catch((error) => console.error('Notification evaluation failed:', error));
           if (persistence.mode() === 'firestore') {
             void firebaseAuth.whenInitialized()
               .then(async (user) => {

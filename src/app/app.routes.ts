@@ -72,6 +72,11 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/deadlines/deadlines-page').then((m) => m.DeadlinesPage),
 	},
 	{
+		path: 'notifications',
+		data: { title: 'Notifiche' },
+		loadComponent: () => import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
+	},
+	{
 		path: 'settings',
 		data: { title: 'Impostazioni' },
 		loadComponent: () => import('./features/settings/settings-page').then((m) => m.SettingsPage),

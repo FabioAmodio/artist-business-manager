@@ -43,7 +43,7 @@ export class IndexedDbProvider implements IStorageProvider {
   async put<T>(_collection: string, _value: T): Promise<void> {
     if (this.database && this.isSupportedCollection(_collection)) {
       const previous = _collection === 'appSettings' || _collection === 'syncOperations' ? undefined : await this.database.table(_collection).get((_value as { id: EntityId }).id) as Record<string, unknown> | undefined;
-      if (_collection !== 'appSettings' && _collection !== 'syncOperations') {
+      if (!this.isLocalOnlyCollection(_collection)) {
         const table = this.database.table(_collection) as Table<Record<string, unknown>, string>;
         const queue = this.database.table('syncOperations') as Table<SyncOperation, string>;
         await this.database.transaction('rw', [table, queue], async () => {
@@ -65,7 +65,7 @@ export class IndexedDbProvider implements IStorageProvider {
     const table = this.database.table(_collection) as Table<Record<string, unknown>, string>;
     const value = await table.get(_id) as (DeleteMetadata & { readonly id: EntityId }) | undefined;
     if (value) {
-      if (_collection !== 'appSettings' && _collection !== 'syncOperations') {
+      if (!this.isLocalOnlyCollection(_collection)) {
         const next = { ...value, deletedAt: _metadata?.deletedAt ?? new Date().toISOString() };
         const queue = this.database.table('syncOperations') as Table<SyncOperation, string>;
         await this.database.transaction('rw', [table, queue], async () => {
@@ -90,7 +90,7 @@ export class IndexedDbProvider implements IStorageProvider {
     await this.database.transaction('rw', tables, async () => {
       await Promise.all(tables.map((table) => table.clear()));
     });
-    if (supported.some((collection) => collection !== 'appSettings')) this.syncStatus.notifyLocalChange();
+    if (supported.some((collection) => !this.isLocalOnlyCollection(collection))) this.syncStatus.notifyLocalChange();
   }
 
   async transaction<T>(_collections: readonly string[], work: () => Promise<T>): Promise<T> {
@@ -109,7 +109,11 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   private isSupportedCollection(collection: string): boolean {
-    return collection === 'appSettings' || collection === 'workflowSettings' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services' || collection === 'syncOperations';
+    return collection === 'appSettings' || collection === 'workflowSettings' || collection === 'notifications' || collection === 'notificationStates' || collection === 'notificationEvaluationRuns' || collection === 'notificationStatsOutbox' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services' || collection === 'syncOperations';
+  }
+
+  private isLocalOnlyCollection(collection: string): boolean {
+    return collection === 'appSettings' || collection === 'workflowSettings' || collection === 'notifications' || collection === 'notificationStates' || collection === 'notificationEvaluationRuns' || collection === 'notificationStatsOutbox' || collection === 'syncOperations';
   }
 
   private async recordSyncOperation(collection: string, after: Record<string, unknown>, before?: Record<string, unknown>): Promise<void> {

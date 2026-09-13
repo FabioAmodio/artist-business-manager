@@ -278,6 +278,33 @@ main.main-content:has(.dialog-backdrop) { overflow: visible; }
   margin-left: auto;
 }
 
+.footer-content > .notification-status-link {
+  align-items: center;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  font-size: 1.25rem;
+  justify-content: center;
+  margin-right: var(--spacing-1);
+  position: relative;
+  text-decoration: none;
+}
+
+.footer-content > .notification-status-link .notification-badge {
+  align-items: center;
+  background: var(--color-status-error);
+  border: 2px solid var(--color-surface);
+  border-radius: 999px;
+  color: var(--color-text-inverse);
+  display: inline-flex;
+  font: 700 .62rem/1 var(--font-sans);
+  justify-content: center;
+  min-width: 1.05rem;
+  padding: .16rem .25rem;
+  position: absolute;
+  right: -5px;
+  top: -5px;
+}
+
 .sync-status {
   border-left: 1px solid var(--color-border);
   padding-left: var(--spacing-3);

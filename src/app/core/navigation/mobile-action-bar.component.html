@@ -2,7 +2,11 @@
   <a routerLink="/dashboard">⌂<span>Home</span></a>
   <a routerLink="/events">◷<span>Eventi</span></a>
   <button class="fab" type="button" (click)="openQuickAction()" aria-label="Nuova operazione fiera">+</button>
-  <a routerLink="/catalog">□<span>Catalogo</span></a>
+  @if (activeFair.isForced()) {
+    <a routerLink="/catalog">□<span>Catalogo</span></a>
+  } @else {
+    <a class="notification-action" routerLink="/notifications" aria-label="Notifiche"><span aria-hidden="true">🔔</span>@if (notificationService.notifications().length) { <b class="notification-badge">{{ notificationService.notifications().length }}</b> }<span>Notifiche</span></a>
+  }
   <button class="more-trigger" type="button" (click)="toggleMoreMenu()" aria-label="Mostra altre voci di menu" aria-haspopup="menu" [attr.aria-expanded]="moreMenuOpen()"><span class="quick-status-dots" aria-hidden="true"><i [class.online]="appState.isOnline()"></i><i [class.firebase]="dataModeOnline()"></i><i [class]="syncIndicatorClass()"></i></span><span>Altro</span></button>
 </nav>
 
@@ -12,7 +16,10 @@
     <header><strong>Altre voci</strong><button type="button" (click)="closeMoreMenu()" aria-label="Chiudi menu">×</button></header>
     <div class="mobile-status" role="status" aria-live="polite"><span class="status-dot" [class.online]="appState.isOnline()"></span><span>{{ appState.isOnline() ? 'Rete disponibile' : 'Offline' }}</span><span class="mobile-sync-status">{{ syncLabel() }}</span></div>
     <nav>
-      @for (item of secondaryItems; track item.path) {
+      @if (activeFair.isForced()) {
+        <a routerLink="/notifications" (click)="closeMoreMenu()" role="menuitem" class="notification-menu-item"><span aria-hidden="true">🔔</span>Notifiche @if (notificationService.notifications().length) { <b class="notification-badge-inline">{{ notificationService.notifications().length }}</b> }</a>
+      }
+      @for (item of secondaryItems(); track item.path) {
         <a [routerLink]="item.path" (click)="closeMoreMenu()" role="menuitem"><span>{{ item.icon }}</span>{{ item.label }}</a>
       }
     </nav>

@@ -13,6 +13,7 @@ import { PersistenceService } from './application/persistence/persistence.servic
 import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog.component';
 import { ConfirmDialogService } from './shared/components/confirm-dialog.service';
+import { NotificationService } from './application/notifications/notification.service';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent, ConfirmDialogComponent],
@@ -28,6 +29,7 @@ export class App {
   protected readonly environment = inject(APP_ENVIRONMENT);
   protected readonly persistence = inject(PersistenceService);
   protected readonly firebaseAuth = inject(FirebaseAuthService);
+  protected readonly notificationService = inject(NotificationService);
   private readonly confirmation = inject(ConfirmDialogService);
   protected readonly menuOpen = signal(false);
   protected readonly pullDistance = signal(0);

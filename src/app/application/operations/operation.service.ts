@@ -1,12 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { OperationRepository } from '../../core/repositories/operation.repository';
 import type { Operation, OperationType } from '../../domain/models/operation';
+import { NotificationService } from '../notifications/notification.service';
 
 export type OperationInput = Pick<Operation, 'type' | 'title' | 'description' | 'partyId' | 'fairEditionId' | 'productId' | 'serviceId' | 'bundleId' | 'parentOperationId' | 'lotId' | 'customerName' | 'amount' | 'quantity' | 'operationDate' | 'notes' | 'workStatus' | 'deliveryDate' | 'needsReview'>;
 
 @Injectable({ providedIn: 'root' })
 export class OperationService {
   private readonly repository = inject(OperationRepository);
+  private readonly notifications = inject(NotificationService);
 
   list(type?: OperationType | 'all', query = ''): Promise<readonly Operation[]> {
     return this.repository.list({ type: type && type !== 'all' ? type : undefined, text: query || undefined });
@@ -24,6 +26,7 @@ export class OperationService {
       updatedAt: now,
     };
     await this.repository.save(operation);
+    this.triggerNotificationRecalculation();
     return operation;
   }
 
@@ -33,11 +36,14 @@ export class OperationService {
     if (!existing) throw new Error('Operazione non trovata.');
     const operation: Operation = { ...existing, ...input, updatedAt: new Date().toISOString() };
     await this.repository.save(operation);
+    this.triggerNotificationRecalculation();
     return operation;
   }
 
-  transitionWorkStatus(id: string, status: NonNullable<Operation['workStatus']>): Promise<Operation> {
-    return this.repository.transition(id, { status });
+  async transitionWorkStatus(id: string, status: NonNullable<Operation['workStatus']>): Promise<Operation> {
+    const operation = await this.repository.transition(id, { status });
+    this.triggerNotificationRecalculation();
+    return operation;
   }
 
   async advanceWorkStatus(id: string): Promise<Operation> {
@@ -48,11 +54,18 @@ export class OperationService {
         : operation.workStatus === 'completed' ? 'delivered'
         : null;
     if (!nextStatus) throw new Error('La lavorazione non puo essere avanzata ulteriormente.');
-    return this.repository.transition(id, { status: nextStatus });
+    const updated = await this.repository.transition(id, { status: nextStatus });
+    this.triggerNotificationRecalculation();
+    return updated;
   }
 
-  delete(id: string): Promise<void> {
-    return this.repository.softDelete(id);
+  async delete(id: string): Promise<void> {
+    await this.repository.softDelete(id);
+    this.triggerNotificationRecalculation();
+  }
+
+  private triggerNotificationRecalculation(): void {
+    void this.notifications.recalculate().catch((error) => console.error('Notification recalculation failed:', error));
   }
 
   private validate(input: OperationInput): void {

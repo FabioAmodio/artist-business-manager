@@ -61,6 +61,20 @@ service cloud.firestore {
         allow delete: if isOwner(workspaceId);
       }
 
+      // Notifiche calcolate lato client: scrittura/cancellazione ammesse solo ai membri con permesso di modifica del proprio workspace.
+      match /notifications/{notificationId} {
+        allow read: if membership(workspaceId);
+        allow create: if canEdit(workspaceId)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.updatedBy == request.auth.uid
+          && request.resource.data.version == 1;
+        allow update: if canEdit(workspaceId)
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.version == resource.data.version + 1
+          && request.resource.data.updatedBy == request.auth.uid;
+        allow delete: if canEdit(workspaceId);
+      }
+
       match /{collection}/{documentId} {
         allow read: if membership(workspaceId);
         allow create: if canEdit(workspaceId)
