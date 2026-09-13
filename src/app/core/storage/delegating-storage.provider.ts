@@ -8,12 +8,14 @@ import type {
   StorageHealth,
 } from './storage-provider';
 import { IndexedDbProvider } from './indexed-db.provider';
+import { FirestoreProvider } from './firestore.provider';
 
 const LOCAL_COLLECTIONS = new Set(['appSettings', 'syncOperations']);
 
 @Injectable()
 export class DelegatingStorageProvider implements IStorageProvider {
   private readonly offline = inject(IndexedDbProvider);
+  private readonly firestore = inject(FirestoreProvider);
   private mode: PersistenceMode = 'offline';
 
   setMode(mode: PersistenceMode): void { this.mode = mode; }
@@ -64,6 +66,6 @@ export class DelegatingStorageProvider implements IStorageProvider {
   }
 
   private providerFor(collection: string): IStorageProvider {
-    return this.offline;
+    return this.mode === 'firestore' && !LOCAL_COLLECTIONS.has(collection) ? this.firestore : this.offline;
   }
 }

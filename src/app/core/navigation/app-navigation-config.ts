@@ -63,6 +63,11 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '▤',
   },
   {
+    path: '/conflicts',
+    label: 'Conflitti',
+    icon: '⚖',
+  },
+  {
     path: '/settings',
     label: 'Impostazioni',
     icon: '⚙',

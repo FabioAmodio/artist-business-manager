@@ -1,0 +1,40 @@
+<section class="conflicts-page" aria-labelledby="conflicts-title">
+  <app-page-header icon="⚖" title="Conflitti" />
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+  <div class="list-heading"><h2>Conflitti da risolvere</h2><span>{{ conflicts().length }} presenti</span></div>
+  @if (!conflicts().length) {
+    <div class="empty-state"><h3>Nessun conflitto</h3><p>Locale e Firebase sono allineati.</p></div>
+  } @else {
+    <div class="conflict-list">
+      @for (operation of conflicts(); track operation.id) {
+        <app-swipe-row [id]="operation.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="conflictActions(operation)">
+          <article class="conflict-row">
+            <div class="conflict-main"><span class="conflict-kind">{{ collectionLabel(operation.collection) }}</span><h3>{{ entityLabel(operation) }}</h3><p>{{ operation.errorMessage || 'Valori locali e remoti diversi' }}</p><small>ID: {{ operation.entityId }}</small></div>
+            <div class="conflict-meta"><span>{{ operation.action === 'delete' ? 'Cancellazione' : 'Modifica' }}</span><time>{{ operation.updatedAt | date:'dd/MM/yyyy HH:mm' }}</time></div>
+            <div class="row-actions"><button class="text-button" type="button" [disabled]="busy()" (click)="openConflict(operation)">Risolvi</button></div>
+          </article>
+        </app-swipe-row>
+      }
+    </div>
+  }
+
+  @if (selected(); as details) {
+    <div class="dialog-backdrop" aria-hidden="true"></div>
+    <section class="conflict-dialog" role="dialog" aria-modal="true" aria-labelledby="conflict-dialog-title">
+      <div class="dialog-heading"><div><span class="conflict-kind">{{ collectionLabel(details.operation.collection) }}</span><h2 id="conflict-dialog-title">{{ entityLabel(details.operation) }}</h2></div><button class="close-button" type="button" aria-label="Chiudi" (click)="closeConflict()">×</button></div>
+      @if (isDeletionConflict()) {
+        <p class="dialog-intro">Questa entità è stata cancellata su un lato e conservata sull'altro. Scegli quale versione mantenere.</p>
+        <div class="choice-actions"><button class="danger-button" type="button" [disabled]="busy()" (click)="resolveDeletion('delete')">Cancella ovunque</button><button class="save-button" type="button" [disabled]="busy()" (click)="resolveDeletion('keep')">Conserva ovunque</button></div>
+      } @else {
+        <p class="dialog-intro">Scegli il valore da mantenere per ogni campo divergente.</p>
+        <div class="field-list">
+          @for (field of details.fields; track field.name) {
+            <div class="field-conflict"><h3>{{ field.name }}</h3><div class="value-choice"><button type="button" [class.selected]="choice(field.name) === 'local'" (click)="setChoice(field.name, 'local')"><strong>Locale</strong><span>{{ formatValue(field.local) }}</span></button><button type="button" [class.selected]="choice(field.name) === 'remote'" (click)="setChoice(field.name, 'remote')"><strong>Remoto</strong><span>{{ formatValue(field.remote) }}</span></button></div></div>
+          }
+        </div>
+        <div class="choice-actions"><button class="secondary-button" type="button" [disabled]="busy()" (click)="closeConflict()">Annulla</button><button class="save-button" type="button" [disabled]="busy()" (click)="resolveFields()">{{ busy() ? 'Allineamento...' : 'Mantieni selezioni' }}</button></div>
+      }
+    </section>
+  }
+</section>

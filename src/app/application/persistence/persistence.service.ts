@@ -30,6 +30,20 @@ export interface FirestoreMergeResult {
   readonly conflicts: number;
 }
 
+export interface ConflictField {
+  readonly name: string;
+  readonly local: unknown;
+  readonly remote: unknown;
+}
+
+export interface ConflictDetails {
+  readonly operation: SyncOperation;
+  readonly remote: Record<string, unknown> | null;
+  readonly fields: readonly ConflictField[];
+  readonly localDeleted: boolean;
+  readonly remoteDeleted: boolean;
+}
+
 export interface DriveFolder { readonly id: string; readonly name: string; readonly shared?: boolean; }
 interface GoogleTokenClient { requestAccessToken: (options?: { prompt?: string }) => void; }
 interface GoogleApi { accounts: { oauth2: { initTokenClient: (config: { client_id: string; scope: string; callback: (response: { access_token?: string; expires_in?: number; error?: string }) => void }) => GoogleTokenClient } } }
@@ -350,6 +364,63 @@ export class PersistenceService {
 
   async discardSyncOperation(id: string): Promise<void> {
     await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, id);
+    await this.refreshSyncOperations();
+  }
+
+  async getConflictDetails(id: string): Promise<ConflictDetails> {
+    const operation = await this.storage.get<SyncOperation>(SYNC_OPERATIONS_COLLECTION, id);
+    if (!operation || operation.status !== 'conflict') throw new Error('Conflitto non trovato o gia risolto.');
+    const remote = await this.firestore.get<Record<string, unknown>>(operation.collection, operation.entityId);
+    const local = operation.after;
+    const ignored = new Set(['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'version', 'deletedAt', 'deletedBy']);
+    const fields = [...new Set([...Object.keys(local ?? {}), ...Object.keys(remote ?? {})])]
+      .filter((field) => !ignored.has(field) && JSON.stringify(local?.[field]) !== JSON.stringify(remote?.[field]))
+      .map((name) => ({ name, local: local?.[name], remote: remote?.[name] }));
+    return { operation, remote, fields, localDeleted: Boolean(local?.['deletedAt']), remoteDeleted: Boolean(remote?.['deletedAt']) };
+  }
+
+  async resolveConflictFields(id: string, choices: Readonly<Record<string, 'local' | 'remote'>>): Promise<void> {
+    const details = await this.getConflictDetails(id);
+    if (!details.remote || !details.operation.after) throw new Error('Questo conflitto riguarda una cancellazione.');
+    const finalRecord = { ...details.remote };
+    for (const field of details.fields) if (choices[field.name] === 'local') finalRecord[field.name] = field.local;
+    delete finalRecord['deletedAt'];
+    delete finalRecord['deletedBy'];
+    const remoteVersion = typeof details.remote['version'] === 'number' ? details.remote['version'] : 0;
+    const aligned = { ...finalRecord, version: remoteVersion + 1, updatedAt: new Date().toISOString() };
+    await this.firestore.put(details.operation.collection, { ...aligned, version: remoteVersion });
+    await this.syncStatus.suppress(async () => {
+      await this.offlineStorage!.put(details.operation.collection, aligned);
+      await this.offlineStorage!.deletePermanent(SYNC_OPERATIONS_COLLECTION, id);
+    });
+    await this.refreshSyncOperations();
+  }
+
+  async resolveConflictDeletion(id: string, decision: 'delete' | 'keep'): Promise<void> {
+    const details = await this.getConflictDetails(id);
+    const operation = details.operation;
+    const source = details.localDeleted ? operation.before : operation.after;
+    if (!source) throw new Error('Il conflitto non contiene una versione locale ripristinabile.');
+    if (decision === 'delete') {
+      const remoteVersion = typeof details.remote?.['version'] === 'number' ? details.remote['version'] : undefined;
+      if (details.remote && !details.remoteDeleted) await this.firestore.deleteLogical(operation.collection, operation.entityId, { expectedVersion: remoteVersion });
+      const localRecord = { ...source, deletedAt: details.remote?.['deletedAt'] ?? new Date().toISOString() };
+      await this.syncStatus.suppress(async () => {
+        await this.offlineStorage!.put(operation.collection, localRecord);
+        await this.offlineStorage!.deletePermanent(SYNC_OPERATIONS_COLLECTION, id);
+      });
+    } else {
+      const kept = { ...source };
+      delete kept['deletedAt'];
+      delete kept['deletedBy'];
+      const remoteVersion = typeof details.remote?.['version'] === 'number' ? details.remote['version'] : 0;
+      const aligned = { ...kept, version: remoteVersion + 1, updatedAt: new Date().toISOString() };
+      await this.firestore.put(operation.collection, { ...aligned, version: remoteVersion });
+      await this.syncStatus.suppress(async () => {
+        await this.offlineStorage!.put(operation.collection, aligned);
+        await this.offlineStorage!.deletePermanent(SYNC_OPERATIONS_COLLECTION, id);
+      });
+    }
     await this.refreshSyncOperations();
   }
 

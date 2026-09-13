@@ -77,6 +77,11 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
 	},
 	{
+		path: 'conflicts',
+		data: { title: 'Conflitti' },
+		loadComponent: () => import('./features/conflicts/conflicts-page').then((m) => m.ConflictsPage),
+	},
+	{
 		path: 'settings',
 		data: { title: 'Impostazioni' },
 		loadComponent: () => import('./features/settings/settings-page').then((m) => m.SettingsPage),
