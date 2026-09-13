@@ -47,20 +47,21 @@ export const appConfig: ApplicationConfig = {
       return storage.open().then(
         async () => {
           await persistence.initialize();
+          if (persistence.mode() === 'firestore') {
+            try {
+              const user = await firebaseAuth.whenInitialized();
+              if (user) await workspace.loadForCurrentUser();
+            } catch (error) {
+              console.error('Firebase workspace initialization failed:', error);
+            }
+          }
           await activeFair.initialize();
           appState.notifyDatabaseReady();
           void notifications.recalculate().catch((error) => console.error('Notification evaluation failed:', error));
           if (persistence.mode() === 'firestore') {
-            void firebaseAuth.whenInitialized()
-              .then(async (user) => {
-                if (user) {
-                  await workspace.loadForCurrentUser();
-                  if (environment.allowCloudSync && persistence.mode() === 'firestore') {
-                    void persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error));
-                  }
-                }
-              })
-              .catch((error) => console.error('Firebase workspace initialization failed:', error));
+            if (environment.allowCloudSync && firebaseAuth.user() && workspace.activeWorkspaceId()) {
+              void persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error));
+            }
           }
         },
         (error) => {

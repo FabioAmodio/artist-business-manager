@@ -9,6 +9,7 @@ import type {
 } from './storage-provider';
 import { IndexedDbProvider } from './indexed-db.provider';
 import { FirestoreProvider } from './firestore.provider';
+import { WorkspaceService } from '../firebase/workspace.service';
 
 const LOCAL_COLLECTIONS = new Set(['appSettings', 'syncOperations']);
 
@@ -16,6 +17,7 @@ const LOCAL_COLLECTIONS = new Set(['appSettings', 'syncOperations']);
 export class DelegatingStorageProvider implements IStorageProvider {
   private readonly offline = inject(IndexedDbProvider);
   private readonly firestore = inject(FirestoreProvider);
+  private readonly workspace = inject(WorkspaceService);
   private mode: PersistenceMode = 'offline';
 
   setMode(mode: PersistenceMode): void { this.mode = mode; }
@@ -66,6 +68,6 @@ export class DelegatingStorageProvider implements IStorageProvider {
   }
 
   private providerFor(collection: string): IStorageProvider {
-    return this.mode === 'firestore' && !LOCAL_COLLECTIONS.has(collection) ? this.firestore : this.offline;
+    return this.mode === 'firestore' && !LOCAL_COLLECTIONS.has(collection) && this.workspace.activeWorkspaceId() ? this.firestore : this.offline;
   }
 }
