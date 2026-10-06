@@ -6,8 +6,9 @@ import { WorkspaceService } from '../../core/firebase/workspace.service';
 import { FirestoreProvider } from '../../core/storage/firestore.provider';
 import type { NotificationEvent, NotificationState, NotificationStateStatus } from '../../domain/models/notification';
 import type { NotificationEvaluationRun, NotificationStatsOutbox } from '../../domain/models/notification-evaluation';
-import { evaluateOperationNotifications, notificationLocalDate } from '../../domain/shared/notification-evaluation';
+import { evaluateFairTaskNotifications, evaluateOperationNotifications, notificationLocalDate } from '../../domain/shared/notification-evaluation';
 import type { Operation } from '../../domain/models/operation';
+import type { FairTask } from '../../domain/models/fair-task';
 import type { WorkflowSettings } from '../../domain/models/workflow-settings';
 
 const WORKFLOW_SETTINGS_COLLECTION = 'workflowSettings';
@@ -43,29 +44,15 @@ export class NotificationService {
     const runId = this.runId(localDate, policyVersion);
     try {
       const operations = await this.storage.list<Operation>('operations');
-      const result = evaluateOperationNotifications(operations, { dueSoonDays, policyVersion }, now);
-      const candidateIds = new Set(result.candidates.map((candidate) => candidate.id));
-      const existingOperationNotifications = (await this.storage.list<NotificationEvent>(NOTIFICATIONS_COLLECTION)).filter((notification) => notification.entityType === 'operation');
+      const operationResult = evaluateOperationNotifications(operations, { dueSoonDays, policyVersion }, now);
+      const fairTasks = await this.storage.list<FairTask>('fairTasks');
+      const fairTaskResult = evaluateFairTaskNotifications(fairTasks, { dueSoonDays, policyVersion }, now);
 
-      let newNotifications = 0;
-      for (const notification of result.candidates) {
-        const existing = await this.storage.get<NotificationEvent>(NOTIFICATIONS_COLLECTION, notification.id);
-        if (!existing) {
-          await this.storage.put(NOTIFICATIONS_COLLECTION, notification);
-          await this.storage.put(NOTIFICATION_STATES_COLLECTION, this.initialState(notification.id, now));
-          newNotifications += 1;
-          await this.syncNotificationRemote(notification);
-        }
-      }
-
-      let removedNotifications = 0;
-      for (const stale of existingOperationNotifications) {
-        if (candidateIds.has(stale.id)) continue;
-        await this.storage.deletePermanent(NOTIFICATIONS_COLLECTION, stale.id);
-        await this.storage.deletePermanent(NOTIFICATION_STATES_COLLECTION, stale.id);
-        await this.deleteNotificationRemote(stale.id);
-        removedNotifications += 1;
-      }
+      const operationReconciliation = await this.reconcileCandidates('operation', operationResult.candidates, now);
+      const fairTaskReconciliation = await this.reconcileCandidates('fair-task', fairTaskResult.candidates, now);
+      const newNotifications = operationReconciliation.newNotifications + fairTaskReconciliation.newNotifications;
+      const removedNotifications = operationReconciliation.removedNotifications + fairTaskReconciliation.removedNotifications;
+      const candidatesTotal = operationResult.candidates.length + fairTaskResult.candidates.length;
 
       const run: NotificationEvaluationRun = {
         id: runId,
@@ -74,8 +61,8 @@ export class NotificationService {
         workspaceId: this.workspaceId(),
         policyVersion,
         status: 'completed',
-        operationsAnalyzed: result.operationsAnalyzed,
-        candidates: result.candidates.length,
+        operationsAnalyzed: operationResult.operationsAnalyzed,
+        candidates: candidatesTotal,
         newNotifications,
         durationMs: Math.round(performance.now() - started),
         startedAt,
@@ -146,6 +133,34 @@ export class NotificationService {
 
   private initialState(notificationId: string, now: Date): NotificationState {
     return { id: notificationId, notificationId, userId: this.userId(), status: 'pending', updatedAt: now.toISOString() };
+  }
+
+  /** Crea le notifiche nuove e rimuove quelle non piu candidate per una singola entityType, senza duplicare la logica tra fonti diverse. */
+  private async reconcileCandidates(entityType: 'operation' | 'fair-task', candidates: readonly NotificationEvent[], now: Date): Promise<{ readonly newNotifications: number; readonly removedNotifications: number }> {
+    const candidateIds = new Set(candidates.map((candidate) => candidate.id));
+    const existingNotifications = (await this.storage.list<NotificationEvent>(NOTIFICATIONS_COLLECTION)).filter((notification) => notification.entityType === entityType);
+
+    let newNotifications = 0;
+    for (const notification of candidates) {
+      const existing = await this.storage.get<NotificationEvent>(NOTIFICATIONS_COLLECTION, notification.id);
+      if (!existing) {
+        await this.storage.put(NOTIFICATIONS_COLLECTION, notification);
+        await this.storage.put(NOTIFICATION_STATES_COLLECTION, this.initialState(notification.id, now));
+        newNotifications += 1;
+        await this.syncNotificationRemote(notification);
+      }
+    }
+
+    let removedNotifications = 0;
+    for (const stale of existingNotifications) {
+      if (candidateIds.has(stale.id)) continue;
+      await this.storage.deletePermanent(NOTIFICATIONS_COLLECTION, stale.id);
+      await this.storage.deletePermanent(NOTIFICATION_STATES_COLLECTION, stale.id);
+      await this.deleteNotificationRemote(stale.id);
+      removedNotifications += 1;
+    }
+
+    return { newNotifications, removedNotifications };
   }
 
   private async recordStats(run: NotificationEvaluationRun, removedNotifications: number): Promise<void> {

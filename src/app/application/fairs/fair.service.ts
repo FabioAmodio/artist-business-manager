@@ -1,12 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { FairEditionRepository } from '../../core/repositories/fair-edition.repository';
 import { FairSeriesRepository } from '../../core/repositories/fair-series.repository';
-import type { Fair, FairSeries } from '../../domain/models/fair';
+import type { Fair, FairEditionStatus, FairSeries } from '../../domain/models/fair';
 import { validateFairInput, type FairValidationIssue } from '../../domain/rules/fair-validation';
 
 export type FairInput = Pick<Fair, 'name' | 'location' | 'locationNotes' | 'startDate' | 'endDate' | 'notes' | 'edition' | 'expectedBudget' | 'standCost' | 'reimbursement' | 'hotelCost' | 'travelCost' | 'otherCosts' | 'standPaid' | 'travelPaid' | 'hotelPaid'> & {
   readonly fairSeriesId?: string;
+  readonly status?: FairEditionStatus;
 };
+
+export type FairSeriesInput = Pick<FairSeries, 'name' | 'organizerPartyId' | 'organizerName' | 'organizerContact' | 'organizerEmail' | 'organizerPhone' | 'website' | 'defaultLocation' | 'notes' | 'taskTemplate'>;
 
 export class FairValidationError extends Error {
   constructor(readonly issues: readonly FairValidationIssue[]) {
@@ -50,6 +53,7 @@ export class FairService {
       fairSeriesId: seriesId,
       edition: input.edition,
       year: this.legacyYear(input.edition),
+      status: input.status ?? 'draft',
       createdAt: now,
       updatedAt: now,
     };
@@ -62,13 +66,21 @@ export class FairService {
     await this.assertValid(input, id, acknowledgeWarnings);
     const existing = await this.repository.getById(id);
     if (!existing) throw new Error('Fiera non trovata.');
-    const fair: Fair = { ...existing, ...input, fairSeriesId: existing.fairSeriesId, year: this.legacyYear(input.edition), updatedAt: new Date().toISOString() };
+    const fair: Fair = { ...existing, ...input, fairSeriesId: existing.fairSeriesId, year: this.legacyYear(input.edition), status: input.status ?? existing.status, updatedAt: new Date().toISOString() };
     await this.repository.save(fair);
     return fair;
   }
 
   delete(id: string): Promise<void> {
     return this.repository.softDelete(id);
+  }
+
+  async updateSeries(id: string, input: FairSeriesInput): Promise<FairSeries> {
+    const existing = await this.seriesRepository.getById(id);
+    if (!existing) throw new Error('Serie non trovata.');
+    const series: FairSeries = { ...existing, ...input, updatedAt: new Date().toISOString() };
+    await this.seriesRepository.save(series);
+    return series;
   }
 
   private async assertValid(input: FairInput, editingId: string | undefined, acknowledgeWarnings: boolean): Promise<void> {

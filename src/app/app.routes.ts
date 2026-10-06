@@ -12,14 +12,19 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
 	},
 	{
+		path: 'contacts',
+		data: { title: 'Contatti' },
+		loadComponent: () => import('./features/contacts/contacts-page').then((m) => m.ContactsPage),
+	},
+	{
 		path: 'clients',
-		data: { title: 'Clienti' },
-		loadComponent: () => import('./features/clients/clients-page').then((m) => m.ClientsPage),
+		data: { title: 'Contatti', presetRole: 'customer' },
+		loadComponent: () => import('./features/contacts/contacts-page').then((m) => m.ContactsPage),
 	},
 	{
 		path: 'suppliers',
-		data: { title: 'Fornitori' },
-		loadComponent: () => import('./features/suppliers/suppliers-page').then((m) => m.SuppliersPage),
+		data: { title: 'Contatti', presetRole: 'supplier' },
+		loadComponent: () => import('./features/contacts/contacts-page').then((m) => m.ContactsPage),
 	},
 	{
 		path: 'purchases',
@@ -45,6 +50,11 @@ export const routes: Routes = [
 		path: 'events',
 		data: { title: 'Eventi' },
 		loadComponent: () => import('./features/fairs/fairs-page').then((m) => m.FairsPage),
+	},
+	{
+		path: 'activity-log',
+		data: { title: 'Registro attivita' },
+		loadComponent: () => import('./features/activity-log/activity-log-page').then((m) => m.ActivityLogPage),
 	},
 	{
 		path: 'sales',

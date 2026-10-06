@@ -30,6 +30,11 @@
           <option value="">Tutte</option><option value="completed">Concluse</option><option value="upcoming">Prossime</option>
         </select>
       </label>
+      <label>Stato conferma
+        <select name="fairStatusFilter" [ngModel]="fairStatusFilter() ?? ''" (ngModelChange)="changeFairStatusFilter($event)">
+          <option value="">Tutte</option><option value="draft">Bozza</option><option value="confirmed">Confermata</option><option value="cancelled">Annullata</option>
+        </select>
+      </label>
       <label>Stand <select [ngModel]="standCoverageFilter()" (ngModelChange)="standCoverageFilter.set($event)"><option value="all">Tutti</option><option value="covered">Coperto</option><option value="not-covered">Non coperto</option></select></label>
       <label>Viaggio <select [ngModel]="travelCoverageFilter()" (ngModelChange)="travelCoverageFilter.set($event)"><option value="all">Tutti</option><option value="covered">Coperto</option><option value="not-covered">Non coperto</option></select></label>
       <label>Hotel <select [ngModel]="hotelCoverageFilter()" (ngModelChange)="hotelCoverageFilter.set($event)"><option value="all">Tutti</option><option value="covered">Coperto</option><option value="not-covered">Non coperto</option></select></label>
@@ -64,10 +69,13 @@
                 <span><strong>Bilancio</strong><em class="fair-balance">{{ formatMoney(fairBalance(fair)) }} @if (fairBalance(fair) !== undefined) { <i class="balance-dot" [class.positive]="fairBalance(fair)! >= 0" [class.negative]="fairBalance(fair)! < 0" aria-hidden="true"></i> }</em></span>
               </div>
           <div class="fair-indicators" aria-label="Indicatori fiera">
+                        @if (fair.status !== 'confirmed') { <span class="indicator" [class.indicator-warning]="fair.status === 'draft'" [class.indicator-error]="fair.status === 'cancelled'" [attr.aria-label]="statusLabel(fair.status)" [attr.title]="statusLabel(fair.status)"><b class="badge-icon" aria-hidden="true">{{ statusIcon(fair.status) }}</b><span class="badge-label">{{ statusLabel(fair.status) }}</span></span> }
+                        @if (fair.status === 'confirmed') {
                         <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'stand')" [class.indicator-error]="!isCostCovered(fair, 'stand')" [attr.aria-label]="coverageLabel(fair, 'stand')" [attr.title]="coverageLabel(fair, 'stand')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'stand')" aria-hidden="true">🪑</b><span class="badge-label">{{ coverageLabel(fair, 'stand') }}</span></span>
                         <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'travel')" [class.indicator-error]="!isCostCovered(fair, 'travel')" [attr.aria-label]="coverageLabel(fair, 'travel')" [attr.title]="coverageLabel(fair, 'travel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'travel')" aria-hidden="true">🚗</b><span class="badge-label">{{ coverageLabel(fair, 'travel') }}</span></span>
                         <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'hotel')" [class.indicator-error]="!isCostCovered(fair, 'hotel')" [attr.aria-label]="coverageLabel(fair, 'hotel')" [attr.title]="coverageLabel(fair, 'hotel')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'hotel')" aria-hidden="true">🏨</b><span class="badge-label">{{ coverageLabel(fair, 'hotel') }}</span></span>
                         @if (hasOtherCosts(fair)) { <span class="indicator" [class.indicator-success]="isCostCovered(fair, 'other')" [class.indicator-error]="!isCostCovered(fair, 'other')" [attr.aria-label]="coverageLabel(fair, 'other')" [attr.title]="coverageLabel(fair, 'other')"><b class="badge-icon" [class.not-covered]="!isCostCovered(fair, 'other')" aria-hidden="true">🧾</b><span class="badge-label">{{ coverageLabel(fair, 'other') }}</span></span> }
+                        }
           </div>
           <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica fiera" title="Modifica fiera" (click)="startEditing(fair)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina fiera" [disabled]="isFairUsed(fair)" [title]="isFairUsed(fair) ? 'Fiera usata in operazioni' : 'Elimina fiera'" (click)="remove(fair)">🗑</button></div>
         </article>
@@ -93,6 +101,19 @@
             </label>
             <label [class.field-error]="hasFieldError('edition')">Edizione <input name="edition" placeholder="es. Primavera 2026" required [(ngModel)]="draft.edition" /></label>
           </div>
+          <fieldset class="work-status-selector full-width">
+            <legend>Stato fiera</legend>
+            <div>
+              @for (status of fairStatusOptions; track status) {
+                <label class="work-status-option" [class.selected]="draft.status === status" [attr.title]="statusLabel(status)">
+                  <input type="radio" name="status" [value]="status" [(ngModel)]="draft.status" />
+                  <span class="work-status-option-icon" aria-hidden="true">{{ statusIcon(status) }}</span>
+                  <span class="work-status-option-label">{{ statusLabel(status) }}</span>
+                </label>
+              }
+            </div>
+          </fieldset>
+          @if (draft.fairSeriesId) { <button class="text-button" type="button" (click)="startEditingSeries(draft.fairSeriesId)">Modifica dati serie</button> }
           <div class="form-row form-row-dates">
             <label [class.field-error]="hasFieldError('startDate')">Data inizio <input name="startDate" type="date" required [(ngModel)]="draft.startDate" [attr.aria-invalid]="hasFieldError('startDate')" /></label>
             <label [class.field-error]="hasFieldError('endDate')">Data fine <input name="endDate" type="date" required [(ngModel)]="draft.endDate" [attr.aria-invalid]="hasFieldError('endDate')" /></label>
@@ -104,25 +125,60 @@
           <section class="economic-section" aria-labelledby="fair-economic-title">
             <h3 id="fair-economic-title">Dati economici</h3>
             <div class="form-row form-row-money">
-              <label>Costo stand <app-number-stepper name="standCost" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.standCost" /></label>
+              <label>Costo stand <app-number-stepper name="standCost" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.standCost" /> @if (costDelta('standCost'); as delta) { <small class="cost-delta" [class.increase]="delta > 0">Anno scorso {{ formatMoney(previousCostValue('standCost')) }} · {{ delta > 0 ? '+' : '' }}{{ formatMoney(delta) }}</small> }</label>
               <label>Rimborso <app-number-stepper name="reimbursement" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.reimbursement" /></label>
             </div>
             <div class="form-row form-row-money">
-              <label>Costo hotel <app-number-stepper name="hotelCost" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.hotelCost" /></label>
-              <label>Costo viaggio <app-number-stepper name="travelCost" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.travelCost" /></label>
+              <label>Costo hotel <app-number-stepper name="hotelCost" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.hotelCost" /> @if (costDelta('hotelCost'); as delta) { <small class="cost-delta" [class.increase]="delta > 0">Anno scorso {{ formatMoney(previousCostValue('hotelCost')) }} · {{ delta > 0 ? '+' : '' }}{{ formatMoney(delta) }}</small> }</label>
+              <label>Costo viaggio <app-number-stepper name="travelCost" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.travelCost" /> @if (costDelta('travelCost'); as delta) { <small class="cost-delta" [class.increase]="delta > 0">Anno scorso {{ formatMoney(previousCostValue('travelCost')) }} · {{ delta > 0 ? '+' : '' }}{{ formatMoney(delta) }}</small> }</label>
             </div>
             <div class="form-row form-row-money">
-              <label>Altri costi <app-number-stepper name="otherCosts" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.otherCosts" /></label>
+              <label>Altri costi <app-number-stepper name="otherCosts" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.otherCosts" /> @if (costDelta('otherCosts'); as delta) { <small class="cost-delta" [class.increase]="delta > 0">Anno scorso {{ formatMoney(previousCostValue('otherCosts')) }} · {{ delta > 0 ? '+' : '' }}{{ formatMoney(delta) }}</small> }</label>
               <label>Budget previsto <app-number-stepper name="expectedBudget" [step]="1" [decimals]="2" [min]="0" [(ngModel)]="draft.expectedBudget" /></label>
             </div>
           </section>
         </div>
+        @if (editingId(); as id) {
+          @if (!isPastFair() || showPastChecklist()) {
+            <app-fair-task-list [fairEditionId]="id" [seriesTaskTemplate]="currentSeriesTaskTemplate()" [readonly]="isPastFair()" />
+          } @else {
+            <button class="text-button" type="button" (click)="showPastChecklist.set(true)">Mostra checklist organizzativa (sola lettura)</button>
+          }
+        }
         @if (matchedSeries(); as matched) {
           <div class="series-suggestion" role="status">
             <p>Hai gia partecipato a <strong>{{ matched.name }}</strong>. Vuoi creare una nuova edizione?</p>
             <div><button class="primary-button" type="button" (click)="useExistingSeries(matched)">Nuova edizione</button><button class="text-button" type="button" (click)="useNewSeries()">Nuova fiera</button></div>
           </div>
         }
+      </form>
+    </section>
+  }
+
+  @if (editingSeriesId()) {
+    <div class="dialog-backdrop" aria-hidden="true"></div>
+    <section class="fair-dialog series-dialog" role="dialog" aria-modal="true" aria-labelledby="series-form-title">
+      <form class="fair-form" (ngSubmit)="saveSeries()">
+        <div class="form-heading">
+          <app-form-actions [saving]="savingSeries()" saveLabel="Salva serie" (cancel)="cancelSeriesForm()">
+            <h2 id="series-form-title">Modifica dati serie</h2>
+          </app-form-actions>
+        </div>
+        <div class="form-grid">
+          <label class="full-width">Nome serie <input name="seriesName" required [(ngModel)]="seriesDraft.name" /></label>
+          <label>Luogo predefinito <input name="seriesDefaultLocation" [(ngModel)]="seriesDraft.defaultLocation" /></label>
+          <label class="full-width">Organizzatore (anagrafica)
+            <select name="organizerPartyId" [(ngModel)]="seriesDraft.organizerPartyId">
+              <option [ngValue]="undefined">-- Nessuno (usa i campi sotto) --</option>
+              @for (contact of organizerContacts(); track contact.id) { <option [ngValue]="contact.id">{{ contact.displayName }}</option> }
+            </select>
+          </label>
+          <label>Organizzatore (testo libero) <input name="organizerName" [(ngModel)]="seriesDraft.organizerName" /></label>
+          <label>Email organizzatore <input name="organizerEmail" type="email" [(ngModel)]="seriesDraft.organizerEmail" /></label>
+          <label>Telefono organizzatore <input name="organizerPhone" type="tel" [(ngModel)]="seriesDraft.organizerPhone" /></label>
+          <label>Sito web <input name="website" [(ngModel)]="seriesDraft.website" /></label>
+          <label class="full-width">Note <textarea name="seriesNotes" rows="2" [(ngModel)]="seriesDraft.notes"></textarea></label>
+        </div>
       </form>
     </section>
   }

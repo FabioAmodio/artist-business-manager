@@ -10,6 +10,7 @@ const existingEdition: FairEdition = {
   location: 'Alessandria',
   startDate: '2026-05-15',
   endDate: '2026-05-17',
+  status: 'confirmed',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

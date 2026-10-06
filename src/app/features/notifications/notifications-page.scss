@@ -26,6 +26,10 @@
 .empty { color: var(--color-text-secondary); }
 .page-description { margin: 1rem 0; }
 
+.notifications-page .work-status-selector { margin-bottom: 1rem; }
+
+.notification-kind-icon { flex-shrink: 0; font-size: 1.25rem; }
+
 .notification-list {
   display: grid;
   gap: .75rem;

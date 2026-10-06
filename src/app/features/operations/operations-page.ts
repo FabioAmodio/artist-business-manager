@@ -5,6 +5,7 @@ import { OperationService, type OperationInput } from '../../application/operati
 import { PaymentMethodService } from '../../application/payment-methods/payment-method.service';
 import { PaymentService } from '../../application/payments/payment.service';
 import { ClientService } from '../../application/clients/client.service';
+import { ContactService } from '../../application/contacts/contact.service';
 import { FairService } from '../../application/fairs/fair.service';
 import { LotService } from '../../application/lots/lot.service';
 import { ProductService } from '../../application/products/product.service';
@@ -16,7 +17,7 @@ import type { Operation, OperationType } from '../../domain/models/operation';
 import type { Bundle } from '../../domain/models/bundle';
 import type { PaymentMethod } from '../../domain/models/payment-method';
 import type { Payment } from '../../domain/models/payment';
-import type { Party } from '../../domain/models/party';
+import type { Party, PartyRole } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Service } from '../../domain/models/service';
 import type { Fair } from '../../domain/models/fair';
@@ -29,6 +30,14 @@ import { PersistenceService } from '../../application/persistence/persistence.se
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
+
+const ROLE_HINT_LABELS: readonly { readonly role: PartyRole; readonly label: string }[] = [
+  { role: 'organizer', label: 'Organizzatore' },
+  { role: 'hotel', label: 'Hotel' },
+  { role: 'supplier', label: 'Fornitore' },
+  { role: 'publisher', label: 'Editore' },
+  { role: 'collaborator', label: 'Collaboratore' },
+];
 
 interface PaymentDraft {
   amount?: number;
@@ -100,6 +109,7 @@ export class OperationsPage implements OnInit {
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly paymentService = inject(PaymentService);
   private readonly clientService = inject(ClientService);
+  private readonly contactService = inject(ContactService);
   private readonly fairService = inject(FairService);
   private readonly lotService = inject(LotService);
   private readonly productService = inject(ProductService);
@@ -351,6 +361,11 @@ export class OperationsPage implements OnInit {
   protected offerTypeIcon(operation: Operation): string { return operation.serviceId ? '🛠️' : operation.productId ? '🏷️' : operation.bundleId || operation.type === 'bundle' ? '🎁' : '🏷️'; }
   protected customerLabel(operation: Operation): string { return operation.partyId ? this.partyName(operation.partyId) : (operation.customerName || 'Cliente non indicato'); }
   protected partyName(id?: string): string { return this.parties().find((party) => party.id === id)?.displayName ?? 'Cliente non trovato'; }
+  /** Segnala nei suggerimenti che il contatto non e' ancora un cliente (es. organizzatore/fornitore): selezionandolo il ruolo viene aggiunto automaticamente. */
+  protected partyRoleHint(party: Party): string {
+    if (party.roles?.includes('customer')) return '';
+    return ROLE_HINT_LABELS.find((label) => party.roles?.includes(label.role))?.label ?? '';
+  }
   protected fairName(id?: string): string { const fair = this.fairs().find((item) => item.id === id); return fair ? `${fair.name} · ${fair.edition || fair.year}` : 'Fiera non indicata'; }
   protected formatDate(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT').format(new Date(`${value}T00:00:00`)) : 'Non indicata'; }
   protected formatDateTime(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Non indicata'; }
@@ -883,6 +898,15 @@ export class OperationsPage implements OnInit {
   protected selectCustomerSuggestion(party: Party): void {
     this.draft = { ...this.draft, partyId: party.id, customerName: party.displayName };
     this.customerMode.set('existing');
+    if (!party.roles?.includes('customer')) void this.addCustomerRoleToParty(party.id);
+  }
+
+  /** Chi vende/lavora per qualcuno lo rende di fatto un cliente, anche se finora era solo organizzatore/fornitore/altro: il ruolo si aggiunge senza toccare gli altri ruoli. */
+  private async addCustomerRoleToParty(partyId: string): Promise<void> {
+    try {
+      const updated = await this.contactService.ensureRole(partyId, 'customer');
+      this.parties.update((parties) => parties.map((party) => party.id === updated.id ? updated : party));
+    } catch (error) { this.errorMessage.set(error instanceof Error ? error.message : 'Impossibile aggiornare il ruolo del cliente.'); }
   }
   protected continueWithSoftCustomer(): void {
     this.draft = { ...this.draft, partyId: undefined };
@@ -1081,7 +1105,7 @@ export class OperationsPage implements OnInit {
   private async loadAll(): Promise<void> {
     this.loading.set(true);
     try {
-      const [operations, parties, fairs, lots, paymentMethods, payments, products, services, bundles] = await Promise.all([this.service.list(this.salesOnly ? 'sale' : 'all'), this.clientService.list(), this.fairService.list(), this.lotService.list(), this.paymentMethodService.list(), this.paymentService.list(), this.productService.list(), this.serviceService.list(), this.bundleService.list()]);
+      const [operations, parties, fairs, lots, paymentMethods, payments, products, services, bundles] = await Promise.all([this.service.list(this.salesOnly ? 'sale' : 'all'), this.contactService.list(), this.fairService.list(), this.lotService.list(), this.paymentMethodService.list(), this.paymentService.list(), this.productService.list(), this.serviceService.list(), this.bundleService.list()]);
       this.activeFairMode.setFairs(fairs);
       this.allOperations = operations; this.operations.set(this.filterOperations(operations)); this.parties.set(parties); this.fairs.set(fairs); this.lots.set(lots); this.paymentMethods.set(paymentMethods); this.payments.set(payments); this.products.set(products); this.services.set(services); this.bundles.set(bundles);
     } catch { this.errorMessage.set('Impossibile caricare le operazioni.'); }

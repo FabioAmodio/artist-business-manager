@@ -33,8 +33,8 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '⏰',
   },
   {
-    path: '/clients',
-    label: 'Clienti',
+    path: '/contacts',
+    label: 'Contatti',
     icon: '👥',
   },
   {
@@ -48,14 +48,14 @@ export const APP_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: '＋',
   },
   {
-    path: '/suppliers',
-    label: 'Fornitori',
-    icon: '▣',
-  },
-  {
     path: '/events',
     label: 'Eventi',
     icon: '📅',
+  },
+  {
+    path: '/activity-log',
+    label: 'Registro attivita',
+    icon: '📋',
   },
   {
     path: '/payment-methods',

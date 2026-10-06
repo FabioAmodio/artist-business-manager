@@ -1,0 +1,70 @@
+<section class="activity-log-page" aria-labelledby="activity-log-page-title">
+  <app-page-header icon="📋" title="Registro attivita" />
+
+  <div class="filters-row">
+    <label>Fiera
+      <select [ngModel]="fairFilter()" (ngModelChange)="fairFilter.set($event)">
+        <option value="">Tutte</option>
+        @for (fair of fairs(); track fair.id) { <option [value]="fair.id">{{ fair.name }} · {{ fair.edition }}</option> }
+      </select>
+    </label>
+    <label>Ricerca <input type="search" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Azione, contatto, note..." /></label>
+  </div>
+
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!visibleEntries().length) {
+    <div class="empty-state"><h3>Nessuna voce trovata</h3></div>
+  } @else {
+    <div class="list-heading"><h2>Voci registrate</h2><span>{{ visibleEntries().length }}</span></div>
+    <ul class="activity-log-page-items">
+      @for (entry of visibleEntries(); track entry.id) {
+        <li>
+          <app-swipe-row [id]="entry.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="rightActions(entry)" [leftActions]="leftActions(entry)">
+            <div class="activity-log-page-row">
+              <div class="activity-log-page-date"><strong>{{ entry.date }}</strong></div>
+              <div class="activity-log-page-main">
+                <h3>{{ entry.title }}</h3>
+                <p>{{ fairName(entry) }}</p>
+                @if (entry.contactName || entry.contactValue) { <small>{{ entry.contactName }} @if (entry.contactChannel) { · {{ channelLabel(entry) }} } @if (entry.contactValue) { · {{ entry.contactValue }} }</small> }
+                @if (entry.notes) { <small>{{ entry.notes }}</small> }
+              </div>
+              @if (!isMobileSwipeMode()) {
+                <div class="activity-log-page-actions">
+                  <button class="text-button list-action" type="button" aria-label="Apri fiera" title="Apri fiera" (click)="openFair(entry)">📅</button>
+                  <button class="text-button list-action" type="button" aria-label="Modifica voce" title="Modifica voce" (click)="openEdit(entry)">✎</button>
+                  <button class="danger-button list-action" type="button" aria-label="Elimina voce" title="Elimina voce" (click)="deleteEntry(entry)">🗑</button>
+                </div>
+              }
+            </div>
+          </app-swipe-row>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (editingEntry(); as entry) {
+    <div class="dialog-backdrop" aria-hidden="true"></div>
+    <section class="activity-log-dialog" role="dialog" aria-modal="true" aria-labelledby="activity-log-dialog-title">
+      <form (ngSubmit)="saveEntry()" #editForm="ngForm">
+        <app-form-actions [disabled]="editForm.invalid === true" saveLabel="Salva voce" (cancel)="cancelEdit()">
+          <h2 id="activity-log-dialog-title">Modifica voce</h2>
+        </app-form-actions>
+        <div class="activity-log-dialog-grid">
+          <label class="full-width">Fiera <input type="text" [value]="fairName(entry)" disabled /></label>
+          <label>Data <input type="date" name="date" required [(ngModel)]="editDraft.date" /></label>
+          <label>Azione <input type="text" name="title" required [(ngModel)]="editDraft.title" /></label>
+          <label>Contatto <input type="text" name="contactName" [(ngModel)]="editDraft.contactName" /></label>
+          <label>Canale
+            <select name="contactChannel" [(ngModel)]="editDraft.contactChannel">
+              <option value="">-- Nessuno --</option>
+              @for (channel of channelKinds; track channel) { <option [value]="channel">{{ channelLabels[channel] }}</option> }
+            </select>
+          </label>
+          <label>Valore <input type="text" name="contactValue" [(ngModel)]="editDraft.contactValue" /></label>
+          <label class="full-width">Note <textarea name="notes" rows="2" [(ngModel)]="editDraft.notes"></textarea></label>
+        </div>
+      </form>
+    </section>
+  }
+</section>

@@ -1,5 +1,6 @@
 import type { EntityId } from '../shared/types';
 import type { Fair, FairEdition, FairSeries } from '../models/fair';
+import type { FairTask } from '../models/fair-task';
 import type { FairFilter, FairSeriesFilter } from './repository-types';
 
 export interface IFairSeriesRepository {
@@ -15,6 +16,14 @@ export interface IFairEditionRepository {
   listBySeries(seriesId: EntityId): Promise<readonly FairEdition[]>;
   findActive(onDate: string): Promise<readonly FairEdition[]>;
   save(edition: FairEdition): Promise<void>;
+  softDelete(id: EntityId): Promise<void>;
+}
+
+export interface IFairTaskRepository {
+  getById(id: EntityId): Promise<FairTask | null>;
+  listByFairEdition(fairEditionId: EntityId): Promise<readonly FairTask[]>;
+  listAll(): Promise<readonly FairTask[]>;
+  save(task: FairTask): Promise<void>;
   softDelete(id: EntityId): Promise<void>;
 }
 

@@ -20,7 +20,8 @@ export class ClientRepository implements IClientRepository {
     const parties = await this.storage.list<Party>(COLLECTION);
     return parties
       .filter((party) => !party.deletedAt)
-      .filter((party) => !party.roles?.length || party.roles.includes('customer') || party.roles.includes('commissioner'))
+      /* 'commissioner' e stato unificato in 'customer': il controllo resta per i record legacy non ancora risalvati. */
+      .filter((party) => !party.roles?.length || party.roles.includes('customer') || (party.roles as readonly string[]).includes('commissioner'))
       .filter((party) => !normalized || `${party.displayName} ${party.email ?? ''} ${party.phone ?? ''} ${party.social ?? ''}`.toLowerCase().includes(normalized))
       .sort((first, second) => first.displayName.localeCompare(second.displayName))
       .slice(0, limit);

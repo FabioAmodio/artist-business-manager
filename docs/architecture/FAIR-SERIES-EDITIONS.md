@@ -119,3 +119,5 @@ Questa nota non introduce ancora nuove entita o migrazioni. In una fase successi
 
 - MVP: `FairSeries`, `FairEdition`, repository separati, migrazione additive e gestione base delle edizioni;
 - Post-MVP: `FairTask`, `ContactLog`, Reservation con dati specifici, preparazione organizzativa avanzata e statistiche aggregate.
+
+Piano dettagliato e deciso per stato di conferma edizione, `FairTask` come checklist guidata e notifiche unificate: [FAIR-ORGANIZATION-TASKS-PLAN.md](FAIR-ORGANIZATION-TASKS-PLAN.md).

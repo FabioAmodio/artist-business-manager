@@ -149,7 +149,7 @@
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }
               @if (customerSuggestions().length) {
                 <div class="suggestions" aria-label="Suggerimenti clienti">
-                  @for (party of customerSuggestions(); track party.id) { <button type="button" (click)="selectCustomerSuggestion(party)">{{ party.displayName }}</button> }
+                  @for (party of customerSuggestions(); track party.id) { <button type="button" (click)="selectCustomerSuggestion(party)">{{ party.displayName }}@if (partyRoleHint(party); as hint) { <small> ({{ hint }})</small> }</button> }
                   <button type="button" (click)="continueWithSoftCustomer()">Continua con Cliente soft "{{ draft.customerName }}"</button>
                 </div>
               }
@@ -168,7 +168,7 @@
               @if (customerMode() === 'existing') { <p>Cliente registrato: {{ partyName(draft.partyId) }}</p> }
               @if (customerSuggestions().length) {
                 <div class="suggestions" aria-label="Suggerimenti clienti">
-                  @for (party of customerSuggestions(); track party.id) { <button type="button" (click)="selectCustomerSuggestion(party)">{{ party.displayName }}</button> }
+                  @for (party of customerSuggestions(); track party.id) { <button type="button" (click)="selectCustomerSuggestion(party)">{{ party.displayName }}@if (partyRoleHint(party); as hint) { <small> ({{ hint }})</small> }</button> }
                   <button type="button" (click)="continueWithSoftCustomer()">Continua con Cliente soft "{{ draft.customerName }}"</button>
                 </div>
               }

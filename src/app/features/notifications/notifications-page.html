@@ -1,7 +1,27 @@
 <section class="notifications-page" aria-labelledby="notifications-title">
   <app-page-header icon="🔔" title="Notifiche" />
-  <div class="list-heading"><h2 id="notifications-title">Notifiche</h2><span>{{ notificationService.notifications().length }} da gestire</span></div>
+  <div class="list-heading"><h2 id="notifications-title">Notifiche</h2><span>{{ visibleNotifications().length }} da gestire</span></div>
   <p class="page-description">Scadenze rilevate durante l'ultimo controllo dell'applicazione.</p>
+
+  <fieldset class="work-status-selector">
+    <legend class="sr-only">Filtra per tipo</legend>
+    <div>
+      <label class="work-status-option" [class.selected]="groupFilter() === 'all'" title="Tutte">
+        <input type="radio" name="groupFilter" value="all" [ngModel]="groupFilter()" (ngModelChange)="groupFilter.set($event)" />
+        <span class="work-status-option-label">Tutte</span>
+      </label>
+      <label class="work-status-option" [class.selected]="groupFilter() === 'works'" title="Lavorazioni">
+        <input type="radio" name="groupFilter" value="works" [ngModel]="groupFilter()" (ngModelChange)="groupFilter.set($event)" />
+        <span class="work-status-option-icon" aria-hidden="true">⏰</span>
+        <span class="work-status-option-label">Lavorazioni</span>
+      </label>
+      <label class="work-status-option" [class.selected]="groupFilter() === 'fairs'" title="Fiere">
+        <input type="radio" name="groupFilter" value="fairs" [ngModel]="groupFilter()" (ngModelChange)="groupFilter.set($event)" />
+        <span class="work-status-option-icon" aria-hidden="true">📅</span>
+        <span class="work-status-option-label">Fiere</span>
+      </label>
+    </div>
+  </fieldset>
 
   @if (notificationService.error()) {
     <p class="status error" role="alert">{{ notificationService.error() }}</p>
@@ -9,20 +29,21 @@
 
   @if (notificationService.evaluating()) {
     <p class="status" role="status">Controllo notifiche in corso...</p>
-  } @else if (!notificationService.notifications().length) {
+  } @else if (!visibleNotifications().length) {
     <p class="empty" role="status">Nessuna notifica da gestire.</p>
   } @else {
     <div class="notification-list">
-      @for (notification of notificationService.notifications(); track notification.id) {
+      @for (notification of visibleNotifications(); track notification.id) {
         <app-swipe-row [id]="notification.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="rightActions(notification.id)" [leftActions]="leftActions(notification.id)">
           <article class="notification-item">
+            <span class="notification-kind-icon" aria-hidden="true">{{ notificationIcon(notification) }}</span>
             <div class="notification-copy">
               <strong>{{ notification.title }}</strong>
               <p>{{ notification.body }}</p>
             </div>
             @if (!isMobileSwipeMode()) {
               <div class="notification-actions">
-                @if (notification.entityId) { <button class="icon-action" type="button" aria-label="Apri lavorazione" title="Apri lavorazione" (click)="openNotification(notification.id)">↗</button> }
+                @if (notification.entityId) { <button class="icon-action" type="button" aria-label="Apri" title="Apri" (click)="openNotification(notification.id)">↗</button> }
                 <button class="icon-action" type="button" aria-label="Segna come fatta" title="Segna come fatta" (click)="markDone(notification.id)">✓</button>
                 <button class="icon-action" type="button" aria-label="Sposta a domani" title="Sposta a domani" (click)="snooze(notification.id)">◷</button>
                 <button class="icon-action" type="button" aria-label="Ignora notifica" title="Ignora notifica" (click)="dismiss(notification.id)">×</button>

@@ -67,7 +67,7 @@ export function annualDashboardMetrics(source: AnnualDashboardSource, year: numb
       : operation;
     if ((paymentTotals.get(paymentTarget.id) ?? 0) + 0.005 < (paymentTarget.amount ?? 0)) unpaidWorkTargets.add(paymentTarget.id);
   }
-  const yearFairs = source.fairs.filter((fair) => yearOf(fair.startDate) === year);
+  const yearFairs = source.fairs.filter((fair) => fair.status === 'confirmed' && yearOf(fair.startDate) === year);
   const parentSales = yearOperations.filter((operation) => !operation.parentOperationId && (operation.type === 'sale' || operation.type === 'bundle'));
   const fairSales = parentSales.filter((operation) => operation.fairEditionId);
   const nonFairSales = parentSales.filter((operation) => !operation.fairEditionId);

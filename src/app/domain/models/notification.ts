@@ -1,12 +1,12 @@
 import type { EntityId, IsoDateTime } from '../shared/types';
 
-export type NotificationKind = 'operation-due-soon' | 'operation-overdue' | 'reminder';
+export type NotificationKind = 'operation-due-soon' | 'operation-overdue' | 'fair-task-due-soon' | 'fair-task-overdue' | 'reminder';
 
 export interface NotificationEvent {
   readonly id: EntityId;
   readonly occurrenceKey: string;
   readonly kind: NotificationKind;
-  readonly entityType?: 'operation' | 'reminder';
+  readonly entityType?: 'operation' | 'fair-task' | 'reminder';
   readonly entityId?: EntityId;
   readonly title: string;
   readonly body: string;

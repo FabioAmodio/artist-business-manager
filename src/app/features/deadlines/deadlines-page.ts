@@ -1,21 +1,34 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClientService } from '../../application/clients/client.service';
+import { ContactService } from '../../application/contacts/contact.service';
 import { OperationService } from '../../application/operations/operation.service';
 import { ProductService } from '../../application/products/product.service';
 import { ServiceService } from '../../application/services/service.service';
+import { FairTaskService } from '../../application/fairs/fair-task.service';
+import { FairService } from '../../application/fairs/fair.service';
 import type { Operation } from '../../domain/models/operation';
-import type { Party } from '../../domain/models/party';
+import type { Party, PartyContactChannel } from '../../domain/models/party';
 import type { Product } from '../../domain/models/product';
 import type { Service } from '../../domain/models/service';
+import type { Fair } from '../../domain/models/fair';
+import type { FairTask } from '../../domain/models/fair-task';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { ListFilterPanelComponent } from '../../shared/components/list-filter-panel.component';
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { contactLinksForChannel, contactLinksFromFreeText, type ContactLinks } from '../../shared/utils/contact-links';
 
 type DeadlineSortKey = 'date' | 'offer' | 'customer' | 'status';
+
+interface FairTaskDeadline {
+  readonly task: FairTask;
+  readonly fairName: string;
+  readonly overdue: boolean;
+  readonly dueSoon: boolean;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,14 +41,21 @@ export class DeadlinesPage implements OnInit {
   private readonly router = inject(Router);
   private readonly operationService = inject(OperationService);
   private readonly clientService = inject(ClientService);
+  private readonly contactService = inject(ContactService);
   private readonly productService = inject(ProductService);
   private readonly serviceService = inject(ServiceService);
+  private readonly fairTaskService = inject(FairTaskService);
+  private readonly fairService = inject(FairService);
   private readonly persistence = inject(PersistenceService);
 
   protected readonly works = signal<readonly Operation[]>([]);
   protected readonly parties = signal<readonly Party[]>([]);
   protected readonly products = signal<readonly Product[]>([]);
   protected readonly services = signal<readonly Service[]>([]);
+  protected readonly fairTasks = signal<readonly FairTask[]>([]);
+  protected readonly fairs = signal<readonly Fair[]>([]);
+  protected readonly fairTaskContacts = signal<readonly Party[]>([]);
+  private readonly fairTaskContactsById = computed(() => new Map(this.fairTaskContacts().map((party) => [party.id, party])));
   protected readonly loading = signal(true);
   protected readonly filtersOpen = signal(false);
   protected readonly sortOpen = signal(false);
@@ -70,6 +90,63 @@ export class DeadlinesPage implements OnInit {
     });
     return [...works].sort((first, second) => { const value = (work: Operation): string => this.sortKey() === 'date' ? work.deliveryDate ?? '9999-12-31' : this.sortKey() === 'offer' ? this.offerName(work) : this.sortKey() === 'customer' ? this.customerName(work) : this.isOverdue(work) ? '0' : this.isDueSoon(work) ? '1' : '2'; const result = value(first).localeCompare(value(second), 'it', { numeric: true, sensitivity: 'base' }); return this.sortDirection() === 'asc' ? result : -result; });
   }
+
+  /** Attivita checklist fiera 'da fare'/'in corso' con scadenza, accanto alle lavorazioni: stessa logica scaduto/in-scadenza, ordinamento solo per data. */
+  protected visibleFairTaskDeadlines(): readonly FairTaskDeadline[] {
+    const query = this.query().trim().toLocaleLowerCase();
+    const items = this.fairTasks()
+      .filter((task) => Boolean(task.dueDate) && task.status === 'pending')
+      .map((task) => this.toFairTaskDeadline(task));
+    return items
+      .filter((item) => {
+        if (this.statusFilter() === 'overdue' && !item.overdue) return false;
+        if (this.statusFilter() === 'due-soon' && !item.dueSoon) return false;
+        return !query || `${item.task.title} ${item.fairName}`.toLocaleLowerCase().includes(query);
+      })
+      .sort((first, second) => (first.task.dueDate ?? '9999-12-31').localeCompare(second.task.dueDate ?? '9999-12-31'));
+  }
+  protected openFairTask(task: FairTask): void { void this.router.navigate(['/events'], { queryParams: { open: task.fairEditionId } }); }
+  /** Azione predefinita della checklist (contatto collegato o testo libero): stessa risoluzione usata nella checklist della fiera. */
+  protected fairTaskContactLinks(task: FairTask): ContactLinks {
+    if (task.partyId && task.contactChannel) {
+      const value = this.partyChannelValue(this.fairTaskContactsById().get(task.partyId), task.contactChannel, task.contactMethodId);
+      if (value) return contactLinksForChannel(task.contactChannel, value);
+    }
+    return contactLinksFromFreeText(task.contactInfo);
+  }
+  protected fairTaskRightActions(task: FairTask): SwipeAction[] {
+    const links = this.fairTaskContactLinks(task);
+    const actions: SwipeAction[] = [];
+    if (links.callHref) actions.push({ key: 'call', icon: '📞', label: 'Chiama', run: () => { window.location.href = links.callHref!; } });
+    if (links.mailHref) actions.push({ key: 'mail', icon: '✉️', label: 'Email', run: () => { window.location.href = links.mailHref!; } });
+    if (links.whatsappHref) actions.push({ key: 'whatsapp', icon: '💬', label: 'WhatsApp', run: () => window.open(links.whatsappHref, '_blank', 'noopener') });
+    if (links.websiteHref) actions.push({ key: 'website', icon: '🌐', label: 'Sito', run: () => window.open(links.websiteHref, '_blank', 'noopener') });
+    actions.push({ key: 'edit', icon: '✎', label: 'Apri fiera', kind: 'auto', run: () => this.openFairTask(task) });
+    return actions;
+  }
+  private partyChannelValue(party: Party | undefined, channel: PartyContactChannel, methodId?: string): string | undefined {
+    if (!party) return undefined;
+    if (methodId) {
+      const method = party.contacts?.find((candidate) => candidate.id === methodId && candidate.channel === channel);
+      if (method) return method.value;
+    }
+    if (channel === 'email') return party.email || party.contacts?.find((method) => method.channel === 'email')?.value;
+    if (channel === 'website') return party.website || party.contacts?.find((method) => method.channel === 'website')?.value;
+    if (channel === 'phone' || channel === 'whatsapp') return party.phone || party.contacts?.find((method) => method.channel === channel)?.value;
+    return party.contacts?.find((method) => method.channel === channel)?.value;
+  }
+  private toFairTaskDeadline(task: FairTask): FairTaskDeadline {
+    const fair = this.fairs().find((item) => item.id === task.fairEditionId);
+    const limit = new Date(); limit.setDate(limit.getDate() + this.persistence.dueSoonDays());
+    const limitDate = limit.toISOString().slice(0, 10);
+    const overdue = Boolean(task.dueDate && task.dueDate < this.today());
+    return {
+      task,
+      fairName: fair ? `${fair.name} · ${fair.edition}` : 'Fiera non trovata',
+      overdue,
+      dueSoon: !overdue && Boolean(task.dueDate && task.dueDate <= limitDate),
+    };
+  }
   protected hasActiveFilters(): boolean { return Boolean(this.query().trim()) || this.statusFilter() !== 'all'; }
   protected closeFilterPanel(): void { this.filtersOpen.set(false); }
   protected resetFilters(): void { this.query.set(''); this.statusFilter.set('all'); this.filtersOpen.set(false); }
@@ -82,9 +159,10 @@ export class DeadlinesPage implements OnInit {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const [operations, parties, products, services] = await Promise.all([this.operationService.list('all'), this.clientService.list(), this.productService.list(), this.serviceService.list()]);
+      const [operations, parties, products, services, fairTasks, fairs, fairTaskContacts] = await Promise.all([this.operationService.list('all'), this.clientService.list(), this.productService.list(), this.serviceService.list(), this.fairTaskService.listAll(), this.fairService.list(), this.contactService.list()]);
       this.works.set(operations.filter((operation) => operation.workStatus === 'requested' || operation.workStatus === 'in-progress'));
       this.parties.set(parties); this.products.set(products); this.services.set(services);
+      this.fairTasks.set(fairTasks); this.fairs.set(fairs); this.fairTaskContacts.set(fairTaskContacts);
     } finally { this.loading.set(false); }
   }
 

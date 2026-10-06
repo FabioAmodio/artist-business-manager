@@ -5,10 +5,10 @@ import { FairEditionRepository } from './fair-edition.repository';
 
 const editions: readonly FairEdition[] = [
   {
-    id: 'late', fairSeriesId: 'series', edition: 'Autunno 2026', name: 'Fiera tarda', location: 'B', startDate: '2026-10-10', endDate: '2026-10-11', createdAt: '', updatedAt: '',
+    id: 'late', fairSeriesId: 'series', edition: 'Autunno 2026', name: 'Fiera tarda', location: 'B', startDate: '2026-10-10', endDate: '2026-10-11', status: 'confirmed', createdAt: '', updatedAt: '',
   },
   {
-    id: 'early', fairSeriesId: 'series', edition: 'Primavera 2026', name: 'Fiera presto', location: 'A', startDate: '2026-04-10', endDate: '2026-04-11', createdAt: '', updatedAt: '',
+    id: 'early', fairSeriesId: 'series', edition: 'Primavera 2026', name: 'Fiera presto', location: 'A', startDate: '2026-04-10', endDate: '2026-04-11', status: 'confirmed', createdAt: '', updatedAt: '',
   },
 ];
 

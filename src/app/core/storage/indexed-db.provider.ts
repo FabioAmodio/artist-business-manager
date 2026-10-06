@@ -109,7 +109,7 @@ export class IndexedDbProvider implements IStorageProvider {
   }
 
   private isSupportedCollection(collection: string): boolean {
-    return collection === 'appSettings' || collection === 'workflowSettings' || collection === 'notifications' || collection === 'notificationStates' || collection === 'notificationEvaluationRuns' || collection === 'notificationStatsOutbox' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services' || collection === 'syncOperations';
+    return collection === 'appSettings' || collection === 'workflowSettings' || collection === 'notifications' || collection === 'notificationStates' || collection === 'notificationEvaluationRuns' || collection === 'notificationStatsOutbox' || collection === 'bundles' || collection === 'fairs' || collection === 'fairSeries' || collection === 'fairEditions' || collection === 'fairTasks' || collection === 'activityLog' || collection === 'lots' || collection === 'parties' || collection === 'operations' || collection === 'paymentMethods' || collection === 'payments' || collection === 'products' || collection === 'purchases' || collection === 'services' || collection === 'syncOperations';
   }
 
   private isLocalOnlyCollection(collection: string): boolean {

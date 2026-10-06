@@ -1,6 +1,8 @@
 import Dexie, { type Table } from 'dexie';
+import type { ActivityLogEntry } from '../../domain/models/activity-log';
 import type { Bundle } from '../../domain/models/bundle';
 import type { FairEdition, FairSeries } from '../../domain/models/fair';
+import type { FairTask } from '../../domain/models/fair-task';
 import type { Lot } from '../../domain/models/lot';
 import type { Operation } from '../../domain/models/operation';
 import type { PaymentMethod } from '../../domain/models/payment-method';
@@ -13,7 +15,7 @@ import type { SyncOperation } from '../../domain/models/sync-operation';
 import type { WorkflowSettings } from '../../domain/models/workflow-settings';
 
 export const DATABASE_NAME = 'artist-business-manager';
-export const DATABASE_VERSION = 25;
+export const DATABASE_VERSION = 28;
 
 interface LegacyFair {
   readonly id: string;
@@ -44,6 +46,7 @@ export class AppDatabase extends Dexie {
   readonly fairs!: Table<FairEdition, string>;
   readonly fairSeries!: Table<FairSeries, string>;
   readonly fairEditions!: Table<FairEdition, string>;
+  readonly fairTasks!: Table<FairTask, string>;
   readonly lots!: Table<Lot, string>;
   readonly operations!: Table<Operation, string>;
   readonly paymentMethods!: Table<PaymentMethod, string>;
@@ -53,6 +56,7 @@ export class AppDatabase extends Dexie {
   readonly purchases!: Table<Purchase, string>;
   readonly services!: Table<Service, string>;
   readonly syncOperations!: Table<SyncOperation, string>;
+  readonly activityLog!: Table<ActivityLogEntry, string>;
   readonly appSettings!: Table<{ id: string; source: string; directoryHandle?: FileSystemDirectoryHandle; updatedAt: string }, string>;
   readonly workflowSettings!: Table<WorkflowSettings, string>;
 
@@ -252,11 +256,87 @@ export class AppDatabase extends Dexie {
       await transaction.table('services').bulkPut(services.map((service) => ({ ...service, active: service.active ?? true })));
     });
     // v25: nuove tabelle notifiche, aggiunte come versione a se stante affinche i database gia migrati a v24 le ricevano.
-    this.version(DATABASE_VERSION).stores({
+    this.version(25).stores({
       bundles: 'id, name, active, updatedAt, deletedAt',
       fairs: 'id, startDate, endDate, updatedAt, deletedAt',
       fairSeries: 'id, name, updatedAt, deletedAt',
       fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, updatedAt, deletedAt',
+      lots: 'id, productId, purchaseId, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
+      paymentMethods: 'id, name, system, updatedAt, deletedAt',
+      payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
+      parties: 'id, type, displayName, email, updatedAt, deletedAt',
+      products: 'id, name, active, updatedAt, deletedAt',
+      purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
+      services: 'id, code, description, active, system, updatedAt, deletedAt',
+      appSettings: 'id, updatedAt',
+      workflowSettings: 'id, updatedAt',
+      notifications: 'id, occurrenceKey, kind, entityId, updatedAt',
+      notificationStates: 'id, notificationId, status, snoozedUntil, updatedAt',
+      notificationEvaluationRuns: 'id, localDate, workspaceId, userId, status, updatedAt',
+      notificationStatsOutbox: 'id, localDate, workspaceId, updatedAt',
+      syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
+    });
+    // v26: stato di conferma sulle FairEdition (pregresso = confirmed) e nuova tabella fairTasks per la checklist organizzativa.
+    this.version(DATABASE_VERSION).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
+      fairs: 'id, startDate, endDate, updatedAt, deletedAt',
+      fairSeries: 'id, name, updatedAt, deletedAt',
+      fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, status, updatedAt, deletedAt',
+      fairTasks: 'id, fairEditionId, kind, status, dueDate, updatedAt, deletedAt',
+      lots: 'id, productId, purchaseId, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
+      paymentMethods: 'id, name, system, updatedAt, deletedAt',
+      payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
+      parties: 'id, type, displayName, email, updatedAt, deletedAt',
+      products: 'id, name, active, updatedAt, deletedAt',
+      purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
+      services: 'id, code, description, active, system, updatedAt, deletedAt',
+      appSettings: 'id, updatedAt',
+      workflowSettings: 'id, updatedAt',
+      notifications: 'id, occurrenceKey, kind, entityId, updatedAt',
+      notificationStates: 'id, notificationId, status, snoozedUntil, updatedAt',
+      notificationEvaluationRuns: 'id, localDate, workspaceId, userId, status, updatedAt',
+      notificationStatsOutbox: 'id, localDate, workspaceId, updatedAt',
+      syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
+    }).upgrade(async (transaction) => {
+      const editions = await transaction.table('fairEditions').toArray() as Array<FairEdition & { readonly status?: string }>;
+      await transaction.table('fairEditions').bulkPut(editions.map((edition) => edition.status ? edition : { ...edition, status: 'confirmed' as const }));
+    });
+    // v27: rimosso lo stato 'in-progress' dalla checklist fiera (restano Da fare/Fatta/Da non fare).
+    this.version(DATABASE_VERSION).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
+      fairs: 'id, startDate, endDate, updatedAt, deletedAt',
+      fairSeries: 'id, name, updatedAt, deletedAt',
+      fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, status, updatedAt, deletedAt',
+      fairTasks: 'id, fairEditionId, kind, status, dueDate, updatedAt, deletedAt',
+      lots: 'id, productId, purchaseId, updatedAt, deletedAt',
+      operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
+      paymentMethods: 'id, name, system, updatedAt, deletedAt',
+      payments: 'id, operationId, paymentDate, paymentMethodId, updatedAt, deletedAt',
+      parties: 'id, type, displayName, email, updatedAt, deletedAt',
+      products: 'id, name, active, updatedAt, deletedAt',
+      purchases: 'id, supplierId, purchaseDate, productId, updatedAt, deletedAt',
+      services: 'id, code, description, active, system, updatedAt, deletedAt',
+      appSettings: 'id, updatedAt',
+      workflowSettings: 'id, updatedAt',
+      notifications: 'id, occurrenceKey, kind, entityId, updatedAt',
+      notificationStates: 'id, notificationId, status, snoozedUntil, updatedAt',
+      notificationEvaluationRuns: 'id, localDate, workspaceId, userId, status, updatedAt',
+      notificationStatsOutbox: 'id, localDate, workspaceId, updatedAt',
+      syncOperations: 'id, collection, entityId, status, createdAt, updatedAt',
+    }).upgrade(async (transaction) => {
+      const tasks = await transaction.table('fairTasks').toArray() as Array<Omit<FairTask, 'status'> & { readonly status: string }>;
+      await transaction.table('fairTasks').bulkPut(tasks.map((task) => task.status === 'in-progress' ? { ...task, status: 'pending' as const } : task));
+    });
+    // v28: nuova tabella activityLog per il registro attivita' (storico azioni fiera, indipendente dalla checklist).
+    this.version(DATABASE_VERSION).stores({
+      bundles: 'id, name, active, updatedAt, deletedAt',
+      fairs: 'id, startDate, endDate, updatedAt, deletedAt',
+      fairSeries: 'id, name, updatedAt, deletedAt',
+      fairEditions: 'id, fairSeriesId, edition, year, startDate, endDate, status, updatedAt, deletedAt',
+      fairTasks: 'id, fairEditionId, kind, status, dueDate, updatedAt, deletedAt',
+      activityLog: 'id, subjectType, subjectId, date, updatedAt, deletedAt',
       lots: 'id, productId, purchaseId, updatedAt, deletedAt',
       operations: 'id, type, partyId, fairEditionId, serviceId, bundleId, parentOperationId, operationDate, deliveryDate, updatedAt, deletedAt',
       paymentMethods: 'id, name, system, updatedAt, deletedAt',

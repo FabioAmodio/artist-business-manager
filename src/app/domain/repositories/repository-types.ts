@@ -1,4 +1,5 @@
 import type { EntityId } from '../shared/types';
+import type { PartyRole } from '../models/party';
 
 export interface EntityFilter {
   readonly includeDeleted?: boolean;
@@ -13,6 +14,7 @@ export type ProductFilter = EntityFilter & { readonly active?: boolean };
 export type PurchaseFilter = EntityFilter & { readonly supplierId?: EntityId };
 export type PaymentMethodFilter = EntityFilter;
 export type ServiceFilter = EntityFilter;
+export type PartyFilter = EntityFilter & { readonly role?: PartyRole };
 
 export interface OperationTransition {
   readonly status: string;

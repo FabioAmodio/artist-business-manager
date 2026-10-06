@@ -1,0 +1,143 @@
+<section class="contacts-page" aria-labelledby="contacts-title">
+  <app-page-header icon="👥" title="Contatti" [actions]="[{ key: 'new', label: '+ Nuovo contatto' }]" [hidden]="!!editingId()" (select)="startCreating()" />
+
+  @if (errorMessage()) { <p class="feedback error" role="alert">{{ errorMessage() }}</p> }
+  @if (successMessage()) { <p class="feedback success" role="status">{{ successMessage() }}</p> }
+
+  <div class="list-heading"><h2>Elenco contatti</h2><div class="list-heading-end"><span>{{ visibleContacts().length }} registrati</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" aria-label="Apri filtri" title="Filtra lista" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button><button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" aria-label="Ordina lista" title="Ordina lista" (click)="toggleSort()"><span aria-hidden="true">↕</span></button></div></div>
+  @if (filtersOpen()) { <app-list-filter-panel [resultLabel]="'Filtra ' + visibleContacts().length + ' elementi'" (close)="closeFilterPanel()" (reset)="resetFilters()" (apply)="closeFilterPanel()">
+    <label>Ricerca <input name="query" type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Nome, email, telefono, sito..." /></label>
+    <fieldset class="work-status-selector">
+      <legend>Ruolo</legend>
+      <div>
+        @for (role of roleOptions; track role) {
+          <label class="work-status-option" [class.selected]="isRoleFilterChecked(role)">
+            <input type="checkbox" [checked]="isRoleFilterChecked(role)" (change)="toggleRoleFilter(role, $any($event.target).checked)" />
+            <span class="work-status-option-icon" aria-hidden="true">{{ roleIcons[role] }}</span>
+            <span class="work-status-option-label">{{ roleLabels[role] }}</span>
+          </label>
+        }
+      </div>
+    </fieldset>
+    <label>Tipo
+      <select name="typeFilter" [(ngModel)]="typeFilter">
+        <option value="all">Tutti</option>
+        <option value="person">Persone</option>
+        <option value="organization">Organizzazioni</option>
+      </select>
+    </label>
+    @if (!roleFilter().length || isRoleFilterChecked('supplier')) {
+      <label>Tipo fornitore
+        <select name="supplierTypeFilter" [(ngModel)]="supplierTypeFilter">
+          <option value="all">Tutti</option>
+          <option value="printer">Tipografie</option>
+          <option value="publisher">Editori</option>
+          <option value="materials">Materiali</option>
+          <option value="marketplace">Marketplace</option>
+          <option value="other">Altri fornitori</option>
+        </select>
+      </label>
+    }
+    <label>Acquisti minimi <app-number-stepper [step]="1" [min]="0" [integer]="true" [ngModel]="purchasesMin()" (ngModelChange)="purchasesMin.set($event)" /></label>
+    <label>Acquisti massimi <app-number-stepper [step]="1" [min]="0" [integer]="true" [ngModel]="purchasesMax()" (ngModelChange)="purchasesMax.set($event)" /></label>
+    <label>Spesa minima <app-number-stepper [step]="1" [decimals]="2" [min]="0" [ngModel]="spendingMin()" (ngModelChange)="spendingMin.set($event)" /></label>
+    <label>Spesa massima <app-number-stepper [step]="1" [decimals]="2" [min]="0" [ngModel]="spendingMax()" (ngModelChange)="spendingMax.set($event)" /></label>
+  </app-list-filter-panel> }
+  @if (sortOpen()) { <div class="sort-backdrop sheet-backdrop" aria-hidden="true"></div><div class="toolbar sort-panel" role="dialog" aria-label="Ordinamento contatti"><div class="sort-control-row"><select aria-label="Colonna da ordinare" [ngModel]="sortKey()" (ngModelChange)="sortKey.set($event)"><option value="name">Nome</option><option value="purchases">Acquisti</option><option value="spending">Spesa</option><option value="type">Tipo</option></select><button class="sort-direction-button" type="button" [attr.aria-label]="sortDirection() === 'asc' ? 'Discendente' : 'Ascendente'" title="Cambia direzione" (click)="changeSortDirection()">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</button><button class="sort-reset-button" type="button" aria-label="Ripristina ordinamento" title="Ripristina ordinamento" (click)="restoreSort()">↺</button></div></div> }
+
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!visibleContacts().length) {
+    <div class="empty-state"><h3>Nessun contatto registrato</h3></div>
+  } @else {
+    <div class="contact-list">
+      @for (contact of visibleContacts(); track contact.id) {
+        <app-swipe-row [id]="contact.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="contactRightActions(contact)" [leftActions]="contactLeftActions(contact)">
+        <article class="contact-row">
+          <div>
+            <h3><span class="contact-type-icon" aria-hidden="true">{{ contact.type === 'person' ? '👤' : '🏢' }}</span>{{ contact.displayName }}</h3>
+            <div class="relation-badges">
+              @for (badge of roleBadges(contact); track badge) { <span>{{ badge }}</span> }
+              @if (contact.supplierType) { <span>{{ supplierTypeLabel(contact.supplierType) }}</span> }
+            </div>
+          </div>
+          <div class="contact-grid">
+            @if (contact.roles?.includes('customer')) {
+              <button class="metric-link" type="button" aria-label="Apri vendite del contatto" title="Apri vendite del contatto" (click)="openContactSales(contact)"><strong>Acquisti</strong>{{ purchaseCount(contact) }}</button>
+              <button class="metric-link" type="button" aria-label="Apri vendite del contatto" title="Apri vendite del contatto" (click)="openContactSales(contact)"><strong>Spesa</strong>{{ purchaseTotal(contact) | currency:'EUR':'symbol':'1.2-2' }}</button>
+            }
+            <span><strong>Email</strong>{{ contact.email || 'n.d.' }}</span>
+            <span><strong>Telefono</strong>{{ contact.phone || 'n.d.' }}</span>
+            <span><strong>Sito</strong>{{ contact.website || 'n.d.' }}</span>
+            @if (contactMethodSummary(contact); as extra) { @if (extra) { <span><strong>Altri contatti</strong>{{ extra }}</span> } }
+          </div>
+          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica contatto" title="Modifica contatto" (click)="startEditing(contact)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina contatto" [disabled]="isContactUsed(contact)" [title]="isContactUsed(contact) ? 'Contatto usato in operazioni/acquisti' : 'Elimina contatto'" (click)="remove(contact)">🗑</button></div>
+        </article>
+        </app-swipe-row>
+      }
+    </div>
+  }
+
+  @if (editingId() || creating()) {
+    <div class="dialog-backdrop" aria-hidden="true"></div>
+    <section class="contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-form-title">
+      <form class="contact-form" (ngSubmit)="save()" #contactForm="ngForm">
+        <div class="form-heading"><app-form-actions [disabled]="contactForm.invalid === true" [saving]="saving()" saveLabel="Salva contatto" (cancel)="cancelForm()"><h2 id="contact-form-title">{{ editingId() ? 'Modifica contatto' : 'Nuovo contatto' }}</h2></app-form-actions></div>
+        <div class="form-grid">
+          <label class="wide">Nome <input name="displayName" required [(ngModel)]="draft.displayName" /></label>
+          <label>Tipo
+            <select name="type" required [(ngModel)]="draft.type">
+              <option value="person">Persona</option>
+              <option value="organization">Organizzazione</option>
+            </select>
+          </label>
+          <fieldset class="work-status-selector full-width">
+            <legend>Ruoli</legend>
+            <div>
+              @for (role of roleOptions; track role) {
+                <label class="work-status-option" [class.selected]="hasRole(role)" [attr.title]="role === 'customer' && isCustomerRoleLocked() ? 'Collegato a vendite/lavorazioni: non rimovibile' : null">
+                  <input type="checkbox" [checked]="hasRole(role)" [disabled]="role === 'customer' && isCustomerRoleLocked()" (change)="toggleRole(role, $any($event.target).checked)" />
+                  <span class="work-status-option-icon" aria-hidden="true">{{ roleIcons[role] }}</span>
+                  <span class="work-status-option-label">{{ roleLabels[role] }}</span>
+                </label>
+              }
+            </div>
+            @if (isCustomerRoleLocked()) { <p class="role-lock-note">Il ruolo Cliente non e' rimovibile: il contatto e' collegato a vendite o lavorazioni.</p> }
+          </fieldset>
+          @if (hasRole('supplier')) {
+            <label>Tipo fornitore
+              <select name="supplierType" [(ngModel)]="draft.supplierType">
+                <option value="printer">Tipografia</option>
+                <option value="publisher">Editore</option>
+                <option value="materials">Fornitore materiale</option>
+                <option value="marketplace">Marketplace</option>
+                <option value="other">Altro fornitore</option>
+              </select>
+            </label>
+          }
+          <label>Email <input name="email" type="email" [(ngModel)]="draft.email" /></label>
+          <label>Telefono <input name="phone" [(ngModel)]="draft.phone" /></label>
+          <label>Sito web <input name="website" type="url" [(ngModel)]="draft.website" /></label>
+          <label>Social <input name="social" [(ngModel)]="draft.social" /></label>
+          <section class="contact-methods full-width">
+            <div class="contact-methods-heading"><span>Altri contatti</span><button class="text-button" type="button" (click)="addContactMethod()">+ Aggiungi</button></div>
+            @for (method of draftContacts; track method.id) {
+              <div class="contact-method-row">
+                <select [ngModel]="method.channel" (ngModelChange)="updateContactMethod(method.id, { channel: $event })" [ngModelOptions]="{standalone: true}" aria-label="Canale">
+                  <option value="email">Email</option>
+                  <option value="phone">Telefono</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="website">Sito web</option>
+                </select>
+                <input type="text" placeholder="Valore" [ngModel]="method.value" (ngModelChange)="updateContactMethod(method.id, { value: $event })" [ngModelOptions]="{standalone: true}" />
+                <input type="text" placeholder="Etichetta (es. Ufficio)" [ngModel]="method.label ?? ''" (ngModelChange)="updateContactMethod(method.id, { label: $event })" [ngModelOptions]="{standalone: true}" />
+                <button class="icon-action" type="button" aria-label="Rimuovi contatto" title="Rimuovi contatto" (click)="removeContactMethod(method.id)">🗑</button>
+              </div>
+            }
+          </section>
+          <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
+        </div>
+      </form>
+    </section>
+  }
+</section>

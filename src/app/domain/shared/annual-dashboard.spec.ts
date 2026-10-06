@@ -12,7 +12,7 @@ const source = {
     { id: 'older-work', type: 'work', title: 'Storico aperto', amount: 15, workStatus: 'requested', operationDate: '2025-12-01T10:00:00Z', createdAt: '2025-12-01T10:00:00Z', updatedAt: '2025-12-01T10:00:00Z' },
   ],
   payments: [{ id: 'payment-1', operationId: 'bundle', amount: 25, paymentDate: '2026-06-02', paymentMethodId: 'cash', createdAt: '2026-06-02T10:00:00Z', updatedAt: '2026-06-02T10:00:00Z' }],
-  fairs: [{ id: 'fair-1', fairSeriesId: 'series-1', edition: '2026', name: 'Fiera', location: 'Roma', startDate: '2026-06-01', endDate: '2026-06-02', standCost: 20, reimbursement: 5, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }],
+  fairs: [{ id: 'fair-1', fairSeriesId: 'series-1', edition: '2026', name: 'Fiera', location: 'Roma', startDate: '2026-06-01', endDate: '2026-06-02', status: 'confirmed', standCost: 20, reimbursement: 5, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }],
   purchases: [{ id: 'purchase-1', purchaseDate: '2026-03-01', description: 'Stampe', totalAmount: 30, createdAt: '2026-03-01T00:00:00Z', updatedAt: '2026-03-01T00:00:00Z' }],
   products: [{ id: 'product-1', name: 'Stampa', active: true, tags: [], createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }],
   services: [],
@@ -39,5 +39,13 @@ describe('annual dashboard', () => {
 
   it('derives inclusive year bounds from registered data and the current year', () => {
     expect(availableYearRange(source, 2027)).toEqual({ min: 2025, max: 2027 });
+  });
+
+  it('excludes draft and cancelled fair editions from fair and balance metrics', () => {
+    const draftFair = { ...source.fairs[0], id: 'fair-draft', status: 'draft' as const, startDate: '2026-09-10', endDate: '2026-09-11' };
+    const cancelledFair = { ...source.fairs[0], id: 'fair-cancelled', status: 'cancelled' as const, startDate: '2026-09-12', endDate: '2026-09-13' };
+    const metrics = annualDashboardMetrics({ ...source, fairs: [source.fairs[0], draftFair, cancelledFair] }, 2026, '2026-09-01');
+
+    expect(metrics.fairs).toMatchObject({ completed: 1, inProgress: 0, upcoming: 0, next: null });
   });
 });

@@ -4,7 +4,7 @@ import type { Fair } from '../../domain/models/fair';
 import { STORAGE_PROVIDER } from '../configuration/environment.tokens';
 import { ActiveFairService } from './active-fair.service';
 
-const fair: Fair = { id: 'fair-1', fairSeriesId: 'series-1', edition: '2025', name: 'Fiera scelta', location: 'Roma', startDate: '2025-01-01', endDate: '2025-01-02', createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' };
+const fair: Fair = { id: 'fair-1', fairSeriesId: 'series-1', edition: '2025', name: 'Fiera scelta', location: 'Roma', startDate: '2025-01-01', endDate: '2025-01-02', status: 'confirmed', createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' };
 
 describe('ActiveFairService', () => {
   it('persists a forced fair and clears it', async () => {

@@ -4,7 +4,7 @@
 
 Fotografia dello stato reale dell'applicazione rispetto ai documenti di dominio e architettura.
 
-Ultimo aggiornamento: 2026-09-09.
+Ultimo aggiornamento: 2026-10-06.
 
 ## Sintesi
 
@@ -17,13 +17,14 @@ Ultimo aggiornamento: 2026-09-09.
 | Sincronizzazione | Implementata V1 | Sync automatico/manuale e risoluzione per `updatedAt`; manca una outbox persistente |
 | Dashboard / Riepilogo | Implementata V1 | Vista annuale e vista fiera operativa con deep-link filtrati |
 | Modalita Fiera | Implementata V1 | Rilevamento automatico, forzatura persistente, indicatore globale e uscita confermata |
-| Eventi / Fiere | Implementata V1 | Serie/edizioni, CRUD, validazioni, costi, ricavi, bilancio e copertura |
+| Eventi / Fiere | Implementata V1 | Serie/edizioni, CRUD, validazioni, costi, ricavi, bilancio, copertura, stato di conferma (`draft`/`confirmed`/`cancelled`), checklist organizzativa (`FairTask`) e dati costanti di serie modificabili da UI |
 | Operazioni | Implementata V1 | Vendite, lavorazioni e bundle sulla stessa aggregate root |
 | Pagamenti | Implementata V1 | Payment 1:N, acconti/saldi, registrazione rapida e pagamento raggruppato delle vendite consecutive |
 | Catalogo | Implementata V1 | Prodotti, servizi e bundle, disponibilita derivata e collegamenti agli acquisti |
 | Anagrafiche | Implementata V1 | Clienti e fornitori con ricerca, filtri e soft delete |
 | Acquisti e collegamenti | Implementata V1 | Acquisti, lotti/collegamenti, alias e bilancio per acquisto |
 | Scadenze | Implementata V1 | Lavorazioni aperte, badge temporali e deep-link alla lavorazione |
+| Notifiche | Implementata V1 | Lavorazioni in scadenza/scadute e attivita fiera (`FairTask`) in un'unica lista, con icona e filtro per tipo |
 | Cestino | Implementata V1 | Ripristino e cancellazione permanente singola/multipla |
 | Finanza dedicata | Placeholder | Il riepilogo annuale copre il bilancio V1; la route `/finance` resta futura |
 
@@ -60,10 +61,11 @@ La sidebar e visibile da 700 px. Sotto i 700 px viene sostituita dalla action ba
 | `/purchases` | `PurchasesPage` | Implementata V1 | Acquisti con filtro anno |
 | `/suppliers` | `SuppliersPage` | Implementata V1 | Fornitori e categorie |
 | `/lots` | `LotsPage` | Implementata V1 | Collegamenti/lotti tecnici |
-| `/events` | `FairsPage` | Implementata V1 | Edizioni fiera, dati economici e filtro anno |
+| `/events` | `FairsPage` | Implementata V1 | Edizioni fiera, dati economici, filtro anno/stato e checklist organizzativa |
 | `/payment-methods` | `PaymentMethodsPage` | Implementata V1 | Modalita di pagamento |
 | `/settings` | `SettingsPage` | Implementata V1 | Persistenza, sync, import/export e trasparenza AI |
 | `/trash` | `TrashPage` | Implementata V1 | Cestino applicativo |
+| `/notifications` | `NotificationsPage` | Implementata V1 | Notifiche lavorazioni e attivita fiera con icona e filtro per tipo |
 | `/finance` | `PlaceholderPage` | Futuro | Reporting finanziario dedicato |
 
 ## Dashboard annuale
@@ -73,7 +75,7 @@ La vista generale usa per default l'anno corrente e permette di cambiare anno co
 Metriche:
 
 - **Lavorazioni globali**, indipendenti dall'anno: Da fare (`requested`), In lavorazione (`in-progress`), Da consegnare (`completed`) e Da saldare; una seconda riga mostra il totale dell'anno selezionato.
-- **Fiere annuali**: concluse nell'anno, bilancio annuale, prossime fiere e prossima edizione.
+- **Fiere annuali**: concluse nell'anno, bilancio annuale, prossime fiere e prossima edizione, calcolate solo sulle edizioni con stato `confirmed`.
 - **Bilancio annuale**: uscite da Acquisti e costi Fiere; entrate da vendite in fiera/non fiera e rimborsi; dettaglio per prodotto, servizio o bundle.
 
 Le metriche sono calcolate da funzioni pure in `domain/shared/annual-dashboard.ts`. I valori cliccabili aprono le pagine di origine con query parameter reali (`year`, `workFilter`, `fairFilter`, `fairScope`, `offer`). Le pagine mostrano filtri espliciti e pannelli ricerca richiudibili.

@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased] - 2026-10-06
+
+### Implementato
+
+- Stato di conferma edizione fiera (`draft`/`confirmed`/`cancelled`): bilanci, prossimi eventi e statistiche annuali contano solo le edizioni confermate; nuovo filtro di stato nell'elenco Fiere distinto dal filtro temporale esistente.
+- Checklist organizzativa (`FairTask`) generata come guida alla creazione di ogni edizione (contattare organizzatore, modulistica, quota, materiale promozionale, hotel, scadenza cancellazione), personalizzabile e marcabile come "non necessaria" senza perdere lo storico.
+- Dati costanti di `FairSeries` (luogo, organizzatore) finalmente modificabili da UI, con template di checklist personalizzabile per serie (`taskTemplate`/`defaultNotes`) ereditato ma sempre sovrascrivibile per edizione.
+- Prefill dei costi (stand, hotel, viaggio, altri, budget) dall'edizione precedente della stessa serie, con indicatore di scostamento per accorgersi subito degli aumenti anno su anno.
+- Notifiche di lavorazioni e attivita fiera unificate in un'unica lista, distinte da icona per tipo e filtro Tutte/Lavorazioni/Fiere.
+- Azioni di contatto rapide (chiamata/email/WhatsApp) per i contatti dell'organizzatore e per il testo libero dei task fiera.
+
 ## [Unreleased] - 2026-09-09
 
 ### Implementato
@@ -30,6 +41,7 @@
 
 - Introdotta [OPERATIONS-DOMAIN-SPECIFICATION.md](../business/OPERATIONS-DOMAIN-SPECIFICATION.md) come specifica normativa per Operazione, macchina a stati delle commissioni, record incompleti, Clienti soft e contabilizzazione fieristica distinta da origine e consegna.
 - La Modalita Fiera e un contesto operativo automatico con FAB centrale e azione alternativa; l'AI resta una tecnologia di supporto con provenance esplicita e revisione umana.
+- Lo stato di conferma della `FairEdition` resta concettualmente distinto dal soft delete (`deletedAt`): `cancelled` e una fiera che non si fa piu ma resta visibile per storico/report, come descritto in [FAIR-ORGANIZATION-TASKS-PLAN.md](FAIR-ORGANIZATION-TASKS-PLAN.md).
 
 Questo documento traccia tutti gli aggiornamenti e le nuove funzionalita introdotte nella documentazione e nella architettura di Artist Business Manager.
 

@@ -18,4 +18,31 @@
       }
     </div>
   }
+
+  <div class="list-heading"><h2>Attività fiera</h2><span>{{ visibleFairTaskDeadlines().length }} registrate</span></div>
+  @if (!loading() && !fairTasks().length) {
+    <div class="empty-state"><h3>Nessuna attivita fiera in scadenza</h3></div>
+  } @else if (!loading()) {
+    <div class="deadline-list">
+      @for (item of visibleFairTaskDeadlines(); track item.task.id) {
+        <app-swipe-row [id]="item.task.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="fairTaskRightActions(item.task)">
+        <article class="deadline-row" [class.deadline-overdue]="item.overdue" [class.deadline-due-soon]="item.dueSoon">
+          <div class="deadline-summary"><div class="deadline-date" [class.deadline-date-overdue]="item.overdue" [class.deadline-date-due-soon]="item.dueSoon" aria-label="Scadenza"><strong>{{ formatDateDay(item.task.dueDate) }}</strong>@if (item.task.dueDate) { <span>{{ formatDateMonth(item.task.dueDate) }}</span> }@if (item.overdue) { <span class="deadline-date-badge" aria-hidden="true">⏰</span> } @else if (item.dueSoon) { <span class="deadline-date-badge" aria-hidden="true">⏳</span> }</div><div class="deadline-main"><h3>{{ item.task.title }}</h3><p>{{ item.fairName }}</p></div></div>
+          @if (!isMobileSwipeMode()) { <div class="badges">@if (item.overdue) { <span class="overdue" aria-label="Scaduta" title="Scaduta"><span class="badge-icon" aria-hidden="true">⏰</span><span class="badge-label">Scaduta</span></span> } @else if (item.dueSoon) { <span class="due-soon" aria-label="In scadenza" title="In scadenza"><span class="badge-icon" aria-hidden="true">⏳</span><span class="badge-label">In scadenza</span></span> }</div> }
+          @if (!isMobileSwipeMode()) {
+            <div class="deadline-actions">
+              @if (fairTaskContactLinks(item.task); as links) {
+                @if (links.callHref) { <a class="list-action" [href]="links.callHref" aria-label="Chiama" title="Chiama">📞</a> }
+                @if (links.mailHref) { <a class="list-action" [href]="links.mailHref" aria-label="Invia email" title="Invia email">✉️</a> }
+                @if (links.whatsappHref) { <a class="list-action" [href]="links.whatsappHref" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">💬</a> }
+                @if (links.websiteHref) { <a class="list-action" [href]="links.websiteHref" target="_blank" rel="noopener" aria-label="Apri sito" title="Apri sito">🌐</a> }
+              }
+              <button class="text-button list-action" type="button" aria-label="Apri fiera" title="Apri fiera" (click)="openFairTask(item.task)">✎</button>
+            </div>
+          }
+        </article>
+        </app-swipe-row>
+      }
+    </div>
+  }
 </section>

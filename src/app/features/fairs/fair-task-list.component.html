@@ -1,0 +1,163 @@
+<section class="fair-task-list" aria-labelledby="fair-task-list-title">
+  <div class="task-list-heading">
+    <h3 id="fair-task-list-title">Checklist organizzativa</h3>
+    @if (!readonlyMode() && !loading() && (!hasTasks() || hasAddableDefaults())) {
+      <button class="text-button" type="button" (click)="generateDefaults()">{{ hasTasks() ? 'Aggiungi attivita standard mancanti' : 'Genera checklist' }}</button>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <p class="feedback error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="empty-state">Caricamento...</p>
+  } @else if (!hasTasks()) {
+    <p class="empty-state">Nessuna attivita ancora registrata per questa edizione.</p>
+  } @else {
+    <ul class="task-items">
+      @for (task of orderedTasks(); track task.id) {
+        <li class="task-item" [class.task-done]="task.status === 'done'" [class.task-not-needed]="task.status === 'not-needed'">
+          <app-swipe-row [id]="task.id" [openId]="openRowId()" (openIdChange)="openRowId.set($event)" [rightActions]="taskRightActions(task)" [leftActions]="taskLeftActions(task)">
+          <div class="task-header-row">
+            <button class="task-collapse-toggle" type="button" [attr.aria-expanded]="!isCollapsed(task)" [attr.aria-label]="isCollapsed(task) ? 'Espandi attivita' : 'Comprimi attivita'" [title]="isCollapsed(task) ? 'Espandi' : 'Comprimi'" (click)="toggleCollapse(task)">
+              <span aria-hidden="true">{{ isCollapsed(task) ? '▸' : '▾' }}</span>
+            </button>
+            <strong class="task-title">{{ kindLabel(task) }}</strong>
+            @if (isCollapsed(task)) { <span class="task-status-icon-compact" [attr.title]="currentStatusOption(task).label" aria-hidden="true">{{ currentStatusOption(task).icon }}</span> }
+          </div>
+          @if (!isCollapsed(task)) {
+          @if (task.statusChangedAt) { <small class="task-status-changed">Stato aggiornato il {{ formatTimestamp(task.statusChangedAt) }}</small> }
+          <div class="task-row-fields">
+            <label>Scadenza <input type="date" [ngModel]="draft(task).dueDate" (ngModelChange)="updateDraft(task, { dueDate: $event })" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()" /></label>
+            <label>Tipo contatto
+              <select [ngModel]="draft(task).contactRole" (ngModelChange)="changeDraftContactRole(task, $event)" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()">
+                <option value="organizer">{{ contactRoleLabels.organizer }}</option>
+                <option value="hotel">{{ contactRoleLabels.hotel }}</option>
+              </select>
+            </label>
+            <label>{{ contactRoleLabels[draft(task).contactRole] }}
+              <select [ngModel]="draft(task).partyId" (ngModelChange)="changeDraftParty(task, $event)" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()">
+                <option value="">-- Nessuno (testo libero) --</option>
+                @for (contact of contactOptions(task); track contact.id) { <option [value]="contact.id">{{ contact.displayName }}</option> }
+              </select>
+            </label>
+            @if (draft(task).partyId) {
+              <label>Canale
+                <select [ngModel]="channelSelectValue(task)" (ngModelChange)="changeDraftChannel(task, $event)" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()">
+                  @for (option of channelOptions(task); track channelOptionKey(option)) { <option [value]="channelOptionKey(option)">{{ option.label }}</option> }
+                </select>
+              </label>
+            } @else {
+              <label>Contatto libero <input type="text" placeholder="Nome, telefono, email..." [ngModel]="draft(task).contactInfo" (ngModelChange)="updateDraft(task, { contactInfo: $event })" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()" /></label>
+            }
+            @if (contactLinks(task); as links) {
+              @if (links.callHref || links.mailHref || links.whatsappHref || links.websiteHref) {
+                <div class="task-contact-actions">
+                  @if (links.callHref) { <a [href]="links.callHref" aria-label="Chiama" title="Chiama">📞</a> }
+                  @if (links.mailHref) { <a [href]="links.mailHref" aria-label="Invia email" title="Invia email">✉️</a> }
+                  @if (links.whatsappHref) { <a [href]="links.whatsappHref" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">💬</a> }
+                  @if (links.websiteHref) { <a [href]="links.websiteHref" target="_blank" rel="noopener" aria-label="Apri sito" title="Apri sito">🌐</a> }
+                </div>
+              }
+            }
+          </div>
+          <label class="task-notes">Note <textarea rows="2" [ngModel]="draft(task).notes" (ngModelChange)="updateDraft(task, { notes: $event })" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()"></textarea></label>
+          <div class="task-footer-row">
+            <fieldset class="work-status-selector">
+              <legend class="sr-only">Stato attivita</legend>
+              <div>
+                @for (option of statusOptions; track option.status) {
+                  <label class="work-status-option" [class.selected]="task.status === option.status" [attr.title]="option.label">
+                    <input type="radio" [attr.name]="'task-status-' + task.id" [checked]="task.status === option.status" [disabled]="readonlyMode()" (change)="changeStatus(task, option.status)" />
+                    <span class="work-status-option-icon" aria-hidden="true">{{ option.icon }}</span>
+                    <span class="work-status-option-label">{{ option.label }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+            @if (!readonlyMode()) {
+              <div class="task-footer-actions">
+                <button class="icon-action task-delete" type="button" aria-label="Elimina task" title="Elimina task" (click)="removeTask(task)">🗑</button>
+                <button class="task-save" type="button" [disabled]="!isDirty(task)" aria-label="Salva task" title="Salva task" (click)="saveTask(task)">✓</button>
+              </div>
+            }
+          </div>
+          }
+          </app-swipe-row>
+        </li>
+      }
+    </ul>
+  }
+
+
+  @if (!readonlyMode()) {
+    @if (addingTask()) {
+      <div class="task-add-row">
+        <input type="text" placeholder="Titolo attivita" [(ngModel)]="newTaskTitle" [ngModelOptions]="{standalone: true}" />
+        <button class="primary-button" type="button" (click)="confirmAddTask()">Aggiungi</button>
+        <button class="text-button" type="button" (click)="cancelAddingTask()">Annulla</button>
+      </div>
+    } @else {
+      <button class="text-button" type="button" (click)="startAddingTask()">+ Aggiungi task libero</button>
+    }
+  }
+
+  <div class="task-list-heading activity-log-heading">
+    <button class="text-button" type="button" (click)="toggleActivityLog()">{{ showActivityLog() ? 'Nascondi registro attivita' : 'Mostra registro attivita' }}</button>
+  </div>
+  @if (showActivityLog()) {
+    <section class="activity-log" aria-labelledby="activity-log-title">
+      <h3 id="activity-log-title" class="sr-only">Registro attivita</h3>
+      @if (activityLogLoading()) {
+        <p class="empty-state">Caricamento...</p>
+      } @else if (!activityLog().length && !addingLogEntry()) {
+        <p class="empty-state">Nessuna voce ancora registrata.</p>
+      }
+      @if (activityLog().length) {
+        <ul class="activity-log-items">
+          @for (entry of activityLog(); track entry.id) {
+            <li class="activity-log-item">
+              <div class="activity-log-fields">
+                <label class="field-date">Data <input type="date" [ngModel]="logDraft(entry).date" (ngModelChange)="updateLogDraft(entry, { date: $event })" [ngModelOptions]="{standalone: true}" /></label>
+                <label>Azione <input type="text" [ngModel]="logDraft(entry).title" (ngModelChange)="updateLogDraft(entry, { title: $event })" [ngModelOptions]="{standalone: true}" /></label>
+                <label>Contatto <input type="text" [ngModel]="logDraft(entry).contactName" (ngModelChange)="updateLogDraft(entry, { contactName: $event })" [ngModelOptions]="{standalone: true}" /></label>
+                <label class="field-channel">Canale
+                  <select [ngModel]="logDraft(entry).contactChannel" (ngModelChange)="updateLogDraft(entry, { contactChannel: $event })" [ngModelOptions]="{standalone: true}">
+                    <option value="">-- Nessuno --</option>
+                    @for (channel of channelKinds; track channel) { <option [value]="channel">{{ channelLabels[channel] }}</option> }
+                  </select>
+                </label>
+                <label>Valore <input type="text" [ngModel]="logDraft(entry).contactValue" (ngModelChange)="updateLogDraft(entry, { contactValue: $event })" [ngModelOptions]="{standalone: true}" /></label>
+              </div>
+              <div class="activity-log-actions">
+                <button class="icon-action" type="button" aria-label="Elimina voce" title="Elimina voce" (click)="deleteLogEntry(entry)">🗑</button>
+                <button class="task-save" type="button" [disabled]="!isLogDirty(entry)" aria-label="Salva voce" title="Salva voce" (click)="saveLogEntry(entry)">✓</button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+      @if (addingLogEntry()) {
+        <div class="activity-log-fields activity-log-add">
+          <label class="field-date">Data <input type="date" [(ngModel)]="newLogDraft.date" [ngModelOptions]="{standalone: true}" /></label>
+          <label>Azione <input type="text" placeholder="Es. Contatto organizzatore" [(ngModel)]="newLogDraft.title" [ngModelOptions]="{standalone: true}" /></label>
+          <label>Contatto <input type="text" [(ngModel)]="newLogDraft.contactName" [ngModelOptions]="{standalone: true}" /></label>
+          <label class="field-channel">Canale
+            <select [(ngModel)]="newLogDraft.contactChannel" [ngModelOptions]="{standalone: true}">
+              <option value="">-- Nessuno --</option>
+              @for (channel of channelKinds; track channel) { <option [value]="channel">{{ channelLabels[channel] }}</option> }
+            </select>
+          </label>
+          <label>Valore <input type="text" [(ngModel)]="newLogDraft.contactValue" [ngModelOptions]="{standalone: true}" /></label>
+          <div class="activity-log-actions">
+            <button class="primary-button" type="button" (click)="confirmAddLogEntry()">Aggiungi</button>
+            <button class="text-button" type="button" (click)="cancelAddingLogEntry()">Annulla</button>
+          </div>
+        </div>
+      } @else {
+        <button class="text-button" type="button" (click)="startAddingLogEntry()">+ Aggiungi voce</button>
+      }
+    </section>
+  }
+</section>
