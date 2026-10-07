@@ -778,7 +778,18 @@ export class PersistenceService {
   }
 
   private async writeLocalDataset(provider: IStorageProvider, dataset: PersistedDataset): Promise<void> {
-    for (const collection of DATA_COLLECTIONS) for (const record of dataset.collections[collection] ?? []) await provider.put(collection, record);
+    const failures: string[] = [];
+    for (const collection of DATA_COLLECTIONS) {
+      for (const record of dataset.collections[collection] ?? []) {
+        try {
+          await provider.put(collection, record);
+        } catch (error) {
+          // un record in conflitto non deve impedire la scrittura delle collection successive (es. parties dopo paymentMethods)
+          failures.push(`${collection}/${String(record['id'])}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+    }
+    if (failures.length) throw new Error(`${failures.length} record non scritti: ${failures.slice(0, 5).join(' | ')}${failures.length > 5 ? ' | ...' : ''}`);
   }
 
   private downloadDataset(dataset: PersistedDataset, fileName: string): void {
