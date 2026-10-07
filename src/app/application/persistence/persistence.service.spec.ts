@@ -39,7 +39,7 @@ describe('PersistenceService factory reset', () => {
     expect(storage.clearCollections).not.toHaveBeenCalled();
   });
 
-  it('clears local data and recreates mandatory system records', async () => {
+  it('clears local data without recreating default records', async () => {
     const { service, storage, paymentMethodService, serviceService } = setup();
 
     await service.factoryReset();
@@ -47,8 +47,8 @@ describe('PersistenceService factory reset', () => {
     expect(storage.clearCollections).toHaveBeenCalledOnce();
     expect(storage.clearCollections.mock.calls[0][0]).toContain('appSettings');
     expect(storage.put).toHaveBeenCalledWith('appSettings', expect.objectContaining({ id: 'current', source: 'none' }));
-    expect(paymentMethodService.list).toHaveBeenCalledOnce();
-    expect(serviceService.list).toHaveBeenCalledOnce();
+    expect(paymentMethodService.list).not.toHaveBeenCalled();
+    expect(serviceService.list).not.toHaveBeenCalled();
   });
 
   it('loads the read-only demo dataset on first TEST initialization and restores it on reset', async () => {

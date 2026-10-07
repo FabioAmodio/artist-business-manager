@@ -9,8 +9,6 @@ export class ServiceService {
   private readonly repository = inject(ServiceRepository);
 
   async list(query = ''): Promise<readonly Service[]> {
-    const services = await this.repository.list({ text: query || undefined });
-    await this.ensureSystemServices(services);
     return this.repository.list({ text: query || undefined });
   }
 
@@ -42,15 +40,5 @@ export class ServiceService {
   private validate(input: ServiceInput): void {
     if (!input.code.trim()) throw new Error('Il codice e obbligatorio.');
     if (!input.description.trim()) throw new Error('La descrizione e obbligatoria.');
-  }
-
-  private async ensureSystemServices(services: readonly Service[]): Promise<void> {
-    const ids = new Set(services.map((service) => service.id));
-    const now = new Date().toISOString();
-    const systemServices = [
-      { id: 'system-service-commission', code: 'COMMISSION', description: 'Commission' },
-      { id: 'system-service-sketch', code: 'SKETCH', description: 'Sketch' },
-    ].filter((service) => !ids.has(service.id)).map((service) => ({ ...service, active: true, system: true, createdAt: now, updatedAt: now } satisfies Service));
-    await Promise.all(systemServices.map((service) => this.repository.save(service)));
   }
 }

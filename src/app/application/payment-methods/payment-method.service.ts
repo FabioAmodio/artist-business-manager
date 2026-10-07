@@ -9,8 +9,6 @@ export class PaymentMethodService {
   private readonly repository = inject(PaymentMethodRepository);
 
   async list(query = ''): Promise<readonly PaymentMethod[]> {
-    const paymentMethods = await this.repository.list({ text: query || undefined });
-    await this.ensureSystemMethods(paymentMethods);
     return this.repository.list({ text: query || undefined });
   }
 
@@ -40,17 +38,5 @@ export class PaymentMethodService {
 
   private validate(input: PaymentMethodInput): void {
     if (!input.name.trim()) throw new Error('Il nome e obbligatorio.');
-  }
-
-  private async ensureSystemMethods(paymentMethods: readonly PaymentMethod[]): Promise<void> {
-    const ids = new Set(paymentMethods.map((paymentMethod) => paymentMethod.id));
-    const now = new Date().toISOString();
-    const systemMethods = [
-      { id: 'system-payment-method-contanti', name: 'Contanti' },
-      { id: 'system-payment-method-bancomat', name: 'Bancomat' },
-    ]
-      .filter((paymentMethod) => !ids.has(paymentMethod.id))
-      .map((paymentMethod) => ({ ...paymentMethod, system: true, createdAt: now, updatedAt: now } satisfies PaymentMethod));
-    await Promise.all(systemMethods.map((paymentMethod) => this.repository.save(paymentMethod)));
   }
 }

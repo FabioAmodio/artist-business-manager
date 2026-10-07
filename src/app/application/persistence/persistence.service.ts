@@ -3,8 +3,6 @@ import { APP_ENVIRONMENT, STORAGE_PROVIDER } from '../../core/configuration/envi
 import type { IStorageProvider } from '../../core/storage/storage-provider';
 import type { ListInteractionMode, PersistedDataset, PersistenceMode, PersistenceSettings } from '../../core/persistence/persistence.models';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
-import { PaymentMethodService } from '../payment-methods/payment-method.service';
-import { ServiceService } from '../services/service.service';
 import type { SyncOperation } from '../../domain/models/sync-operation';
 import type { WorkflowSettings } from '../../domain/models/workflow-settings';
 import { IndexedDbProvider } from '../../core/storage/indexed-db.provider';
@@ -53,8 +51,6 @@ export class PersistenceService {
   private readonly environment = inject(APP_ENVIRONMENT);
   private readonly storage = inject<IStorageProvider>(STORAGE_PROVIDER);
   private readonly syncStatus = inject(SyncStatusService);
-  private readonly paymentMethodService = inject(PaymentMethodService);
-  private readonly serviceService = inject(ServiceService);
   private readonly offlineStorage = inject(IndexedDbProvider, { optional: true });
   private readonly workspace = inject(WorkspaceService);
   private readonly firebaseAuth = inject(FirebaseAuthService);
@@ -212,8 +208,7 @@ export class PersistenceService {
     let deleted = 0;
     for (const collection of DATA_COLLECTIONS) {
       const records = await this.storage.list<Record<string, unknown>>(collection);
-      const removable = records.filter((record) => !(SYSTEM_COLLECTIONS.has(collection) && record['system'] === true));
-      for (const record of removable) {
+      for (const record of records) {
         await this.storage.deletePermanent(collection, String(record['id']));
         deleted += 1;
       }
@@ -221,10 +216,10 @@ export class PersistenceService {
     if (this.environment.demoDatasetUrl) {
       const demoDataset = await this.readDemoDataset();
       await this.writeLocalDataset(this.storage, demoDataset);
+      this.status.set(`Ripristino remoto completato: ${deleted} record rimossi e dati demo ripristinati.`);
     } else {
-      await Promise.all([this.paymentMethodService.list(), this.serviceService.list()]);
+      this.status.set(`Ripristino remoto completato: ${deleted} record rimossi, nessun dato di default ricreato.`);
     }
-    this.status.set(`Ripristino remoto completato: ${deleted} record rimossi e dati iniziali ripristinati.`);
     return deleted;
   }
 
@@ -318,7 +313,6 @@ export class PersistenceService {
         return;
       }
       await this.offlineStorage!.put(SETTINGS_COLLECTION, { id: SETTINGS_ID, source: 'none', updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
-      await Promise.all([this.paymentMethodService.list(), this.serviceService.list()]);
     });
     this.mode.set('offline');
     this.source.set('none');

@@ -20,6 +20,8 @@ const EVALUATION_RUNS_COLLECTION = 'notificationEvaluationRuns';
 const STATS_OUTBOX_COLLECTION = 'notificationStatsOutbox';
 const SETTINGS_COLLECTION = 'appSettings';
 const SETTINGS_ID = 'current';
+/** Disattivazione temporanea: niente calcoli automatici, la pagina Scadenze resta il flusso principale. */
+const NOTIFICATIONS_FEATURE_ENABLED = false;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -27,6 +29,7 @@ export class NotificationService {
   private readonly auth = inject(FirebaseAuthService);
   private readonly workspace = inject(WorkspaceService);
   private readonly firestore = inject(FirestoreProvider);
+  readonly enabled = NOTIFICATIONS_FEATURE_ENABLED;
   readonly notifications = signal<readonly NotificationEvent[]>([]);
   readonly evaluating = signal(false);
   readonly lastEvaluation = signal<NotificationEvaluationRun | null>(null);
@@ -36,6 +39,7 @@ export class NotificationService {
 
   /** Caricamento leggero per il bootstrap: legge solo le notifiche già calcolate (nessuna rilettura di operations/fairTasks). */
   async loadPersistedState(now = new Date()): Promise<void> {
+    if (!NOTIFICATIONS_FEATURE_ENABLED) return;
     const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
     this.stale.set(settings?.notificationsStale ?? true);
     await this.loadVisible(now);
@@ -43,6 +47,7 @@ export class NotificationService {
 
   /** Invalida il conteggio senza ricalcolare: usato dai trigger (modifica operation/fair-task/impostazioni). Il ricalcolo vero avviene solo quando l'utente apre/aggiorna la pagina Notifiche. */
   async markStale(): Promise<void> {
+    if (!NOTIFICATIONS_FEATURE_ENABLED) return;
     this.stale.set(true);
     await this.persistStale(true);
   }
@@ -54,6 +59,7 @@ export class NotificationService {
 
   /** Ricalcolo completo (legge operations/fairTasks): va richiamato solo on-demand dalla pagina Notifiche, non piu' ad ogni bootstrap o mutazione. */
   async recalculate(now = new Date()): Promise<void> {
+    if (!NOTIFICATIONS_FEATURE_ENABLED) return;
     if (this.evaluating()) { this.pendingRecalculate = true; return; }
     this.evaluating.set(true);
     this.error.set('');
