@@ -47,10 +47,17 @@ export const appConfig: ApplicationConfig = {
       return storage.open().then(
         async () => {
           await persistence.initialize();
+          const bootstrapTimeoutMs = persistence.firestoreBootstrapTimeoutSeconds() * 1000;
           if (persistence.mode() === 'firestore') {
             try {
               const user = await firebaseAuth.whenInitialized();
-              if (user) await workspace.loadForCurrentUser();
+              if (user) {
+                // getDocs/getDoc senza timeout nativo: con segnale debole (non assente) potrebbero restare in sospeso a lungo.
+                await Promise.race([
+                  workspace.loadForCurrentUser(),
+                  new Promise<void>((resolve) => setTimeout(resolve, bootstrapTimeoutMs)),
+                ]);
+              }
             } catch (error) {
               console.error('Firebase workspace initialization failed:', error);
             }
@@ -61,7 +68,7 @@ export const appConfig: ApplicationConfig = {
             // bloccare l'app quando il segnale e assente o troppo debole: il sync continua comunque in background.
             await Promise.race([
               persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error)),
-              new Promise<void>((resolve) => setTimeout(resolve, 8000)),
+              new Promise<void>((resolve) => setTimeout(resolve, bootstrapTimeoutMs)),
             ]);
           }
           await activeFair.initialize();

@@ -100,6 +100,13 @@ export class SettingsPage implements OnInit {
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare l\'intervallo di sincronizzazione.'); }
   }
 
+  protected async selectFirestoreBootstrapTimeoutSeconds(value: number | string): Promise<void> {
+    const seconds = Number(value);
+    if (!Number.isFinite(seconds)) return;
+    try { await this.persistence.setFirestoreBootstrapTimeoutSeconds(seconds); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare il tempo massimo di attesa all\'avvio.'); }
+  }
+
   protected async signInWithGoogle(): Promise<void> {
     if (this.authenticating()) return;
     this.authenticating.set(true);

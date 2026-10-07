@@ -13,6 +13,8 @@ export interface PersistenceSettings {
   readonly notificationsStale?: boolean;
   // Per-dispositivo, non sincronizzato: ogni installazione puo avere un intervallo diverso.
   readonly firestoreFullSyncIntervalMinutes?: number;
+  // Per-dispositivo, non sincronizzato: tempo massimo di attesa all'avvio prima di procedere coi soli dati locali.
+  readonly firestoreBootstrapTimeoutSeconds?: number;
   readonly updatedAt: string;
 }
 

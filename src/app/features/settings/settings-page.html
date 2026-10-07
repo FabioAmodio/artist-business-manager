@@ -66,6 +66,10 @@
           <input type="number" min="1" max="60" step="1" [ngModel]="persistence.firestoreFullSyncIntervalMinutes()" (ngModelChange)="selectFirestoreFullSyncIntervalMinutes($event)" /> minuti
         </label>
         <p class="status">Vale solo su questo dispositivo. Il pulsante "Sincronizza" piu in basso forza comunque un controllo immediato; le modifiche locali vengono inviate subito, senza attendere l'intervallo.</p>
+        <label>Attendi al massimo all'avvio
+          <input type="number" min="1" max="60" step="1" [ngModel]="persistence.firestoreBootstrapTimeoutSeconds()" (ngModelChange)="selectFirestoreBootstrapTimeoutSeconds($event)" /> secondi
+        </label>
+        <p class="status">Vale solo su questo dispositivo. Con segnale debole, oltre questo tempo l'app si apre comunque con i soli dati locali e completa il caricamento in background.</p>
         <button type="button" (click)="signOutFromFirebase()">Disconnetti account Google</button>
       } @else {
         <button type="button" [disabled]="authenticating()" (click)="signInWithGoogle()">{{ authenticating() ? 'Accesso in corso...' : 'Accedi con Google' }}</button>

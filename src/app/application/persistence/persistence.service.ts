@@ -61,6 +61,8 @@ export class PersistenceService {
   readonly catalogUsageFairCount = signal(10);
   // Per-dispositivo, non sincronizzato: ogni installazione puo avere un intervallo diverso.
   readonly firestoreFullSyncIntervalMinutes = signal(5);
+  // Per-dispositivo, non sincronizzato: tempo massimo di attesa all'avvio prima di procedere coi soli dati locali.
+  readonly firestoreBootstrapTimeoutSeconds = signal(8);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
   readonly status = signal('');
@@ -102,6 +104,7 @@ export class PersistenceService {
     this.dueSoonDays.set(workflowSettings.dueSoonDays);
     this.catalogUsageFairCount.set(workflowSettings.catalogUsageFairCount);
     this.firestoreFullSyncIntervalMinutes.set(this.normalizeFirestoreFullSyncIntervalMinutes(settings?.firestoreFullSyncIntervalMinutes));
+    this.firestoreBootstrapTimeoutSeconds.set(this.normalizeFirestoreBootstrapTimeoutSeconds(settings?.firestoreBootstrapTimeoutSeconds));
     this.storage.setMode?.(this.mode());
     this.source.set(this.environment.environmentName === 'release' || this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
     this.directoryHandle = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.directoryHandle;
@@ -141,6 +144,13 @@ export class PersistenceService {
     const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
     await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, firestoreFullSyncIntervalMinutes, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
     this.firestoreFullSyncIntervalMinutes.set(firestoreFullSyncIntervalMinutes);
+  }
+
+  async setFirestoreBootstrapTimeoutSeconds(seconds: number): Promise<void> {
+    const firestoreBootstrapTimeoutSeconds = this.normalizeFirestoreBootstrapTimeoutSeconds(seconds);
+    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, firestoreBootstrapTimeoutSeconds, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    this.firestoreBootstrapTimeoutSeconds.set(firestoreBootstrapTimeoutSeconds);
   }
 
   async setMode(mode: PersistenceMode): Promise<void> {
@@ -915,4 +925,5 @@ export class PersistenceService {
   private normalizeDueSoonDays(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 365) : 7; }
   private normalizeCatalogUsageFairCount(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 100) : 10; }
   private normalizeFirestoreFullSyncIntervalMinutes(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 60) : 5; }
+  private normalizeFirestoreBootstrapTimeoutSeconds(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 60) : 8; }
 }
