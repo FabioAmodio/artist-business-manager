@@ -14,7 +14,7 @@ Ultimo aggiornamento: 2026-10-07.
 | Routing GitHub Pages | Implementato | `404.html` deriva il base path dal repository e ripristina i deep-link tramite query parameter |
 | Ambienti TEST/DEMO | Implementati | Build separati, IndexedDB `ABM-TEST`/`ABM-DEMO`, dataset demo read-only, reset con ricaricamento dataset, capability flags e servizi esterni disabilitati |
 | Offline first | Implementata V1 | IndexedDB/Dexie come fonte locale, import/export JSON, File System e Google Drive |
-| Sincronizzazione | Implementata V1 | Sync automatico/manuale e risoluzione per `updatedAt`; corretto il 2026-10-07 un bug critico che rileggeva/riscriveva l'intero dataset Firestore a ogni focus/visibilitychange anche senza modifiche pendenti, causando esaurimento quota; manca una vera cache locale in modalita Firestore (vedi priorita in [ROADMAP.md](../ROADMAP.md)) |
+| Sincronizzazione | Implementata V1 | Locale-first anche in modalita Firestore dal 2026-10-07: tutte le collection applicative vivono sempre in IndexedDB, Firestore e sincronizzato in background tramite la coda `syncOperations` con riconciliazione piena solo se c'e qualcosa da inviare o sono passati almeno 5 minuti; manca ancora un'outbox persistente per i provider File System/Drive |
 | Dashboard / Riepilogo | Implementata V1 | Vista annuale e vista fiera operativa con deep-link filtrati |
 | Modalita Fiera | Implementata V1 | Rilevamento automatico, forzatura persistente, indicatore globale e uscita confermata |
 | Eventi / Fiere | Implementata V1 | Serie/edizioni, CRUD, validazioni, costi, ricavi, bilancio, copertura, stato di conferma (`draft`/`confirmed`/`cancelled`), checklist organizzativa (`FairTask`) e dati costanti di serie modificabili da UI |

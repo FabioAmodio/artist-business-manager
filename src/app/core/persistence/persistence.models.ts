@@ -11,6 +11,8 @@ export interface PersistenceSettings {
   readonly driveClientId?: string;
   readonly listInteractionMode?: ListInteractionMode;
   readonly notificationsStale?: boolean;
+  // Per-dispositivo, non sincronizzato: ogni installazione puo avere un intervallo diverso.
+  readonly firestoreFullSyncIntervalMinutes?: number;
   readonly updatedAt: string;
 }
 

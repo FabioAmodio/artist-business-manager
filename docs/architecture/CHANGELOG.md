@@ -13,6 +13,16 @@
 - Funzionalita Notifiche disattivata temporaneamente tramite flag centralizzato (`NOTIFICATIONS_FEATURE_ENABLED`), in attesa di consolidare il flusso Scadenze come percorso principale; icona e badge rimossi dal footer.
 - Barra azioni mobile: il collegamento alle Notifiche (disattivate) e stato sostituito con un collegamento diretto alla pagina Scadenze, sia nello slot principale sia nella voce dedicata del menu "Altro" quando la Modalita Fiera e forzata.
 
+### Architettura: locale-first anche in modalita Firestore
+
+L'incidente di esaurimento quota aveva rivelato un problema piu fondamentale: in modalita Firestore, `DelegatingStorageProvider` instradava letture/scritture delle collection applicative direttamente a Firestore (via `runTransaction`, che richiede connettivita live), bypassando completamente IndexedDB. Un utente in fiera con segnale assente o instabile avrebbe rischiato di non riuscire a salvare vendite, lavori o pagamenti.
+
+- `DelegatingStorageProvider` ora instrada sempre le collection applicative a IndexedDB, qualunque sia la modalita di persistenza; la coda `syncOperations` (gia esistente per Drive/File System) si attiva quindi anche in modalita Firestore.
+- Le funzioni amministrative esplicitamente remote (`seedFirestoreFromOffline`, `mergeOfflineIntoFirestore`, `resetFirestoreWorkspace`) ora operano esplicitamente su `FirestoreProvider`, non piu sullo storage "corrente".
+- `synchronizeFirestoreInternal` esegue la riconciliazione completa (letture + riscrittura dell'intero dataset) solo quando c'e qualcosa da inviare oppure non viene eseguita da almeno 5 minuti, cosi da intercettare comunque le modifiche di altri dispositivi/collaboratori senza ripetere il costo ad ogni focus/visibilitychange.
+- Il bootstrap dell'app attende (con timeout di sicurezza di 8 secondi) un primo tentativo di sincronizzazione Firestore prima di mostrare le pagine, cosi la cache locale risulta popolata sui dispositivi che finora leggevano solo dal remoto; con segnale assente l'app si apre comunque, senza attese indefinite.
+- Riutilizza interamente l'infrastruttura di conflitti/outbox gia esistente (`retrySyncOperation`, `getConflictDetails`, `resolveConflictFields`/`resolveConflictDeletion`), pensata per il caso d'uso reale: un solo operatore scrive in fiera, eventuali collaboratori si collegano in un secondo momento.
+
 ## [Unreleased] - 2026-10-06
 
 ### Implementato

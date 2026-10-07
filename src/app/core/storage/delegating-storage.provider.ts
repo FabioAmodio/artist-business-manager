@@ -8,18 +8,15 @@ import type {
   StorageHealth,
 } from './storage-provider';
 import { IndexedDbProvider } from './indexed-db.provider';
-import { FirestoreProvider } from './firestore.provider';
-import { WorkspaceService } from '../firebase/workspace.service';
 
-const LOCAL_COLLECTIONS = new Set(['appSettings', 'syncOperations']);
-
+// Locale-first: tutte le collection applicative restano sempre su IndexedDB, qualunque sia la modalita di persistenza.
+// La sincronizzazione con Firestore e un processo separato (PersistenceService.synchronize), non instradamento diretto delle letture/scritture.
 @Injectable()
 export class DelegatingStorageProvider implements IStorageProvider {
   private readonly offline = inject(IndexedDbProvider);
-  private readonly firestore = inject(FirestoreProvider);
-  private readonly workspace = inject(WorkspaceService);
   private mode: PersistenceMode = 'offline';
 
+  // Conservato per compatibilita con IStorageProvider/PersistenceService: non influenza piu l'instradamento.
   setMode(mode: PersistenceMode): void { this.mode = mode; }
 
   async open(): Promise<void> {
@@ -31,43 +28,34 @@ export class DelegatingStorageProvider implements IStorageProvider {
   }
 
   get<T>(collection: string, id: EntityId): Promise<T | null> {
-    return this.providerFor(collection).get(collection, id);
+    return this.offline.get(collection, id);
   }
 
   list<T>(collection: string, filter?: StorageFilter): Promise<readonly T[]> {
-    return this.providerFor(collection).list(collection, filter);
+    return this.offline.list(collection, filter);
   }
 
   put<T>(collection: string, value: T): Promise<void> {
-    return this.providerFor(collection).put(collection, value);
+    return this.offline.put(collection, value);
   }
 
   deleteLogical(collection: string, id: EntityId, metadata?: DeleteMetadata): Promise<void> {
-    return this.providerFor(collection).deleteLogical(collection, id, metadata);
+    return this.offline.deleteLogical(collection, id, metadata);
   }
 
   deletePermanent(collection: string, id: EntityId): Promise<void> {
-    return this.providerFor(collection).deletePermanent(collection, id);
+    return this.offline.deletePermanent(collection, id);
   }
 
   clearCollections(collections: readonly string[]): Promise<void> {
-    const local = collections.filter((collection) => LOCAL_COLLECTIONS.has(collection));
-    const remote = collections.filter((collection) => !LOCAL_COLLECTIONS.has(collection));
-    const tasks: Promise<void>[] = [];
-    if (local.length) tasks.push(this.offline.clearCollections(local));
-    if (remote.length) tasks.push(this.providerFor(remote[0]).clearCollections(remote));
-    return Promise.all(tasks).then(() => undefined);
+    return this.offline.clearCollections(collections);
   }
 
   transaction<T>(collections: readonly string[], work: () => Promise<T>): Promise<T> {
-    return this.providerFor(collections[0] ?? '').transaction(collections, work);
+    return this.offline.transaction(collections, work);
   }
 
   health(): Promise<StorageHealth> {
-    return this.providerFor('appSettings').health();
-  }
-
-  private providerFor(collection: string): IStorageProvider {
-    return this.mode === 'firestore' && !LOCAL_COLLECTIONS.has(collection) && this.workspace.activeWorkspaceId() ? this.firestore : this.offline;
+    return this.offline.health();
   }
 }

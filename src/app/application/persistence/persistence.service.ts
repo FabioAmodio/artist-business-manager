@@ -59,6 +59,8 @@ export class PersistenceService {
   readonly listInteractionMode = signal<ListInteractionMode>('swipe');
   readonly dueSoonDays = signal(7);
   readonly catalogUsageFairCount = signal(10);
+  // Per-dispositivo, non sincronizzato: ogni installazione puo avere un intervallo diverso.
+  readonly firestoreFullSyncIntervalMinutes = signal(5);
   readonly source = signal<PersistenceSettings['source']>('none');
   readonly isDemoEnvironment = Boolean(this.environment.demoDatasetUrl);
   readonly status = signal('');
@@ -75,6 +77,8 @@ export class PersistenceService {
   private syncTimer: ReturnType<typeof setTimeout> | undefined;
   private synchronizePromise: Promise<void> | undefined;
   private driveReadModifiedTime: string | undefined;
+  // 0 = mai eseguita: forza una riconciliazione completa al primo sync utile (avvio app, login, cambio modalita).
+  private lastFirestoreFullSyncAt = 0;
 
   constructor() {
     effect(() => {
@@ -97,6 +101,7 @@ export class PersistenceService {
     this.listInteractionMode.set(settings?.listInteractionMode ?? 'swipe');
     this.dueSoonDays.set(workflowSettings.dueSoonDays);
     this.catalogUsageFairCount.set(workflowSettings.catalogUsageFairCount);
+    this.firestoreFullSyncIntervalMinutes.set(this.normalizeFirestoreFullSyncIntervalMinutes(settings?.firestoreFullSyncIntervalMinutes));
     this.storage.setMode?.(this.mode());
     this.source.set(this.environment.environmentName === 'release' || this.isDemoEnvironment ? 'none' : settings?.source ?? 'none');
     this.directoryHandle = this.environment.environmentName === 'release' || this.isDemoEnvironment ? undefined : settings?.directoryHandle;
@@ -131,6 +136,13 @@ export class PersistenceService {
     this.catalogUsageFairCount.set(catalogUsageFairCount);
   }
 
+  async setFirestoreFullSyncIntervalMinutes(minutes: number): Promise<void> {
+    const firestoreFullSyncIntervalMinutes = this.normalizeFirestoreFullSyncIntervalMinutes(minutes);
+    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: this.source(), updatedAt: new Date().toISOString() }), id: SETTINGS_ID, firestoreFullSyncIntervalMinutes, updatedAt: new Date().toISOString() } satisfies PersistenceSettings);
+    this.firestoreFullSyncIntervalMinutes.set(firestoreFullSyncIntervalMinutes);
+  }
+
   async setMode(mode: PersistenceMode): Promise<void> {
     if (mode === 'firestore') {
       await this.storage.put(SETTINGS_COLLECTION, {
@@ -155,13 +167,13 @@ export class PersistenceService {
     if (this.mode() !== 'firestore') throw new Error('Seleziona prima la modalità Firebase.');
     if (!this.offlineStorage) throw new Error('Database locale non disponibile.');
     const remoteRecords = (await Promise.all(DATA_COLLECTIONS.map(async (collection) => {
-      const records = await this.storage.list<Record<string, unknown>>(collection);
+      const records = await this.firestore.list<Record<string, unknown>>(collection);
       return SYSTEM_COLLECTIONS.has(collection) ? records.filter((record) => record['system'] !== true) : records;
     }))).flat();
     if (remoteRecords.length) throw new Error('Il workspace Firebase contiene già dati. Il caricamento iniziale è consentito solo su un workspace vuoto.');
     const localDataset = await this.readDataset(this.offlineStorage);
     for (const collection of DATA_COLLECTIONS) {
-      for (const record of localDataset.collections[collection] ?? []) await this.storage.put(collection, record);
+      for (const record of localDataset.collections[collection] ?? []) await this.firestore.put(collection, record);
     }
     this.status.set('Dati locali copiati nel workspace Firebase.');
   }
@@ -178,15 +190,12 @@ export class PersistenceService {
     let unchanged = 0;
     let conflicts = 0;
     for (const collection of DATA_COLLECTIONS) {
-      const [localRecords, remoteRecords] = await Promise.all([
-        this.offlineStorage.list<Record<string, unknown>>(collection),
-        this.storage.list<Record<string, unknown>>(collection),
-      ]);
+      const remoteRecords = await this.firestore.list<Record<string, unknown>>(collection);
       const remoteById = new Map(remoteRecords.map((record) => [String(record['id']), record]));
       for (const localRecord of localDataset.collections[collection] ?? []) {
         const remoteRecord = remoteById.get(String(localRecord['id']));
         if (!remoteRecord) {
-          await this.storage.put(collection, localRecord);
+          await this.firestore.put(collection, localRecord);
           created += 1;
         } else if (this.sameData(localRecord, remoteRecord)) {
           unchanged += 1;
@@ -203,19 +212,19 @@ export class PersistenceService {
   async resetFirestoreWorkspace(): Promise<number> {
     if (this.mode() !== 'firestore') throw new Error('Seleziona prima la modalità Firebase.');
     if (this.environment.environmentName === 'release' && !this.workspace.isActiveOwner()) throw new Error('Solo il proprietario del workspace può eseguire il ripristino remoto PROD.');
-    const backup = await this.readDataset(this.storage);
+    const backup = await this.readDataset(this.firestore);
     if (this.environment.environmentName === 'release') this.downloadDataset(backup, 'artist-business-manager-firestore-backup.json');
     let deleted = 0;
     for (const collection of DATA_COLLECTIONS) {
-      const records = await this.storage.list<Record<string, unknown>>(collection);
+      const records = await this.firestore.list<Record<string, unknown>>(collection);
       for (const record of records) {
-        await this.storage.deletePermanent(collection, String(record['id']));
+        await this.firestore.deletePermanent(collection, String(record['id']));
         deleted += 1;
       }
     }
     if (this.environment.demoDatasetUrl) {
       const demoDataset = await this.readDemoDataset();
-      await this.writeLocalDataset(this.storage, demoDataset);
+      await this.writeLocalDataset(this.firestore, demoDataset);
       this.status.set(`Ripristino remoto completato: ${deleted} record rimossi e dati demo ripristinati.`);
     } else {
       this.status.set(`Ripristino remoto completato: ${deleted} record rimossi, nessun dato di default ricreato.`);
@@ -337,9 +346,9 @@ export class PersistenceService {
     return this.parseDataset(await response.text());
   }
 
-  async synchronize(): Promise<void> {
+  async synchronize(options?: { force?: boolean }): Promise<void> {
     if (this.synchronizePromise) return this.synchronizePromise;
-    this.synchronizePromise = this.synchronizeInternalWithStatus();
+    this.synchronizePromise = this.synchronizeInternalWithStatus(options?.force ?? false);
     try {
       await this.synchronizePromise;
     } finally {
@@ -418,11 +427,11 @@ export class PersistenceService {
     await this.refreshSyncOperations();
   }
 
-  private async synchronizeInternalWithStatus(): Promise<void> {
+  private async synchronizeInternalWithStatus(force: boolean): Promise<void> {
     this.ensureCapabilityAllowed('allowCloudSync');
     this.syncStatus.setStatus('syncing');
     try {
-      await this.synchronizeInternal();
+      await this.synchronizeInternal(force);
       if (this.mode() !== 'firestore') this.syncStatus.setStatus(this.source() === 'none' ? 'local-only' : 'synced');
       this.syncStatus.notifySyncCompleted();
     } catch (error) {
@@ -435,9 +444,9 @@ export class PersistenceService {
     }
   }
 
-  private async synchronizeInternal(): Promise<void> {
+  private async synchronizeInternal(force: boolean): Promise<void> {
     if (this.mode() === 'firestore') {
-      await this.synchronizeFirestoreInternal();
+      await this.synchronizeFirestoreInternal(force);
       return;
     }
     const local = await this.readLocalDataset();
@@ -456,7 +465,7 @@ export class PersistenceService {
     this.status.set(remote ? 'Dati locali e persistenti allineati.' : 'Dati locali copiati nella cartella persistente.');
   }
 
-  private async synchronizeFirestoreInternal(): Promise<void> {
+  private async synchronizeFirestoreInternal(force: boolean): Promise<void> {
     if (!this.workspace.activeWorkspaceId()) {
       if (this.firebaseAuth.user()) await this.workspace.loadForCurrentUser();
       await this.refreshSyncOperations();
@@ -475,8 +484,11 @@ export class PersistenceService {
     for (const operation of allPending.filter((item) => this.isSystemSyncOperation(item))) {
       await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, operation.id);
     }
-    if (!pending.length) {
-      // niente da riconciliare: evita di rileggere/riscrivere l'intero dataset Firestore ad ogni focus/visibilitychange
+    // Senza nulla da inviare, la riconciliazione completa (3 letture + riscrittura) resta comunque limitata nel tempo:
+    // cattura le modifiche di altri dispositivi/collaboratori senza ripeterla ad ogni singolo focus/visibilitychange.
+    // Un sync manuale (force) ignora sempre il limite: l'utente si aspetta un controllo reale quando preme "Sincronizza".
+    const dueForFullSync = force || Date.now() - this.lastFirestoreFullSyncAt >= this.firestoreFullSyncIntervalMinutes() * 60 * 1000;
+    if (!pending.length && !dueForFullSync) {
       this.syncStatus.setStatus('synced');
       this.status.set('Dati locali e Firestore allineati.');
       return;
@@ -520,6 +532,7 @@ export class PersistenceService {
     const synchronizedRemote = await this.readFirestoreDataset();
     const merged = this.mergeLocalWithFirestore(local, synchronizedRemote, effectivePending);
     await this.syncStatus.suppress(() => this.writeLocalDataset(this.storage, merged));
+    this.lastFirestoreFullSyncAt = Date.now();
     for (const operation of effectivePending) {
       const status = await this.storage.get<SyncOperation>(SYNC_OPERATIONS_COLLECTION, operation.id);
       if (status?.status !== 'pending') continue;
@@ -901,4 +914,5 @@ export class PersistenceService {
 
   private normalizeDueSoonDays(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 365) : 7; }
   private normalizeCatalogUsageFairCount(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 100) : 10; }
+  private normalizeFirestoreFullSyncIntervalMinutes(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 60) : 5; }
 }

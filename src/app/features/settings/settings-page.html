@@ -62,6 +62,10 @@
           <p class="status">Nessun workspace autorizzato per questo account.</p>
           <button type="button" (click)="createWorkspace()">Crea workspace</button>
         }
+        <label>Controlla aggiornamenti da altri dispositivi ogni
+          <input type="number" min="1" max="60" step="1" [ngModel]="persistence.firestoreFullSyncIntervalMinutes()" (ngModelChange)="selectFirestoreFullSyncIntervalMinutes($event)" /> minuti
+        </label>
+        <p class="status">Vale solo su questo dispositivo. Il pulsante "Sincronizza" piu in basso forza comunque un controllo immediato; le modifiche locali vengono inviate subito, senza attendere l'intervallo.</p>
         <button type="button" (click)="signOutFromFirebase()">Disconnetti account Google</button>
       } @else {
         <button type="button" [disabled]="authenticating()" (click)="signInWithGoogle()">{{ authenticating() ? 'Accesso in corso...' : 'Accedi con Google' }}</button>
@@ -91,16 +95,20 @@
           @if (!persistence.driveFolders().length) { <p class="status">Nessuna sottocartella in questa posizione.</p> }
         </div>
       }
-      <button class="sync-button" [class.syncing]="synchronizing() || syncStatus.status() === 'syncing'" type="button" [disabled]="persistence.source() === 'none' || synchronizing() || syncStatus.status() === 'syncing'" [attr.aria-busy]="synchronizing() || syncStatus.status() === 'syncing'" (click)="synchronizePersistence()">@if (synchronizing() || syncStatus.status() === 'syncing') { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizzazione... } @else { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizza }</button>
     </div>
-    @if (persistence.pendingSyncOperations().length) {
-      <section class="sync-operations" aria-labelledby="sync-operations-title">
-        <h3 id="sync-operations-title">Operazioni da sincronizzare</h3>
-        @for (operation of persistence.pendingSyncOperations(); track operation.id) {
-          <div class="sync-operation" [class.sync-error]="operation.status !== 'pending'"><span><strong>{{ operation.action }} {{ operation.collection }}</strong> · {{ operation.entityId }}<small>{{ operation.status === 'pending' ? 'In attesa' : operation.status === 'conflict' ? 'Conflitto' : 'Errore' }}{{ operation.errorMessage ? ': ' + operation.errorMessage : '' }}</small></span><button type="button" (click)="retrySyncOperation(operation.id)">Riprova</button><button type="button" (click)="discardSyncOperation(operation.id)">Rimuovi</button></div>
-        }
-      </section>
     }
+    @if (persistence.mode() === 'firestore' || persistence.source() !== 'none') {
+      <div class="settings-actions">
+        <button class="sync-button" [class.syncing]="synchronizing() || syncStatus.status() === 'syncing'" type="button" [disabled]="(persistence.source() === 'none' && persistence.mode() !== 'firestore') || synchronizing() || syncStatus.status() === 'syncing'" [attr.aria-busy]="synchronizing() || syncStatus.status() === 'syncing'" (click)="synchronizePersistence()">@if (synchronizing() || syncStatus.status() === 'syncing') { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizzazione... } @else { <span class="sync-icon" aria-hidden="true">↻</span> Sincronizza }</button>
+      </div>
+      @if (persistence.pendingSyncOperations().length) {
+        <section class="sync-operations" aria-labelledby="sync-operations-title">
+          <h3 id="sync-operations-title">Operazioni da sincronizzare</h3>
+          @for (operation of persistence.pendingSyncOperations(); track operation.id) {
+            <div class="sync-operation" [class.sync-error]="operation.status !== 'pending'"><span><strong>{{ operation.action }} {{ operation.collection }}</strong> · {{ operation.entityId }}<small>{{ operation.status === 'pending' ? 'In attesa' : operation.status === 'conflict' ? 'Conflitto' : 'Errore' }}{{ operation.errorMessage ? ': ' + operation.errorMessage : '' }}</small></span><button type="button" (click)="retrySyncOperation(operation.id)">Riprova</button><button type="button" (click)="discardSyncOperation(operation.id)">Rimuovi</button></div>
+          }
+        </section>
+      }
     }
     <div class="settings-actions file-actions">
       <label class="file-action">Importa file <input type="file" accept="application/json" (change)="importFile($event)" /></label>

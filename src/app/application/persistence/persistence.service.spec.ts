@@ -5,13 +5,22 @@ import type { AppEnvironment } from '../../core/configuration/app-environment';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { PaymentMethodService } from '../payment-methods/payment-method.service';
 import { ServiceService } from '../services/service.service';
+import { IndexedDbProvider } from '../../core/storage/indexed-db.provider';
+import { FirestoreProvider } from '../../core/storage/firestore.provider';
 import { PersistenceService } from './persistence.service';
 
 function setup(demoDatasetUrl?: string) {
   const storage = {
     get: vi.fn().mockResolvedValue(null),
     put: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockResolvedValue([]),
     clearCollections: vi.fn().mockResolvedValue(undefined),
+  };
+  const firestore = {
+    list: vi.fn().mockResolvedValue([]),
+    get: vi.fn().mockResolvedValue(null),
+    put: vi.fn().mockResolvedValue(undefined),
+    deletePermanent: vi.fn().mockResolvedValue(undefined),
   };
   const paymentMethodService = { list: vi.fn().mockResolvedValue([]) };
   const serviceService = { list: vi.fn().mockResolvedValue([]) };
@@ -23,11 +32,14 @@ function setup(demoDatasetUrl?: string) {
         applicationName: 'Artist Business Manager', environmentName: 'test', storagePrefix: 'ABM-TEST', logLevel: 'debug', syncEnabled: false, allowExternalPersistence: false, allowImportExport: false, allowCloudSync: false, version: '0.0.0', defaultPersistenceMode: 'offline', demoDatasetUrl,
       } satisfies AppEnvironment },
       { provide: STORAGE_PROVIDER, useValue: storage },
+      // this.offlineStorage (IndexedDbProvider) condivide il mock di STORAGE_PROVIDER: in questi test rappresentano lo stesso database locale.
+      { provide: IndexedDbProvider, useValue: storage },
+      { provide: FirestoreProvider, useValue: firestore },
       { provide: PaymentMethodService, useValue: paymentMethodService },
       { provide: ServiceService, useValue: serviceService },
     ],
   });
-  return { service: TestBed.inject(PersistenceService), storage, paymentMethodService, serviceService };
+  return { service: TestBed.inject(PersistenceService), storage, firestore, paymentMethodService, serviceService };
 }
 
 describe('PersistenceService factory reset', () => {

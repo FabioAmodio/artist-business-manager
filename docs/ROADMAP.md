@@ -4,7 +4,7 @@ La roadmap distingue lavoro completato, evoluzioni e sperimentazioni. Le date no
 
 Ultimo aggiornamento: 2026-10-07. Lo stato puntuale e in [IMPLEMENTATION-STATUS.md](architecture/IMPLEMENTATION-STATUS.md).
 
-**Priorita immediata**: rafforzare il principio locale-first anche in modalita Firestore. L'incidente di esaurimento quota del 2026-10-07 ha mostrato che, in modalita Firestore, letture e scritture instradano direttamente al provider remoto senza una vera cache locale: ogni pagina e ogni evento di focus/sync possono generare letture/scritture dirette su Firestore. Prima di qualunque altra voce sotto, va verificato/garantito che IndexedDB resti la fonte operativa primaria anche quando la persistenza remota e attiva, con la sincronizzazione come processo separato e a costo marginale (vedi [OFFLINE-FIRST-PERSISTENCE.md](architecture/OFFLINE-FIRST-PERSISTENCE.md)).
+**Locale-first in modalita Firestore (implementato 2026-10-07)**: l'incidente di esaurimento quota del 2026-10-07 aveva mostrato che, in modalita Firestore, letture e scritture instradavano direttamente al provider remoto senza una vera cache locale. Corretto: `DelegatingStorageProvider` instrada sempre le collection applicative a IndexedDB, qualunque sia la modalita; Firestore resta un processo di sincronizzazione separato e in background (coda `syncOperations`, riconciliazione periodica limitata nel tempo, risoluzione conflitti gia esistente). Dettagli in [CHANGELOG.md](architecture/CHANGELOG.md).
 
 ## MVP
 

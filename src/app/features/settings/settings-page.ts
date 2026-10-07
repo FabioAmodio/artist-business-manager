@@ -93,6 +93,13 @@ export class SettingsPage implements OnInit {
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare il numero di fiere considerate.'); }
   }
 
+  protected async selectFirestoreFullSyncIntervalMinutes(value: number | string): Promise<void> {
+    const minutes = Number(value);
+    if (!Number.isFinite(minutes)) return;
+    try { await this.persistence.setFirestoreFullSyncIntervalMinutes(minutes); }
+    catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare l\'intervallo di sincronizzazione.'); }
+  }
+
   protected async signInWithGoogle(): Promise<void> {
     if (this.authenticating()) return;
     this.authenticating.set(true);
@@ -201,7 +208,7 @@ export class SettingsPage implements OnInit {
   protected async synchronizePersistence(): Promise<void> {
     if (this.synchronizing()) return;
     this.synchronizing.set(true);
-    try { await this.persistence.synchronize(); }
+    try { await this.persistence.synchronize({ force: true }); }
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile sincronizzare i dati.'); }
     finally { this.synchronizing.set(false); }
   }

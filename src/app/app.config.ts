@@ -55,14 +55,18 @@ export const appConfig: ApplicationConfig = {
               console.error('Firebase workspace initialization failed:', error);
             }
           }
+          if (persistence.mode() === 'firestore' && environment.allowCloudSync && firebaseAuth.user() && workspace.activeWorkspaceId()) {
+            // Locale-first: i dati applicativi vivono sempre in IndexedDB, quindi al primo avvio (cache locale vuota)
+            // serve aver gia tentato il pull da Firestore prima di mostrare le pagine. Limitato nel tempo per non
+            // bloccare l'app quando il segnale e assente o troppo debole: il sync continua comunque in background.
+            await Promise.race([
+              persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error)),
+              new Promise<void>((resolve) => setTimeout(resolve, 8000)),
+            ]);
+          }
           await activeFair.initialize();
           appState.notifyDatabaseReady();
           void notifications.loadPersistedState().catch((error) => console.error('Notification state load failed:', error));
-          if (persistence.mode() === 'firestore') {
-            if (environment.allowCloudSync && firebaseAuth.user() && workspace.activeWorkspaceId()) {
-              void persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error));
-            }
-          }
         },
         (error) => {
           console.error('Database initialization failed:', error);
