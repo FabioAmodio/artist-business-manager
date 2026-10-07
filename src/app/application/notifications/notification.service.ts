@@ -10,6 +10,7 @@ import { evaluateFairTaskNotifications, evaluateOperationNotifications, notifica
 import type { Operation } from '../../domain/models/operation';
 import type { FairTask } from '../../domain/models/fair-task';
 import type { WorkflowSettings } from '../../domain/models/workflow-settings';
+import type { PersistenceSettings } from '../../core/persistence/persistence.models';
 
 const WORKFLOW_SETTINGS_COLLECTION = 'workflowSettings';
 const WORKFLOW_SETTINGS_ID = 'current';
@@ -17,6 +18,8 @@ const NOTIFICATIONS_COLLECTION = 'notifications';
 const NOTIFICATION_STATES_COLLECTION = 'notificationStates';
 const EVALUATION_RUNS_COLLECTION = 'notificationEvaluationRuns';
 const STATS_OUTBOX_COLLECTION = 'notificationStatsOutbox';
+const SETTINGS_COLLECTION = 'appSettings';
+const SETTINGS_ID = 'current';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -28,9 +31,28 @@ export class NotificationService {
   readonly evaluating = signal(false);
   readonly lastEvaluation = signal<NotificationEvaluationRun | null>(null);
   readonly error = signal('');
+  readonly stale = signal(true);
   private pendingRecalculate = false;
 
-  /** Ricalcola le notifiche operative: va richiamato al bootstrap e ad ogni modifica di Operation/WorkflowSettings, non solo una volta al giorno. */
+  /** Caricamento leggero per il bootstrap: legge solo le notifiche già calcolate (nessuna rilettura di operations/fairTasks). */
+  async loadPersistedState(now = new Date()): Promise<void> {
+    const settings = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    this.stale.set(settings?.notificationsStale ?? true);
+    await this.loadVisible(now);
+  }
+
+  /** Invalida il conteggio senza ricalcolare: usato dai trigger (modifica operation/fair-task/impostazioni). Il ricalcolo vero avviene solo quando l'utente apre/aggiorna la pagina Notifiche. */
+  async markStale(): Promise<void> {
+    this.stale.set(true);
+    await this.persistStale(true);
+  }
+
+  private async persistStale(value: boolean): Promise<void> {
+    const current = await this.storage.get<PersistenceSettings>(SETTINGS_COLLECTION, SETTINGS_ID);
+    await this.storage.put(SETTINGS_COLLECTION, { ...(current ?? { id: SETTINGS_ID, source: 'none', updatedAt: new Date().toISOString() }), notificationsStale: value, updatedAt: new Date().toISOString() });
+  }
+
+  /** Ricalcolo completo (legge operations/fairTasks): va richiamato solo on-demand dalla pagina Notifiche, non piu' ad ogni bootstrap o mutazione. */
   async recalculate(now = new Date()): Promise<void> {
     if (this.evaluating()) { this.pendingRecalculate = true; return; }
     this.evaluating.set(true);
@@ -73,6 +95,8 @@ export class NotificationService {
       await this.recordStats(run, removedNotifications);
       this.lastEvaluation.set(run);
       await this.loadVisible(now);
+      this.stale.set(false);
+      await this.persistStale(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Valutazione notifiche non riuscita.';
       this.error.set(message);

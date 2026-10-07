@@ -57,7 +57,7 @@ export const appConfig: ApplicationConfig = {
           }
           await activeFair.initialize();
           appState.notifyDatabaseReady();
-          void notifications.recalculate().catch((error) => console.error('Notification evaluation failed:', error));
+          void notifications.loadPersistedState().catch((error) => console.error('Notification state load failed:', error));
           if (persistence.mode() === 'firestore') {
             if (environment.allowCloudSync && firebaseAuth.user() && workspace.activeWorkspaceId()) {
               void persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error));

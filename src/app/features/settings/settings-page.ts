@@ -81,7 +81,7 @@ export class SettingsPage implements OnInit {
     if (!Number.isFinite(days)) return;
     try {
       await this.persistence.setDueSoonDays(days);
-      void this.notifications.recalculate().catch((error) => console.error('Notification recalculation failed:', error));
+      void this.notifications.markStale().catch((error) => console.error('Notification invalidation failed:', error));
     }
     catch (error) { this.persistence.status.set(error instanceof Error ? error.message : 'Impossibile salvare la soglia delle scadenze.'); }
   }

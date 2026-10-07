@@ -46,7 +46,8 @@
     <div class="footer-content">
       <a class="notification-status-link" routerLink="/notifications" aria-label="Apri notifiche" title="Notifiche">
         <span aria-hidden="true">🔔</span>
-        @if (notificationService.notifications().length) { <span class="notification-badge">{{ notificationService.notifications().length }}</span> }
+        @if (notificationService.stale()) { <span class="notification-badge notification-badge-stale" aria-label="Notifiche da aggiornare" title="Notifiche da aggiornare">↻</span> }
+        @else if (notificationService.notifications().length) { <span class="notification-badge">{{ notificationService.notifications().length }}</span> }
       </a>
       <div class="footer-status" aria-live="polite">
         <span class="status-dot" [class.online]="appState.isOnline()"></span>

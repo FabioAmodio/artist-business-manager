@@ -1,6 +1,10 @@
 <section class="notifications-page" aria-labelledby="notifications-title">
   <app-page-header icon="🔔" title="Notifiche" />
-  <div class="list-heading"><h2 id="notifications-title">Notifiche</h2><span>{{ visibleNotifications().length }} da gestire</span></div>
+  <div class="list-heading">
+    <h2 id="notifications-title">Notifiche</h2>
+    <span>{{ visibleNotifications().length }} da gestire</span>
+    <button class="text-button" type="button" [disabled]="notificationService.evaluating()" (click)="refresh()">{{ notificationService.evaluating() ? 'Aggiornamento...' : 'Aggiorna' }}</button>
+  </div>
   <p class="page-description">Scadenze rilevate durante l'ultimo controllo dell'applicazione.</p>
 
   <fieldset class="work-status-selector">

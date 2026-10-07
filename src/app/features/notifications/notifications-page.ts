@@ -32,7 +32,12 @@ export class NotificationsPage implements OnInit {
   protected readonly openRowId = signal<string | null>(null);
   protected readonly groupFilter = signal<NotificationGroupFilter>('all');
 
-  ngOnInit(): void { void this.notificationService.loadVisible(); }
+  ngOnInit(): void {
+    if (this.notificationService.stale()) void this.notificationService.recalculate();
+    else void this.notificationService.loadVisible();
+  }
+
+  protected async refresh(): Promise<void> { await this.notificationService.recalculate(); }
 
   protected visibleNotifications(): readonly NotificationEvent[] {
     const filter = this.groupFilter();

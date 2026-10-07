@@ -126,6 +126,6 @@ export class FairTaskService {
   }
 
   private triggerNotificationRecalculation(): void {
-    void this.notifications.recalculate().catch((error) => console.error('Notification recalculation failed:', error));
+    void this.notifications.markStale().catch((error) => console.error('Notification invalidation failed:', error));
   }
 }

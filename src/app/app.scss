@@ -305,6 +305,13 @@ main.main-content:has(.dialog-backdrop) { overflow: visible; }
   top: -5px;
 }
 
+.footer-content > .notification-status-link .notification-badge-stale {
+  background: var(--color-status-warning);
+  font-size: .7rem;
+  min-width: 1.05rem;
+  padding: 0;
+}
+
 .sync-status {
   border-left: 1px solid var(--color-border);
   padding-left: var(--spacing-3);

@@ -10,6 +10,7 @@ export interface PersistenceSettings {
   readonly driveFolderId?: string;
   readonly driveClientId?: string;
   readonly listInteractionMode?: ListInteractionMode;
+  readonly notificationsStale?: boolean;
   readonly updatedAt: string;
 }
 
