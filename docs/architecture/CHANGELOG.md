@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased] - 2026-10-07
+
+### Corretto
+
+- **Causa radice dell'esaurimento quota Firestore**: il sync automatico (`synchronizeFirestoreInternal`, avviato su focus tab, `visibilitychange` e `online`) rileggeva e riscriveva l'intero dataset remoto ad ogni invocazione, anche senza alcuna modifica pendente; un semplice cambio di scheda poteva generare oltre mille richieste e superare la quota giornaliera del piano Spark. Ora la funzione controlla per prima cosa la coda locale delle operazioni pendenti (lettura economica, solo IndexedDB) ed esce subito se non c'e nulla da riconciliare, saltando le tre letture complete e la riscrittura totale del dataset.
+- `writeLocalDataset()` non abortisce piu l'intero import al primo conflitto di versione su un record: ogni scrittura e isolata in try/catch, i fallimenti vengono raccolti e segnalati in un unico errore aggregato a fine processo, evitando che collection successive (es. contatti) restino silenziosamente non scritte.
+- Rimossa l'auto-creazione dei metodi di pagamento e servizi di sistema (`system-payment-method-*`, `system-service-*`) ad ogni `list()`: il reset locale e quello remoto ora cancellano tutto senza ricreare automaticamente i default.
+
+### Modificato
+
+- Funzionalita Notifiche disattivata temporaneamente tramite flag centralizzato (`NOTIFICATIONS_FEATURE_ENABLED`), in attesa di consolidare il flusso Scadenze come percorso principale; icona e badge rimossi dal footer.
+- Barra azioni mobile: il collegamento alle Notifiche (disattivate) e stato sostituito con un collegamento diretto alla pagina Scadenze, sia nello slot principale sia nella voce dedicata del menu "Altro" quando la Modalita Fiera e forzata.
+
 ## [Unreleased] - 2026-10-06
 
 ### Implementato

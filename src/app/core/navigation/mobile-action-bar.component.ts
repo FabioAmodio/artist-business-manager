@@ -5,7 +5,6 @@ import { AppStateService } from '../state/app-state.service';
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 import { SyncStatusService } from '../synchronization/sync-status.service';
-import { NotificationService } from '../../application/notifications/notification.service';
 import { ActiveFairService } from '../event/active-fair.service';
 
 @Component({
@@ -21,12 +20,11 @@ export class MobileActionBarComponent {
   protected readonly persistence = inject(PersistenceService);
   protected readonly firebaseAuth = inject(FirebaseAuthService);
   protected readonly syncStatus = inject(SyncStatusService);
-  protected readonly notificationService = inject(NotificationService);
   protected readonly activeFair = inject(ActiveFairService);
   protected readonly moreMenuOpen = signal(false);
-  // In modalita fiera il Catalogo torna nel footer, quindi va escluso dal menu "Altro" (dove finiscono le Notifiche).
+  // In modalita fiera il Catalogo torna nel footer, quindi va escluso dal menu "Altro" (dove finisce Scadenze, mostrata li' esplicitamente).
   protected readonly secondaryItems = computed<readonly NavigationItem[]>(() => {
-    const hidden = new Set(['/dashboard', '/events', '/lots']);
+    const hidden = new Set(['/dashboard', '/events', '/lots', '/deadlines']);
     if (this.activeFair.isForced()) hidden.add('/catalog');
     return APP_NAVIGATION_ITEMS.filter((item) => !hidden.has(item.path));
   });

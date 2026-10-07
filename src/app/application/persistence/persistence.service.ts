@@ -470,12 +470,18 @@ export class PersistenceService {
       this.syncStatus.setStatus('pending');
       return;
     }
-    const local = await this.readLocalDataset();
     const allPending = (await this.storage.list<SyncOperation>(SYNC_OPERATIONS_COLLECTION)).filter((operation) => operation.status === 'pending');
     const pending = allPending.filter((operation) => !this.isSystemSyncOperation(operation));
     for (const operation of allPending.filter((item) => this.isSystemSyncOperation(item))) {
       await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, operation.id);
     }
+    if (!pending.length) {
+      // niente da riconciliare: evita di rileggere/riscrivere l'intero dataset Firestore ad ogni focus/visibilitychange
+      this.syncStatus.setStatus('synced');
+      this.status.set('Dati locali e Firestore allineati.');
+      return;
+    }
+    const local = await this.readLocalDataset();
     const remote = await this.readFirestoreDataset();
     const remoteByKey = new Map<string, Record<string, unknown>>();
     for (const [collection, records] of Object.entries(remote.collections)) {

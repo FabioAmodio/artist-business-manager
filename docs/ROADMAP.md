@@ -2,7 +2,9 @@
 
 La roadmap distingue lavoro completato, evoluzioni e sperimentazioni. Le date non sono vincolanti: la priorita e la solidita dei dati offline.
 
-Ultimo aggiornamento: 2026-09-09. Lo stato puntuale e in [IMPLEMENTATION-STATUS.md](architecture/IMPLEMENTATION-STATUS.md).
+Ultimo aggiornamento: 2026-10-07. Lo stato puntuale e in [IMPLEMENTATION-STATUS.md](architecture/IMPLEMENTATION-STATUS.md).
+
+**Priorita immediata**: rafforzare il principio locale-first anche in modalita Firestore. L'incidente di esaurimento quota del 2026-10-07 ha mostrato che, in modalita Firestore, letture e scritture instradano direttamente al provider remoto senza una vera cache locale: ogni pagina e ogni evento di focus/sync possono generare letture/scritture dirette su Firestore. Prima di qualunque altra voce sotto, va verificato/garantito che IndexedDB resti la fonte operativa primaria anche quando la persistenza remota e attiva, con la sincronizzazione come processo separato e a costo marginale (vedi [OFFLINE-FIRST-PERSISTENCE.md](architecture/OFFLINE-FIRST-PERSISTENCE.md)).
 
 ## MVP
 
@@ -46,7 +48,8 @@ La migrazione personale e descritta in [HISTORICAL-DATA-MIGRATION.md](business/H
 - DEV, STAGING e PROD;
 - dataset condivisi, collaboratori, assistenti e permessi;
 - supporto multi-team con ownership, ruoli e policy separate;
-- backup automatici e cifratura export.
+- backup automatici e cifratura export;
+- barra azioni mobile adattiva: Home, funzione piu usata, tasto "+", seconda funzione piu usata, voce "altro" per il menu completo; richiede un conteggio locale (non sincronizzato) delle aperture pagina, escludendo la Dashboard che ha gia un tasto dedicato, con conteggi separati per modalita fiera e non-fiera.
 
 ## Esperimenti
 
