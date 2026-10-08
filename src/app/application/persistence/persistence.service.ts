@@ -497,7 +497,9 @@ export class PersistenceService {
     // Senza nulla da inviare, la riconciliazione completa (3 letture + riscrittura) resta comunque limitata nel tempo:
     // cattura le modifiche di altri dispositivi/collaboratori senza ripeterla ad ogni singolo focus/visibilitychange.
     // Un sync manuale (force) ignora sempre il limite: l'utente si aspetta un controllo reale quando preme "Sincronizza".
-    const dueForFullSync = force || Date.now() - this.lastFirestoreFullSyncAt >= this.firestoreFullSyncIntervalMinutes() * 60 * 1000;
+    // -1 = refresh automatico disattivato: la riconciliazione periodica scatta solo con force (pulsante "Sincronizza").
+    const autoFullSyncDisabled = this.firestoreFullSyncIntervalMinutes() === -1;
+    const dueForFullSync = force || (!autoFullSyncDisabled && Date.now() - this.lastFirestoreFullSyncAt >= this.firestoreFullSyncIntervalMinutes() * 60 * 1000);
     if (!pending.length && !dueForFullSync) {
       this.syncStatus.setStatus('synced');
       this.status.set('Dati locali e Firestore allineati.');
@@ -810,7 +812,19 @@ export class PersistenceService {
   private sameData(first: Record<string, unknown> | undefined, second: Record<string, unknown> | undefined): boolean {
     const ignoredFields = new Set(['createdBy', 'updatedBy', 'version']);
     const normalize = (record: Record<string, unknown> | undefined) => record ? Object.fromEntries(Object.entries(record).filter(([key]) => !ignoredFields.has(key))) : undefined;
-    return JSON.stringify(normalize(first)) === JSON.stringify(normalize(second));
+    return this.stableStringify(normalize(first)) === this.stableStringify(normalize(second));
+  }
+
+  // JSON.stringify dipende dall'ordine di inserimento delle chiavi: FirestoreProvider aggiunge sempre "id" in coda
+  // (`{...data, id}`), mentre nei record locali "id" puo stare in qualunque posizione. Senza un ordine canonico,
+  // due oggetti identici risultavano "diversi" e l'operazione restava pending per sempre anche a push riuscito.
+  private stableStringify(value: unknown): string {
+    if (Array.isArray(value)) return `[${value.map((item) => this.stableStringify(item)).join(',')}]`;
+    if (value && typeof value === 'object') {
+      const keys = Object.keys(value as Record<string, unknown>).sort();
+      return `{${keys.map((key) => `${JSON.stringify(key)}:${this.stableStringify((value as Record<string, unknown>)[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
   }
 
   private isFirestoreConflict(error: unknown): boolean {
@@ -939,6 +953,6 @@ export class PersistenceService {
 
   private normalizeDueSoonDays(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 365) : 7; }
   private normalizeCatalogUsageFairCount(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 100) : 10; }
-  private normalizeFirestoreFullSyncIntervalMinutes(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 60) : 5; }
+  private normalizeFirestoreFullSyncIntervalMinutes(value: number | undefined): number { return value === -1 ? -1 : Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 60) : 5; }
   private normalizeFirestoreBootstrapTimeoutSeconds(value: number | undefined): number { return Number.isFinite(value) ? Math.min(Math.max(Math.round(value!), 1), 60) : 8; }
 }

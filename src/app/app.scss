@@ -240,7 +240,9 @@ main.main-content:has(.dialog-backdrop) { overflow: visible; }
 
 .pull-refresh-indicator { align-items: center; color: var(--color-accent); display: flex; gap: .45rem; left: 50%; opacity: 0; pointer-events: none; position: absolute; top: .35rem; transform: translate(-50%, calc(-100% + var(--pull-distance, 0px))); transition: opacity .15s ease; z-index: 1; }
 .pull-refresh-indicator.visible { opacity: 1; }
-.pull-refresh-icon { display: inline-block; font-size: 1.5rem; line-height: 1; transform: rotate(calc(var(--pull-distance, 0px) * 3deg)); }
+.pull-refresh-icon { align-items: center; border-radius: 50%; display: inline-flex; font-size: 1.5rem; height: 2rem; justify-content: center; line-height: 1; position: relative; transform: rotate(calc(var(--pull-distance, 0px) * 3deg)); width: 2rem; }
+.pull-refresh-indicator.ready .pull-refresh-icon { background: var(--color-status-success); color: var(--color-text-inverse); }
+.pull-refresh-indicator.ready .pull-refresh-icon::after { background: conic-gradient(transparent calc(var(--hold-progress, 0) * 360deg), var(--color-surface) 0deg); border-radius: 50%; content: ''; inset: 0; position: absolute; }
 .pull-refresh-indicator.ready { color: var(--color-status-success); }
 .pull-refresh-indicator.refreshing .pull-refresh-icon { animation: pull-refresh-spin .8s linear infinite; }
 .pull-refresh-label { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }

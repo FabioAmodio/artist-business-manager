@@ -66,8 +66,10 @@ export const appConfig: ApplicationConfig = {
             // Locale-first: i dati applicativi vivono sempre in IndexedDB, quindi al primo avvio (cache locale vuota)
             // serve aver gia tentato il pull da Firestore prima di mostrare le pagine. Limitato nel tempo per non
             // bloccare l'app quando il segnale e assente o troppo debole: il sync continua comunque in background.
+            // force:true perche ogni ricarica pagina (F5, pull-to-refresh con conferma, reset, aggiornamento PWA) e
+            // gia un evento deliberato e poco frequente, non un trigger automatico ripetuto come focus/visibilitychange.
             await Promise.race([
-              persistence.synchronize().catch((error) => console.error('Initial Firebase synchronization failed:', error)),
+              persistence.synchronize({ force: true }).catch((error) => console.error('Initial Firebase synchronization failed:', error)),
               new Promise<void>((resolve) => setTimeout(resolve, bootstrapTimeoutMs)),
             ]);
           }

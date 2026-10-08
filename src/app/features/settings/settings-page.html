@@ -63,9 +63,9 @@
           <button type="button" (click)="createWorkspace()">Crea workspace</button>
         }
         <label>Controlla aggiornamenti da altri dispositivi ogni
-          <input type="number" min="1" max="60" step="1" [ngModel]="persistence.firestoreFullSyncIntervalMinutes()" (ngModelChange)="selectFirestoreFullSyncIntervalMinutes($event)" /> minuti
+          <input type="number" min="-1" max="60" step="1" [ngModel]="persistence.firestoreFullSyncIntervalMinutes()" (ngModelChange)="selectFirestoreFullSyncIntervalMinutes($event)" /> minuti
         </label>
-        <p class="status">Vale solo su questo dispositivo. Il pulsante "Sincronizza" piu in basso forza comunque un controllo immediato; le modifiche locali vengono inviate subito, senza attendere l'intervallo.</p>
+        <p class="status">Vale solo su questo dispositivo. Imposta -1 per disattivare il controllo automatico (anche su F5/pull-to-refresh): resta solo il pulsante "Sincronizza" piu in basso. Le modifiche locali vengono comunque inviate subito, senza attendere l'intervallo.</p>
         <label>Attendi al massimo all'avvio
           <input type="number" min="1" max="60" step="1" [ngModel]="persistence.firestoreBootstrapTimeoutSeconds()" (ngModelChange)="selectFirestoreBootstrapTimeoutSeconds($event)" /> secondi
         </label>

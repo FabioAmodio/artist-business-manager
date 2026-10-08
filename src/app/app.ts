@@ -33,10 +33,16 @@ export class App {
   private readonly confirmation = inject(ConfirmDialogService);
   protected readonly menuOpen = signal(false);
   protected readonly pullDistance = signal(0);
+  protected readonly pullHoldProgress = signal(0);
   protected readonly refreshing = signal(false);
   protected readonly updateAvailable = signal(false);
   private pullStartY: number | null = null;
   private readonly pullThreshold = 48;
+  // Tempo di mantenimento oltre la soglia prima di forzare il refresh: un trascinamento rapido/accidentale si annulla,
+  // solo un gesto deliberato (tenuto fermo) attiva la riconciliazione completa con Firestore.
+  private readonly pullHoldDurationMs = 2000;
+  private pullHoldStartedAt: number | null = null;
+  private pullHoldFrame: number | null = null;
 
   private readonly swUpdate = inject(SwUpdate);
 
@@ -64,23 +70,49 @@ export class App {
     const distance = event.touches[0].clientY - this.pullStartY;
     if (distance <= 0) {
       this.pullDistance.set(0);
+      this.cancelPullHold();
       return;
     }
     event.preventDefault();
     this.pullDistance.set(Math.min(distance * 0.65, 84));
+    if (this.pullDistance() >= this.pullThreshold) this.startPullHold();
+    else this.cancelPullHold();
   }
   protected handlePullEnd(): void {
     if (this.pullStartY === null) return;
-    const shouldRefresh = this.pullDistance() >= this.pullThreshold;
+    this.cancelPullHold();
     this.pullStartY = null;
-    if (this.isDialogOpen()) {
-      this.pullDistance.set(0);
-      return;
-    }
-    if (!shouldRefresh) {
-      this.pullDistance.set(0);
-      return;
-    }
+    this.pullDistance.set(0);
+  }
+  private startPullHold(): void {
+    if (this.pullHoldStartedAt !== null) return;
+    this.pullHoldStartedAt = performance.now();
+    const step = () => {
+      if (this.pullHoldStartedAt === null) return;
+      if (this.isDialogOpen()) {
+        this.cancelPullHold();
+        this.pullDistance.set(0);
+        return;
+      }
+      const progress = Math.min((performance.now() - this.pullHoldStartedAt) / this.pullHoldDurationMs, 1);
+      this.pullHoldProgress.set(progress);
+      if (progress >= 1) {
+        this.completePullRefresh();
+        return;
+      }
+      this.pullHoldFrame = requestAnimationFrame(step);
+    };
+    this.pullHoldFrame = requestAnimationFrame(step);
+  }
+  private cancelPullHold(): void {
+    if (this.pullHoldFrame !== null) cancelAnimationFrame(this.pullHoldFrame);
+    this.pullHoldFrame = null;
+    this.pullHoldStartedAt = null;
+    this.pullHoldProgress.set(0);
+  }
+  private completePullRefresh(): void {
+    this.cancelPullHold();
+    this.pullStartY = null;
     this.refreshing.set(true);
     this.pullDistance.set(48);
     window.location.reload();
