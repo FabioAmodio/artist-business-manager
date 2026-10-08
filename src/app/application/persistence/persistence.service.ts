@@ -387,7 +387,7 @@ export class PersistenceService {
     const local = operation.after;
     const ignored = new Set(['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'version', 'deletedAt', 'deletedBy']);
     const fields = [...new Set([...Object.keys(local ?? {}), ...Object.keys(remote ?? {})])]
-      .filter((field) => !ignored.has(field) && JSON.stringify(local?.[field]) !== JSON.stringify(remote?.[field]))
+      .filter((field) => !ignored.has(field) && this.stableStringify(local?.[field]) !== this.stableStringify(remote?.[field]))
       .map((name) => ({ name, local: local?.[name], remote: remote?.[name] }));
     return { operation, remote, fields, localDeleted: Boolean(local?.['deletedAt']), remoteDeleted: Boolean(remote?.['deletedAt']) };
   }

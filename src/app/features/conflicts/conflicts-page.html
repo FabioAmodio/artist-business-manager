@@ -26,6 +26,9 @@
       @if (isDeletionConflict()) {
         <p class="dialog-intro">Questa entità è stata cancellata su un lato e conservata sull'altro. Scegli quale versione mantenere.</p>
         <div class="choice-actions"><button class="danger-button" type="button" [disabled]="busy()" (click)="resolveDeletion('delete')">Cancella ovunque</button><button class="save-button" type="button" [disabled]="busy()" (click)="resolveDeletion('keep')">Conserva ovunque</button></div>
+      } @else if (!details.fields.length) {
+        <p class="dialog-intro">Nessuna differenza di contenuto: i dati locali e remoti coincidono già, si tratta solo di un disallineamento di versione (probabilmente un sync precedente interrotto a metà). Puoi allineare in sicurezza.</p>
+        <div class="choice-actions"><button class="secondary-button" type="button" [disabled]="busy()" (click)="closeConflict()">Annulla</button><button class="save-button" type="button" [disabled]="busy()" (click)="resolveFields()">{{ busy() ? 'Allineamento...' : 'Allinea versione' }}</button></div>
       } @else {
         <p class="dialog-intro">Scegli il valore da mantenere per ogni campo divergente.</p>
         <div class="field-list">
