@@ -1,0 +1,19 @@
+@if (sheet.party(); as party) {
+  <dialog #dialog class="contact-sheet" aria-labelledby="contact-sheet-title" (cancel)="cancel($event)">
+    <h2 id="contact-sheet-title">Contatta {{ party.displayName }}</h2>
+    <ul class="contact-sheet-list">
+      @for (action of actions(); track action.key) {
+        <li>
+          <button type="button" class="contact-sheet-action" [class.preferred]="action.preferred" (click)="runAction(action)">
+            <span class="contact-sheet-icon" aria-hidden="true">{{ action.icon }}</span>
+            <span class="contact-sheet-label">{{ action.label }}</span>
+            @if (action.preferred) { <span class="contact-sheet-preferred-badge" aria-label="Preferito" title="Preferito">★</span> }
+          </button>
+        </li>
+      }
+    </ul>
+    <div class="contact-sheet-actions">
+      <button type="button" class="text-button" (click)="sheet.close()">Annulla</button>
+    </div>
+  </dialog>
+}

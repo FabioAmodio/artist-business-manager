@@ -19,7 +19,9 @@ import { ListFilterPanelComponent } from '../../shared/components/list-filter-pa
 import { PersistenceService } from '../../application/persistence/persistence.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
-import { contactLinksForChannel, contactLinksFromFreeText, type ContactLinks } from '../../shared/utils/contact-links';
+import { contactLinksForChannel, contactLinksFromFreeText, partyContactOptions, type ContactLinks } from '../../shared/utils/contact-links';
+import { buildFairContextActions } from '../../shared/utils/fair-contact-context';
+import { ContactActionSheetService } from '../../shared/components/contact-action-sheet/contact-action-sheet.service';
 
 type DeadlineSortKey = 'date' | 'offer' | 'customer' | 'status';
 
@@ -47,6 +49,7 @@ export class DeadlinesPage implements OnInit {
   private readonly fairTaskService = inject(FairTaskService);
   private readonly fairService = inject(FairService);
   private readonly persistence = inject(PersistenceService);
+  private readonly contactSheet = inject(ContactActionSheetService);
 
   protected readonly works = signal<readonly Operation[]>([]);
   protected readonly parties = signal<readonly Party[]>([]);
@@ -71,7 +74,15 @@ export class DeadlinesPage implements OnInit {
   protected offerName(work: Operation): string { return work.serviceId ? this.services().find((service) => service.id === work.serviceId)?.description ?? 'Servizio non trovato' : this.products().find((product) => product.id === work.productId)?.name ?? 'Prodotto non indicato'; }
   protected customerName(work: Operation): string { return work.partyId ? this.parties().find((party) => party.id === work.partyId)?.displayName ?? 'Cliente non trovato' : work.customerName || 'Cliente non indicato'; }
   protected isMobileSwipeMode(): boolean { return this.persistence.listInteractionMode() === 'swipe' && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true; }
-  protected workRightActions(work: Operation): SwipeAction[] { return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) }]; }
+  protected workRightActions(work: Operation): SwipeAction[] {
+    const actions: SwipeAction[] = [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) }];
+    const party = this.customerParty(work);
+    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.contactSheet.open(party) });
+    return actions;
+  }
+  protected customerParty(work: Operation): Party | undefined { return work.partyId ? this.parties().find((party) => party.id === work.partyId) : undefined; }
+  protected hasContactOptions(party: Party): boolean { return partyContactOptions(party).length > 0; }
+  protected openContactSheet(party: Party): void { this.contactSheet.open(party); }
 
   protected fairTaskTitle(fairDL: FairTaskDeadline): string {
     switch (fairDL.task.kind) {
@@ -149,19 +160,34 @@ export class DeadlinesPage implements OnInit {
     if (links.mailHref) actions.push({ key: 'mail', icon: '✉️', label: 'Email', run: () => { window.location.href = links.mailHref!; } });
     if (links.whatsappHref) actions.push({ key: 'whatsapp', icon: '💬', label: 'WhatsApp', run: () => window.open(links.whatsappHref, '_blank', 'noopener') });
     if (links.websiteHref) actions.push({ key: 'website', icon: '🌐', label: 'Sito', run: () => window.open(links.websiteHref, '_blank', 'noopener') });
+    if (this.hasFairTaskContactSheet(task)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.openFairTaskContactSheet(task) });
+    const bookingUrl = this.hotelCancellationBookingUrl(task);
+    if (bookingUrl) actions.push({ key: 'booking', icon: '🏨', label: 'Apri prenotazione', run: () => window.open(bookingUrl, '_blank', 'noopener') });
     actions.push({ key: 'edit', icon: '✎', label: 'Apri fiera', kind: 'auto', run: () => this.openFairTask(task) });
     return actions;
   }
+  protected fairTaskParty(task: FairTask): Party | undefined { return task.partyId ? this.fairTaskContactsById().get(task.partyId) : undefined; }
+  /** Azioni derivate dal contesto fiera (posizione, prenotazione hotel) da mostrare in coda ai recapiti nella dialog "Contatta": qui si mostra sempre tutto il possibile, a differenza delle icone rapide della lista. */
+  protected fairTaskExtraActions(task: FairTask) {
+    const fair = this.fairs().find((item) => item.id === task.fairEditionId);
+    return buildFairContextActions(fair, task.contactRole);
+  }
+  protected hasFairTaskContactSheet(task: FairTask): boolean {
+    const party = this.fairTaskParty(task);
+    return Boolean(party) && (this.hasContactOptions(party!) || this.fairTaskExtraActions(task).length > 0);
+  }
+  protected openFairTaskContactSheet(task: FairTask): void {
+    const party = this.fairTaskParty(task);
+    if (party) this.contactSheet.open(party, this.fairTaskExtraActions(task));
+  }
+  /** Icona rapida di prenotazione in lista: solo per l'attivita' di cancellazione hotel (nella dialog "Contatta" invece compare per qualunque contatto di ruolo Hotel). */
+  protected hotelCancellationBookingUrl(task: FairTask): string | undefined {
+    if (task.kind !== 'hotel-cancellation-deadline') return undefined;
+    return this.fairs().find((item) => item.id === task.fairEditionId)?.hotelBookingUrl || undefined;
+  }
   private partyChannelValue(party: Party | undefined, channel: PartyContactChannel, methodId?: string): string | undefined {
     if (!party) return undefined;
-    if (methodId) {
-      const method = party.contacts?.find((candidate) => candidate.id === methodId && candidate.channel === channel);
-      if (method) return method.value;
-    }
-    if (channel === 'email') return party.email || party.contacts?.find((method) => method.channel === 'email')?.value;
-    if (channel === 'website') return party.website || party.contacts?.find((method) => method.channel === 'website')?.value;
-    if (channel === 'phone' || channel === 'whatsapp') return party.phone || party.contacts?.find((method) => method.channel === channel)?.value;
-    return party.contacts?.find((method) => method.channel === channel)?.value;
+    return partyContactOptions(party).find((option) => option.channel === channel && (!methodId || option.methodId === methodId))?.value;
   }
   private toFairTaskDeadline(task: FairTask): FairTaskDeadline {
     const fair = this.fairs().find((item) => item.id === task.fairEditionId);

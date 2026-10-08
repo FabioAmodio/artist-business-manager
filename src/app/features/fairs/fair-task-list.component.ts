@@ -8,7 +8,7 @@ import type { FairSeriesTaskTemplateItem, FairTaskKind } from '../../domain/mode
 import type { FairTask, FairTaskContactRole, FairTaskStatus } from '../../domain/models/fair-task';
 import type { Party, PartyContactChannel } from '../../domain/models/party';
 import { GLOBAL_DEFAULT_TEMPLATE, HOTEL_TASK_KINDS, missingDefaultFairTaskKinds } from '../../domain/shared/fair-task-template';
-import { contactLinksForChannel, contactLinksFromFreeText, type ContactLinks } from '../../shared/utils/contact-links';
+import { contactLinksForChannel, contactLinksFromFreeText, partyContactOptions, PARTY_CHANNEL_LABELS, type ContactLinks, type PartyContactOption } from '../../shared/utils/contact-links';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 
@@ -24,20 +24,11 @@ const KIND_LABELS: Record<FairTaskKind, string> = {
 };
 
 const CONTACT_ROLE_LABELS: Record<FairTaskContactRole, string> = { organizer: 'Organizzatore', hotel: 'Hotel' };
-const CHANNEL_LABELS: Record<PartyContactChannel, string> = { email: 'Email', phone: 'Telefono', whatsapp: 'WhatsApp', website: 'Sito web' };
 const STATUS_OPTIONS: readonly { readonly status: FairTaskStatus; readonly icon: string; readonly label: string }[] = [
   { status: 'pending', icon: '📝', label: 'Da fare' },
   { status: 'done', icon: '✓', label: 'Fatta' },
   { status: 'not-needed', icon: '🚫', label: 'Da non fare' },
 ];
-
-interface ChannelOption {
-  readonly channel: PartyContactChannel;
-  /** Id del PartyContactMethod specifico quando non e' il campo principale del Party per quel canale (consente piu' email/telefoni distinti). */
-  readonly methodId?: string;
-  readonly value: string;
-  readonly label: string;
-}
 
 interface TaskDraft {
   readonly dueDate: string;
@@ -78,7 +69,7 @@ export class FairTaskListComponent {
   protected readonly organizerContacts = signal<readonly Party[]>([]);
   protected readonly hotelContacts = signal<readonly Party[]>([]);
   protected readonly contactRoleLabels = CONTACT_ROLE_LABELS;
-  protected readonly channelLabels = CHANNEL_LABELS;
+  protected readonly channelLabels = PARTY_CHANNEL_LABELS;
   protected readonly channelKinds: readonly PartyContactChannel[] = ['email', 'phone', 'whatsapp', 'website'];
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly loading = signal(true);
@@ -136,40 +127,24 @@ export class FairTaskListComponent {
     const draft = this.draft(task);
     if (draft.partyId && draft.contactChannel) {
       const party = this.contactsById().get(draft.partyId);
-      const option = this.channelOptionsForParty(party).find((item) => item.channel === draft.contactChannel && (item.methodId ?? '') === (draft.contactMethodId ?? ''));
+      const option = party ? partyContactOptions(party).find((item) => item.channel === draft.contactChannel && (item.methodId ?? '') === (draft.contactMethodId ?? '')) : undefined;
       if (option) return contactLinksForChannel(draft.contactChannel, option.value);
     }
     return contactLinksFromFreeText(draft.contactInfo);
   }
 
-  protected channelOptions(task: FairTask): readonly ChannelOption[] {
+  protected channelOptions(task: FairTask): readonly PartyContactOption[] {
     const draft = this.draft(task);
-    return this.channelOptionsForParty(this.contactsById().get(draft.partyId));
+    const party = this.contactsById().get(draft.partyId);
+    return party ? partyContactOptions(party) : [];
   }
 
   /** Valore unico per il binding del select "Canale": il methodId quando presente, altrimenti il solo channel (campo principale del Party). */
-  protected channelOptionKey(option: ChannelOption): string { return option.methodId ? `${option.channel}:${option.methodId}` : option.channel; }
+  protected channelOptionKey(option: PartyContactOption): string { return option.methodId ? `${option.channel}:${option.methodId}` : option.channel; }
   protected channelSelectValue(task: FairTask): string { const draft = this.draft(task); return draft.contactMethodId ? `${draft.contactChannel}:${draft.contactMethodId}` : draft.contactChannel; }
   protected changeDraftChannel(task: FairTask, key: string): void {
     const option = this.channelOptions(task).find((item) => this.channelOptionKey(item) === key);
     this.updateDraft(task, { contactChannel: option?.channel ?? '', contactMethodId: option?.methodId ?? '' });
-  }
-
-  private channelOptionsForParty(party: Party | undefined): ChannelOption[] {
-    if (!party) return [];
-    const options: ChannelOption[] = [];
-    if (party.email) options.push({ channel: 'email', value: party.email, label: CHANNEL_LABELS.email });
-    if (party.phone) {
-      options.push({ channel: 'phone', value: party.phone, label: CHANNEL_LABELS.phone });
-      options.push({ channel: 'whatsapp', value: party.phone, label: CHANNEL_LABELS.whatsapp });
-    }
-    if (party.website) options.push({ channel: 'website', value: party.website, label: CHANNEL_LABELS.website });
-    for (const method of party.contacts ?? []) {
-      /* Evita solo i duplicati esatti (stesso canale e stesso valore): recapiti diversi dello stesso canale (es. due email) restano entrambi selezionabili. */
-      if (options.some((option) => option.channel === method.channel && option.value === method.value)) continue;
-      options.push({ channel: method.channel, methodId: method.id, value: method.value, label: `${CHANNEL_LABELS[method.channel]}${method.label ? ' (' + method.label + ')' : ''}` });
-    }
-    return options;
   }
 
   protected formatTimestamp(value?: string): string {
@@ -215,7 +190,7 @@ export class FairTaskListComponent {
   private async logTaskCompletion(task: FairTask): Promise<void> {
     const draft = this.draft(task);
     const party = draft.partyId ? this.contactsById().get(draft.partyId) : undefined;
-    const option = party ? this.channelOptionsForParty(party).find((item) => item.channel === draft.contactChannel && (item.methodId ?? '') === (draft.contactMethodId ?? '')) : undefined;
+    const option = party ? partyContactOptions(party).find((item) => item.channel === draft.contactChannel && (item.methodId ?? '') === (draft.contactMethodId ?? '')) : undefined;
     const entry = await this.activityLogService.logTaskCompletion(this.fairEditionId(), task.id, this.kindLabel(task), {
       name: party?.displayName,
       channel: option ? draft.contactChannel || undefined : undefined,
@@ -296,7 +271,8 @@ export class FairTaskListComponent {
   }
 
   protected changeDraftParty(task: FairTask, partyId: string): void {
-    const options = this.channelOptionsForParty(this.contactsById().get(partyId));
+    const party = this.contactsById().get(partyId);
+    const options = party ? partyContactOptions(party) : [];
     const current = this.draft(task).contactChannel;
     const currentMethodId = this.draft(task).contactMethodId;
     const stillValid = options.some((option) => option.channel === current && (option.methodId ?? '') === currentMethodId);

@@ -15,6 +15,8 @@ import { NumberStepperComponent } from '../../shared/components/number-stepper.c
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
+import { ContactActionSheetService } from '../../shared/components/contact-action-sheet/contact-action-sheet.service';
+import { PARTY_CHANNEL_LABELS, partyContactOptions, type PartyContactOption } from '../../shared/utils/contact-links';
 
 type ContactSortKey = 'name' | 'purchases' | 'spending' | 'type';
 
@@ -42,12 +44,8 @@ const SUPPLIER_TYPE_LABELS: Record<SupplierType, string> = {
   marketplace: 'Marketplace',
   other: 'Altro fornitore',
 };
-export const CONTACT_CHANNEL_LABELS: Record<PartyContactChannel, string> = {
-  email: 'Email',
-  phone: 'Telefono',
-  whatsapp: 'WhatsApp',
-  website: 'Sito web',
-};
+export const CONTACT_CHANNEL_LABELS: Record<PartyContactChannel, string> = PARTY_CHANNEL_LABELS;
+export const CONTACT_METHOD_CHANNEL_OPTIONS: readonly PartyContactChannel[] = ['email', 'phone', 'whatsapp', 'website', 'address', 'facebook', 'instagram', 'tiktok', 'twitter', 'telegram', 'linkedin', 'youtube', 'threads', 'pinterest'];
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,6 +56,7 @@ export const CONTACT_CHANNEL_LABELS: Record<PartyContactChannel, string> = {
 })
 export class ContactsPage implements OnInit {
   private readonly confirmation = inject(ConfirmDialogService);
+  private readonly contactSheet = inject(ContactActionSheetService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(ContactService);
@@ -68,6 +67,7 @@ export class ContactsPage implements OnInit {
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly roleIcons = ROLE_ICONS;
   protected readonly channelLabels = CONTACT_CHANNEL_LABELS;
+  protected readonly channelOptions = CONTACT_METHOD_CHANNEL_OPTIONS;
 
   protected readonly contacts = signal<readonly Party[]>([]);
   protected readonly operations = signal<readonly Operation[]>([]);
@@ -165,12 +165,17 @@ export class ContactsPage implements OnInit {
   }
 
   protected contactRightActions(contact: Party): SwipeAction[] {
-    return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(contact) }];
+    const actions: SwipeAction[] = [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(contact) }];
+    if (this.hasContactOptions(contact)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.openContactSheet(contact) });
+    return actions;
   }
 
   protected contactLeftActions(contact: Party): SwipeAction[] {
     return [{ key: 'delete', icon: '🗑', label: 'Elimina', variant: 'danger', kind: 'auto', disabled: this.isContactUsed(contact), run: () => this.remove(contact) }];
   }
+
+  protected hasContactOptions(contact: Party): boolean { return partyContactOptions(contact).length > 0; }
+  protected openContactSheet(contact: Party): void { this.contactSheet.open(contact); }
 
   protected isContactUsed(contact: Party): boolean {
     return this.operations().some((operation) => operation.partyId === contact.id) || this.purchases().some((purchase) => purchase.supplierId === contact.id);
@@ -206,9 +211,9 @@ export class ContactsPage implements OnInit {
       supplierType: contact.supplierType,
       email: contact.email ?? '',
       phone: contact.phone ?? '',
-      website: contact.website ?? '',
-      social: contact.social ?? '',
       contacts: contact.contacts,
+      preferredContactChannel: contact.preferredContactChannel,
+      preferredContactMethodId: contact.preferredContactMethodId,
       notes: contact.notes ?? '',
     };
     this.draftContacts = (contact.contacts ?? []).map((method) => ({ ...method }));
@@ -233,9 +238,24 @@ export class ContactsPage implements OnInit {
   protected addContactMethod(): void {
     this.draftContacts = [...this.draftContacts, { id: crypto.randomUUID(), channel: 'phone', value: '' }];
   }
-  protected removeContactMethod(id: string): void { this.draftContacts = this.draftContacts.filter((method) => method.id !== id); }
+  protected removeContactMethod(id: string): void {
+    this.draftContacts = this.draftContacts.filter((method) => method.id !== id);
+    if (this.draft.preferredContactMethodId === id) this.draft = { ...this.draft, preferredContactChannel: undefined, preferredContactMethodId: undefined };
+  }
   protected updateContactMethod(id: string, patch: Partial<PartyContactMethod>): void {
     this.draftContacts = this.draftContacts.map((method) => method.id === id ? { ...method, ...patch } : method);
+  }
+
+  /** Opzioni di contatto calcolate sulla bozza non ancora salvata, cosi' il recapito preferito si puo' scegliere subito durante la compilazione. */
+  protected draftContactOptions(): PartyContactOption[] { return partyContactOptions(this.draftAsParty()); }
+  protected draftPreferredKey(): string { return this.draft.preferredContactChannel ? `${this.draft.preferredContactChannel}:${this.draft.preferredContactMethodId ?? ''}` : ''; }
+  protected setPreferredOption(key: string): void {
+    if (!key) { this.draft = { ...this.draft, preferredContactChannel: undefined, preferredContactMethodId: undefined }; return; }
+    const option = this.draftContactOptions().find((item) => `${item.channel}:${item.methodId ?? ''}` === key);
+    this.draft = { ...this.draft, preferredContactChannel: option?.channel, preferredContactMethodId: option?.methodId };
+  }
+  private draftAsParty(): Party {
+    return { id: '', createdAt: '', updatedAt: '', ...this.draft, contacts: this.draftContacts } as Party;
   }
 
   protected async save(): Promise<void> {
@@ -317,6 +337,6 @@ export class ContactsPage implements OnInit {
   private resetMessages(): void { this.errorMessage.set(''); this.successMessage.set(''); }
 
   private emptyDraft(): ContactInput {
-    return { type: 'person', displayName: '', roles: [], supplierType: undefined, email: '', phone: '', website: '', social: '', contacts: [], notes: '' };
+    return { type: 'person', displayName: '', roles: [], supplierType: undefined, email: '', phone: '', contacts: [], notes: '' };
   }
 }

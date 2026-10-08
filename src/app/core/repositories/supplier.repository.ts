@@ -20,7 +20,7 @@ export class SupplierRepository implements ISupplierRepository {
     const parties = await this.storage.list<Party>(COLLECTION);
     return parties
       .filter((party) => !party.deletedAt && party.roles?.includes('supplier'))
-      .filter((party) => !normalized || `${party.displayName} ${party.email ?? ''} ${party.phone ?? ''} ${party.website ?? ''} ${party.supplierType ?? ''}`.toLowerCase().includes(normalized))
+      .filter((party) => !normalized || `${party.displayName} ${party.email ?? ''} ${party.phone ?? ''} ${party.supplierType ?? ''}`.toLowerCase().includes(normalized))
       .sort((first, second) => first.displayName.localeCompare(second.displayName))
       .slice(0, limit);
   }

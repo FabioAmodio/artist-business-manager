@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { SupplierRepository } from '../../core/repositories/supplier.repository';
 import type { Party, PartyRole, SupplierType } from '../../domain/models/party';
 
-export type SupplierInput = Pick<Party, 'displayName' | 'email' | 'phone' | 'website' | 'notes'> & {
+export type SupplierInput = Pick<Party, 'displayName' | 'email' | 'phone' | 'notes'> & {
   readonly supplierType: SupplierType;
 };
 

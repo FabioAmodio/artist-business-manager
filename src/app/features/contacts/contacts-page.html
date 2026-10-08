@@ -68,10 +68,13 @@
             }
             <span><strong>Email</strong>{{ contact.email || 'n.d.' }}</span>
             <span><strong>Telefono</strong>{{ contact.phone || 'n.d.' }}</span>
-            <span><strong>Sito</strong>{{ contact.website || 'n.d.' }}</span>
             @if (contactMethodSummary(contact); as extra) { @if (extra) { <span><strong>Altri contatti</strong>{{ extra }}</span> } }
           </div>
-          <div class="row-actions"><button class="text-button list-action" type="button" aria-label="Modifica contatto" title="Modifica contatto" (click)="startEditing(contact)">✎</button><button class="danger-button list-action" type="button" aria-label="Elimina contatto" [disabled]="isContactUsed(contact)" [title]="isContactUsed(contact) ? 'Contatto usato in operazioni/acquisti' : 'Elimina contatto'" (click)="remove(contact)">🗑</button></div>
+          <div class="row-actions">
+            @if (hasContactOptions(contact)) { <button class="text-button list-action" type="button" aria-label="Contatta" title="Contatta" (click)="openContactSheet(contact)">📇</button> }
+            <button class="text-button list-action" type="button" aria-label="Modifica contatto" title="Modifica contatto" (click)="startEditing(contact)">✎</button>
+            <button class="danger-button list-action" type="button" aria-label="Elimina contatto" [disabled]="isContactUsed(contact)" [title]="isContactUsed(contact) ? 'Contatto usato in operazioni/acquisti' : 'Elimina contatto'" (click)="remove(contact)">🗑</button>
+          </div>
         </article>
         </app-swipe-row>
       }
@@ -117,24 +120,30 @@
           }
           <label>Email <input name="email" type="email" [(ngModel)]="draft.email" /></label>
           <label>Telefono <input name="phone" [(ngModel)]="draft.phone" /></label>
-          <label>Sito web <input name="website" type="url" [(ngModel)]="draft.website" /></label>
-          <label>Social <input name="social" [(ngModel)]="draft.social" /></label>
           <section class="contact-methods full-width">
             <div class="contact-methods-heading"><span>Altri contatti</span><button class="text-button" type="button" (click)="addContactMethod()">+ Aggiungi</button></div>
             @for (method of draftContacts; track method.id) {
               <div class="contact-method-row">
                 <select [ngModel]="method.channel" (ngModelChange)="updateContactMethod(method.id, { channel: $event })" [ngModelOptions]="{standalone: true}" aria-label="Canale">
-                  <option value="email">Email</option>
-                  <option value="phone">Telefono</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="website">Sito web</option>
+                  @for (channel of channelOptions; track channel) { <option [value]="channel">{{ channelLabels[channel] }}</option> }
                 </select>
-                <input type="text" placeholder="Valore" [ngModel]="method.value" (ngModelChange)="updateContactMethod(method.id, { value: $event })" [ngModelOptions]="{standalone: true}" />
+                <input type="text" placeholder="Valore (link per sito/social, testo libero per indirizzo)" [ngModel]="method.value" (ngModelChange)="updateContactMethod(method.id, { value: $event })" [ngModelOptions]="{standalone: true}" />
                 <input type="text" placeholder="Etichetta (es. Ufficio)" [ngModel]="method.label ?? ''" (ngModelChange)="updateContactMethod(method.id, { label: $event })" [ngModelOptions]="{standalone: true}" />
                 <button class="icon-action" type="button" aria-label="Rimuovi contatto" title="Rimuovi contatto" (click)="removeContactMethod(method.id)">🗑</button>
               </div>
             }
           </section>
+          @if (draftContactOptions().length) {
+            <fieldset class="contact-preferred full-width">
+              <legend>Contatto preferito</legend>
+              <select aria-label="Contatto preferito" [ngModel]="draftPreferredKey()" (ngModelChange)="setPreferredOption($event)" [ngModelOptions]="{standalone: true}">
+                <option value="">Nessuna preferenza</option>
+                @for (option of draftContactOptions(); track option.channel + (option.methodId ?? '')) {
+                  <option [value]="option.channel + ':' + (option.methodId ?? '')">{{ option.label }} · {{ option.value }}</option>
+                }
+              </select>
+            </fieldset>
+          }
           <label class="full-width">Note <textarea name="notes" rows="4" [(ngModel)]="draft.notes"></textarea></label>
         </div>
       </form>

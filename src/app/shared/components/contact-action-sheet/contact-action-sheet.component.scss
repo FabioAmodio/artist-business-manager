@@ -1,0 +1,12 @@
+.contact-sheet { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); box-sizing: border-box; max-width: min(26rem, calc(100vw - 2rem)); padding: 1.25rem; width: 26rem; }
+.contact-sheet::backdrop { background: rgba(31, 41, 38, .55); }
+.contact-sheet h2 { color: var(--color-heading); font: 400 1.25rem var(--font-serif); margin: 0 0 .9rem; }
+.contact-sheet-list { display: flex; flex-direction: column; gap: .4rem; list-style: none; margin: 0; padding: 0; }
+.contact-sheet-action { align-items: center; background: var(--color-surface-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; display: flex; font: 500 .95rem var(--font-sans); gap: .6rem; min-height: 2.6rem; padding: .6rem .8rem; text-align: left; width: 100%; }
+.contact-sheet-action.preferred { background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-secondary)); border-color: var(--color-primary-lighter); }
+.contact-sheet-icon { font-size: 1.1rem; }
+.contact-sheet-label { flex: 1; }
+.contact-sheet-preferred-badge { color: var(--color-primary); }
+.contact-sheet-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.contact-sheet-actions button { background: var(--color-surface-secondary); border: 0; border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; font: 600 .9rem var(--font-sans); min-height: 2.4rem; padding: .65rem .9rem; }
+@media (max-width: 699px) { .contact-sheet { font-size: 16px; } }

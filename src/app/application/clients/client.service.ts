@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ClientRepository } from '../../core/repositories/client.repository';
 import type { Party, PartyRole } from '../../domain/models/party';
 
-export type ClientInput = Pick<Party, 'type' | 'displayName' | 'email' | 'phone' | 'website' | 'social' | 'notes'>;
+export type ClientInput = Pick<Party, 'type' | 'displayName' | 'email' | 'phone' | 'notes'>;
 const CLIENT_ROLES: readonly PartyRole[] = ['customer'];
 
 @Injectable({ providedIn: 'root' })

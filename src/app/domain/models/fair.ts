@@ -59,6 +59,8 @@ export interface FairEdition {
   readonly standPaid?: boolean;
   readonly travelPaid?: boolean;
   readonly hotelPaid?: boolean;
+  /** Link alla prenotazione specifica di questa edizione (es. Booking.com): legato alla singola trasferta, non all'anagrafica hotel. */
+  readonly hotelBookingUrl?: string;
   readonly notes?: string;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;

@@ -34,7 +34,7 @@
 
 .mobile-bar button { border: 0; font-family: inherit; }
 
-.mobile-bar .more-trigger { background: transparent; }
+.mobile-bar > button:not(.fab) { background: transparent; cursor: pointer; }
 
 .quick-status-dots { align-items: center; display: inline-flex; font: initial; gap: .28rem; height: 1.35rem; justify-content: center; line-height: 1; }
 .quick-status-dots i { background: var(--color-surface); border: 1px solid #fff; border-radius: 50%; display: block; height: .55rem; width: .55rem; }

@@ -6,6 +6,7 @@ import { PersistenceService } from '../../application/persistence/persistence.se
 import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 import { SyncStatusService } from '../synchronization/sync-status.service';
 import { ActiveFairService } from '../event/active-fair.service';
+import { FairContactsDialogService } from '../../shared/components/fair-contacts-dialog/fair-contacts-dialog.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,17 +22,19 @@ export class MobileActionBarComponent {
   protected readonly firebaseAuth = inject(FirebaseAuthService);
   protected readonly syncStatus = inject(SyncStatusService);
   protected readonly activeFair = inject(ActiveFairService);
+  private readonly fairContactsDialog = inject(FairContactsDialogService);
   protected readonly moreMenuOpen = signal(false);
-  // In modalita fiera il Catalogo torna nel footer, quindi va escluso dal menu "Altro" (dove finisce Scadenze, mostrata li' esplicitamente).
+  // In modalita fiera "Contatti" sostituisce Catalogo nella toolbar: Catalogo torna nel menu "Altro" insieme a Scadenze.
   protected readonly secondaryItems = computed<readonly NavigationItem[]>(() => {
     const hidden = new Set(['/dashboard', '/events', '/lots', '/deadlines']);
-    if (this.activeFair.isForced()) hidden.add('/catalog');
     return APP_NAVIGATION_ITEMS.filter((item) => !hidden.has(item.path));
   });
 
   protected openQuickAction(): void {
     void this.router.navigate(['/sales'], { queryParams: { create: Date.now().toString() } });
   }
+
+  protected openFairContacts(): void { this.fairContactsDialog.open(); }
 
   protected toggleMoreMenu(): void { this.moreMenuOpen.update((open) => !open); }
   protected closeMoreMenu(): void { this.moreMenuOpen.set(false); }

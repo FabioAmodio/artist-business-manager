@@ -47,6 +47,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--color-accent); o
 .contact-method-row { display: grid; gap: .5rem; grid-template-columns: minmax(7rem, 1fr) minmax(0, 1.4fr) minmax(0, 1fr) auto; }
 .contact-method-row .icon-action { align-self: end; }
 .role-lock-note { color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: .5rem 0 0; }
+.contact-preferred { border: 0; display: grid; gap: .4rem; margin: 0; padding: 0; }
+.contact-preferred legend { color: var(--color-text-primary); font-size: var(--font-size-xs); font-weight: 600; padding: 0; }
 @media (max-width: 1180px) { .contact-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; } .relation-badges { grid-column: 1 / -2; } .contact-row > * { min-width: 0; } .contact-grid span { overflow-wrap: anywhere; } }
 @media (max-width: 899px) { .page-header { align-items: stretch; flex-direction: column; } .primary-button { width: 100%; } }
 @media (max-width: 799px) { .contact-row, .form-grid { grid-template-columns: 1fr; } .relation-badges { grid-column: auto; } .contact-method-row { grid-template-columns: 1fr; } }

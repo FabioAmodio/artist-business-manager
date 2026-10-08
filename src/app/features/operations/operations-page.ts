@@ -30,6 +30,8 @@ import { PersistenceService } from '../../application/persistence/persistence.se
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
+import { ContactActionSheetService } from '../../shared/components/contact-action-sheet/contact-action-sheet.service';
+import { partyContactOptions } from '../../shared/utils/contact-links';
 
 const ROLE_HINT_LABELS: readonly { readonly role: PartyRole; readonly label: string }[] = [
   { role: 'organizer', label: 'Organizzatore' },
@@ -116,6 +118,7 @@ export class OperationsPage implements OnInit {
   private readonly serviceService = inject(ServiceService);
   private readonly bundleService = inject(BundleService);
   private readonly confirmation = inject(ConfirmDialogService);
+  private readonly contactSheet = inject(ContactActionSheetService);
   private saveAndCreateAnother = false;
 
   protected readonly operations = signal<readonly Operation[]>([]);
@@ -682,9 +685,15 @@ export class OperationsPage implements OnInit {
     if (this.canQuickPay(operation)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openQuickPayment(operation) });
     if (this.salesOnly && this.hasWork(operation)) actions.push({ key: 'open-work', icon: '🛠️', label: 'Lavorazione', variant: 'neutral', run: () => this.openWork(operation) });
     if (this.worksOnly && this.hasLinkedSale(operation)) actions.push({ key: 'open-sale', icon: '💶', label: 'Vendita', variant: 'neutral', run: () => this.openSale(operation) });
+    const party = this.customerParty(operation);
+    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.contactSheet.open(party) });
     actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(operation) });
     return actions;
   }
+
+  protected customerParty(operation: Operation): Party | undefined { return operation.partyId ? this.parties().find((party) => party.id === operation.partyId) : undefined; }
+  protected hasContactOptions(party: Party): boolean { return partyContactOptions(party).length > 0; }
+  protected openContactSheet(party: Party): void { this.contactSheet.open(party); }
 
   protected operationLeftActions(operation: Operation): SwipeAction[] {
     const busy = this.transitioningWorkId() === operation.id;
@@ -929,7 +938,7 @@ export class OperationsPage implements OnInit {
     this.saving.set(true);
     this.resetMessages();
     try {
-      const client = await this.clientService.create({ type: 'person', displayName: customerName, email: '', phone: '', website: '', social: '', notes: '' });
+      const client = await this.clientService.create({ type: 'person', displayName: customerName, email: '', phone: '', notes: '' });
       this.draft = { ...this.draft, partyId: client.id, customerName: client.displayName };
       this.customerMode.set('existing');
       this.quickCustomerDecision = 'yes';

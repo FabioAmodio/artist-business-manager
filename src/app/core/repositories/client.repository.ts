@@ -22,7 +22,7 @@ export class ClientRepository implements IClientRepository {
       .filter((party) => !party.deletedAt)
       /* 'commissioner' e stato unificato in 'customer': il controllo resta per i record legacy non ancora risalvati. */
       .filter((party) => !party.roles?.length || party.roles.includes('customer') || (party.roles as readonly string[]).includes('commissioner'))
-      .filter((party) => !normalized || `${party.displayName} ${party.email ?? ''} ${party.phone ?? ''} ${party.social ?? ''}`.toLowerCase().includes(normalized))
+      .filter((party) => !normalized || `${party.displayName} ${party.email ?? ''} ${party.phone ?? ''}`.toLowerCase().includes(normalized))
       .sort((first, second) => first.displayName.localeCompare(second.displayName))
       .slice(0, limit);
   }

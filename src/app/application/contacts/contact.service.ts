@@ -3,7 +3,7 @@ import { ContactRepository } from '../../core/repositories/contact.repository';
 import type { Party, PartyRole } from '../../domain/models/party';
 import type { PartyFilter } from '../../domain/repositories/repository-types';
 
-export type ContactInput = Pick<Party, 'type' | 'displayName' | 'roles' | 'supplierType' | 'email' | 'phone' | 'website' | 'social' | 'contacts' | 'notes'>;
+export type ContactInput = Pick<Party, 'type' | 'displayName' | 'roles' | 'supplierType' | 'email' | 'phone' | 'contacts' | 'preferredContactChannel' | 'preferredContactMethodId' | 'notes'>;
 
 @Injectable({ providedIn: 'root' })
 export class ContactService {

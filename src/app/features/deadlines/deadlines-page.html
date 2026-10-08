@@ -12,7 +12,12 @@
           <article class="deadline-row" [class.deadline-overdue]="isOverdue(work)" [class.deadline-due-soon]="isDueSoon(work)">
           <div class="deadline-summary"><div class="deadline-date" [class.deadline-date-overdue]="isOverdue(work)" [class.deadline-date-due-soon]="isDueSoon(work)" aria-label="Data consegna"><strong>{{ formatDateDay(work.deliveryDate) }}</strong>@if (work.deliveryDate) { <span>{{ formatDateMonth(work.deliveryDate) }}</span> }@if (isOverdue(work)) { <span class="deadline-date-badge" aria-hidden="true">⏰</span> } @else if (isDueSoon(work)) { <span class="deadline-date-badge" aria-hidden="true">⏳</span> }</div><div class="deadline-main"><h3>{{ work.title }}</h3><p>{{ offerDetails(work) }}</p></div></div>
           @if (!isMobileSwipeMode()) { <div class="badges">@if (isOverdue(work)) { <span class="overdue" aria-label="Scaduta" title="Scaduta"><span class="badge-icon" aria-hidden="true">⏰</span><span class="badge-label">Scaduta</span></span> } @else if (isDueSoon(work)) { <span class="due-soon" aria-label="In scadenza" title="In scadenza"><span class="badge-icon" aria-hidden="true">⏳</span><span class="badge-label">In scadenza</span></span> }</div> }
-          @if (!isMobileSwipeMode()) { <button class="text-button list-action" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="openWork(work)">✎</button> }
+          @if (!isMobileSwipeMode()) {
+            <div class="deadline-actions">
+              @if (customerParty(work); as party) { @if (hasContactOptions(party)) { <button class="text-button list-action" type="button" aria-label="Contatta" title="Contatta" (click)="openContactSheet(party)">📇</button> } }
+              <button class="text-button list-action" type="button" aria-label="Modifica lavorazione" title="Modifica lavorazione" (click)="openWork(work)">✎</button>
+            </div>
+          }
           </article>
         </app-swipe-row>
       }
@@ -37,6 +42,8 @@
                 @if (links.whatsappHref) { <a class="list-action" [href]="links.whatsappHref" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">💬</a> }
                 @if (links.websiteHref) { <a class="list-action" [href]="links.websiteHref" target="_blank" rel="noopener" aria-label="Apri sito" title="Apri sito">🌐</a> }
               }
+              @if (hasFairTaskContactSheet(item.task)) { <button class="text-button list-action" type="button" aria-label="Contatta" title="Contatta" (click)="openFairTaskContactSheet(item.task)">📇</button> }
+              @if (hotelCancellationBookingUrl(item.task); as bookingHref) { <a class="list-action" [href]="bookingHref" target="_blank" rel="noopener" aria-label="Apri prenotazione hotel" title="Apri prenotazione hotel">🏨</a> }
               <button class="text-button list-action" type="button" aria-label="Apri fiera" title="Apri fiera" (click)="openFairTask(item.task)">✎</button>
             </div>
           }

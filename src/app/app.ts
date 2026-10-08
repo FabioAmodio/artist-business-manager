@@ -13,10 +13,12 @@ import { PersistenceService } from './application/persistence/persistence.servic
 import { FirebaseAuthService } from './core/firebase/firebase-auth.service';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog.component';
 import { ConfirmDialogService } from './shared/components/confirm-dialog.service';
+import { ContactActionSheetComponent } from './shared/components/contact-action-sheet/contact-action-sheet.component';
+import { FairContactsDialogComponent } from './shared/components/fair-contacts-dialog/fair-contacts-dialog.component';
 import { NotificationService } from './application/notifications/notification.service';
 
 @Component({
-  imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent, ConfirmDialogComponent],
+  imports: [RouterLink, RouterOutlet, ResponsiveNavComponent, MobileActionBarComponent, ConfirmDialogComponent, ContactActionSheetComponent, FairContactsDialogComponent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

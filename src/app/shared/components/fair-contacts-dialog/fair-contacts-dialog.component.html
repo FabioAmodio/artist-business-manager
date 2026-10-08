@@ -1,0 +1,35 @@
+@if (dialogService.isOpen()) {
+  <dialog #dialog class="fair-contacts-dialog" aria-labelledby="fair-contacts-title" (cancel)="cancel($event)">
+    @if (fair(); as fair) {
+      <h2 id="fair-contacts-title">Contatti · {{ fair.name }} {{ fair.edition }}</h2>
+      @if (mapsUrl(); as href) {
+        <a class="fair-contacts-row fair-contacts-location" [href]="href" target="_blank" rel="noopener">
+          <span class="fair-contacts-icon" aria-hidden="true">📍</span>
+          <span class="fair-contacts-label">Posizione fiera<small>{{ fair.location }}</small></span>
+        </a>
+      }
+    } @else {
+      <h2 id="fair-contacts-title">Contatti fiera</h2>
+      <p class="empty-state">Nessuna fiera attiva.</p>
+    }
+    @if (loading()) {
+      <p class="empty-state">Caricamento...</p>
+    } @else if (fair() && !rows().length) {
+      <p class="empty-state">Nessun contatto collegato a questa fiera.</p>
+    } @else if (rows().length) {
+      <ul class="fair-contacts-list">
+        @for (row of rows(); track row.contactRole + row.party.id) {
+          <li>
+            <button type="button" class="fair-contacts-row" (click)="openRow(row)">
+              <span class="fair-contacts-icon" aria-hidden="true">{{ roleIcons[row.contactRole] }}</span>
+              <span class="fair-contacts-label">{{ row.party.displayName }}<small>{{ roleLabels[row.contactRole] }}</small></span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    <div class="fair-contacts-actions">
+      <button type="button" class="text-button" (click)="dialogService.close()">Chiudi</button>
+    </div>
+  </dialog>
+}

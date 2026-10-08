@@ -18,6 +18,7 @@ import { ListFilterPanelComponent } from '../../shared/components/list-filter-pa
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
 import { ConfirmDialogService } from '../../shared/components/confirm-dialog.service';
+import { buildMapsSearchUrl } from '../../shared/utils/maps-links';
 import { FairTaskListComponent } from './fair-task-list.component';
 
 type FairSortKey = 'name' | 'year' | 'startDate' | 'balance';
@@ -354,6 +355,8 @@ export class FairsPage implements OnInit {
     return typeof value === 'number' ? `${value.toFixed(2)} €` : 'n.d.';
   }
 
+  protected mapsUrl(location: string | undefined): string | undefined { return location?.trim() ? buildMapsSearchUrl(location) : undefined; }
+
   private costAmount(fair: Fair, cost: 'stand' | 'travel' | 'hotel' | 'other'): number | undefined {
     return { stand: fair.standCost, travel: fair.travelCost, hotel: fair.hotelCost, other: fair.otherCosts }[cost];
   }
@@ -362,7 +365,7 @@ export class FairsPage implements OnInit {
     return {
       name: '', location: '', locationNotes: '', startDate: '', endDate: '', notes: '', edition: String(new Date().getFullYear()),
       expectedBudget: 0, standCost: 0, reimbursement: 0, hotelCost: 0, travelCost: 0, otherCosts: 0,
-      standPaid: false, travelPaid: false, hotelPaid: false,
+      standPaid: false, travelPaid: false, hotelPaid: false, hotelBookingUrl: '',
     };
   }
 

@@ -3,7 +3,7 @@
   <a routerLink="/events">◷<span>Eventi</span></a>
   <button class="fab" type="button" (click)="openQuickAction()" aria-label="Nuova operazione fiera">+</button>
   @if (activeFair.isForced()) {
-    <a routerLink="/catalog">□<span>Catalogo</span></a>
+    <button type="button" (click)="openFairContacts()" aria-label="Contatti fiera">👥<span>Contatti</span></button>
   } @else {
     <a routerLink="/deadlines">⏰<span>Scadenze</span></a>
   }
