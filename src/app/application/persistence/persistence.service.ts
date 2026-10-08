@@ -533,8 +533,19 @@ export class PersistenceService {
           await this.firestore.put(effectiveOperation.collection, effectiveOperation.after);
         }
       } catch (error) {
-        if (this.isFirestoreConflict(error)) await this.markSyncOperation(effectiveOperation, 'conflict', error instanceof Error ? error.message : 'Conflitto Firestore.');
-        else throw error;
+        if (this.isFirestoreConflict(error)) {
+          await this.markSyncOperation(effectiveOperation, 'conflict', error instanceof Error ? error.message : 'Conflitto Firestore.');
+          effectivePending.push({ ...effectiveOperation, status: 'conflict' });
+          continue;
+        }
+        if (this.isTransientFirestoreError(error)) {
+          // Quota esaurita/servizio temporaneamente non disponibile: segna l'operazione come errore visibile invece di
+          // abortire l'intero giro di sync, cosi le altre operazioni pendenti vengono comunque tentate.
+          await this.markSyncOperation(effectiveOperation, 'error', error instanceof Error ? error.message : 'Firestore temporaneamente non disponibile.');
+          effectivePending.push({ ...effectiveOperation, status: 'error' });
+          continue;
+        }
+        throw error;
       }
       effectivePending.push(effectiveOperation);
     }
@@ -804,6 +815,10 @@ export class PersistenceService {
 
   private isFirestoreConflict(error: unknown): boolean {
     return error instanceof Error && (error.message.includes('modificato anche su un altro dispositivo') || error.message.includes('Conflitto Firestore:'));
+  }
+
+  private isTransientFirestoreError(error: unknown): boolean {
+    return error instanceof Error && /resource-exhausted|quota|unavailable|deadline-exceeded/i.test(error.message);
   }
 
   private async writeLocalDataset(provider: IStorageProvider, dataset: PersistedDataset): Promise<void> {
