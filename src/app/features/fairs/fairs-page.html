@@ -20,6 +20,7 @@
   <div class="list-heading"><h2>Elenco fiere</h2><div class="list-heading-end"><span>{{ visibleFairs().length }} registrate</span><button class="filter-toggle" type="button" [class.active]="hasActiveFilters()" [attr.aria-expanded]="filtersOpen()" aria-label="Apri filtri" title="Filtra lista" (click)="filtersOpen.update((open) => !open)"><span aria-hidden="true">🔎</span></button><button class="filter-toggle sort-toggle" type="button" [class.active]="hasActiveSort()" [attr.aria-expanded]="sortOpen()" aria-label="Ordina lista" title="Ordina lista" (click)="toggleSort()"><span aria-hidden="true">↕</span></button></div></div>
   @if (filtersOpen()) {
     <app-list-filter-panel [resultLabel]="'Filtra ' + visibleFairs().length + ' elementi'" (close)="closeFilterPanel()" (reset)="resetFilters()" (apply)="closeFilterPanel()">
+      <label>Fiera <select [ngModel]="seriesFilter()" (ngModelChange)="seriesFilter.set($event)"><option value="all">Tutti</option>@for (serie of series(); track serie.id) { <option [value]="serie.id">{{ serie.name }}</option> }</select></label>
       <label>Anno
         <select name="yearFilter" [ngModel]="yearFilter()?.toString() ?? ''" (ngModelChange)="changeYearFilter($event)">
           @for (option of yearFilterOptions(); track option.value) { <option [value]="option.value">{{ option.label }}</option> }

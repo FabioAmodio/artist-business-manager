@@ -62,6 +62,7 @@ export class FairsPage implements OnInit {
   protected readonly editingSeriesId = signal<string | null>(null);
   protected readonly savingSeries = signal(false);
   protected readonly showPastChecklist = signal(false);
+  protected readonly seriesFilter = signal<string | null>('all');
   protected seriesDraft: FairSeriesInput = this.emptySeriesDraft();
 
   protected fairRightActions(fair: Fair): SwipeAction[] {
@@ -110,6 +111,7 @@ export class FairsPage implements OnInit {
     const filter = this.fairFilter();
     const today = new Date().toISOString().slice(0, 10);
     const fairs = this.fairs().filter((fair) => {
+      if (this.seriesFilter() !== 'all' && fair.fairSeriesId !== this.seriesFilter()) return false;
       if (year && Number(fair.startDate.slice(0, 4)) !== year) return false;
       if (filter === 'completed' && fair.endDate >= today) return false;
       if (filter === 'upcoming' && fair.startDate <= today) return false;
@@ -145,9 +147,9 @@ export class FairsPage implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { year }, queryParamsHandling: 'merge' });
   }
 
-  protected hasActiveFilters(): boolean { return this.fairFilter() !== null || this.fairStatusFilter() !== null || this.yearFilter() !== null || this.standCoverageFilter() !== 'all' || this.travelCoverageFilter() !== 'all' || this.hotelCoverageFilter() !== 'all' || this.otherCoverageFilter() !== 'all' || this.costsMin() !== null || this.costsMax() !== null || this.revenueMin() !== null || this.revenueMax() !== null || this.balanceMin() !== null || this.balanceMax() !== null; }
+  protected hasActiveFilters(): boolean { return this.seriesFilter() !== 'all' || this.fairFilter() !== null || this.fairStatusFilter() !== null || this.yearFilter() !== null || this.standCoverageFilter() !== 'all' || this.travelCoverageFilter() !== 'all' || this.hotelCoverageFilter() !== 'all' || this.otherCoverageFilter() !== 'all' || this.costsMin() !== null || this.costsMax() !== null || this.revenueMin() !== null || this.revenueMax() !== null || this.balanceMin() !== null || this.balanceMax() !== null; }
   protected closeFilterPanel(): void { this.filtersOpen.set(false); }
-  protected resetFilters(): void { this.yearFilter.set(null); this.fairFilter.set(null); this.fairStatusFilter.set(null); this.standCoverageFilter.set('all'); this.travelCoverageFilter.set('all'); this.hotelCoverageFilter.set('all'); this.otherCoverageFilter.set('all'); this.costsMin.set(null); this.costsMax.set(null); this.revenueMin.set(null); this.revenueMax.set(null); this.balanceMin.set(null); this.balanceMax.set(null); this.filtersOpen.set(false); void this.router.navigate([], { relativeTo: this.route, queryParams: { year: null, fairFilter: null, fairStatus: null }, queryParamsHandling: 'merge' }); }
+  protected resetFilters(): void { this.seriesFilter.set('all'); this.yearFilter.set(null); this.fairFilter.set(null); this.fairStatusFilter.set(null); this.standCoverageFilter.set('all'); this.travelCoverageFilter.set('all'); this.hotelCoverageFilter.set('all'); this.otherCoverageFilter.set('all'); this.costsMin.set(null); this.costsMax.set(null); this.revenueMin.set(null); this.revenueMax.set(null); this.balanceMin.set(null); this.balanceMax.set(null); this.filtersOpen.set(false); void this.router.navigate([], { relativeTo: this.route, queryParams: { year: null, fairFilter: null, fairStatus: null }, queryParamsHandling: 'merge' }); }
   protected statusLabel(status: FairEditionStatus): string { return { draft: 'Bozza', confirmed: 'Confermata', cancelled: 'Annullata' }[status]; }
   protected statusIcon(status: FairEditionStatus): string { return { draft: '📝', confirmed: '✓', cancelled: '🚫' }[status]; }
   protected readonly fairStatusOptions: readonly FairEditionStatus[] = ['draft', 'confirmed', 'cancelled'];
