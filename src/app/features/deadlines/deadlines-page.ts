@@ -67,10 +67,38 @@ export class DeadlinesPage implements OnInit {
 
   ngOnInit(): void { void this.load(); }
 
+  protected offerDetails(work: Operation): string { return work.description + (work.description ? ' · ' : '') + (work.partyId ? this.parties().find((party) => party.id === work.partyId)?.displayName ?? 'Cliente non trovato' : work.customerName || 'Cliente non indicato'); }
   protected offerName(work: Operation): string { return work.serviceId ? this.services().find((service) => service.id === work.serviceId)?.description ?? 'Servizio non trovato' : this.products().find((product) => product.id === work.productId)?.name ?? 'Prodotto non indicato'; }
   protected customerName(work: Operation): string { return work.partyId ? this.parties().find((party) => party.id === work.partyId)?.displayName ?? 'Cliente non trovato' : work.customerName || 'Cliente non indicato'; }
   protected isMobileSwipeMode(): boolean { return this.persistence.listInteractionMode() === 'swipe' && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true; }
   protected workRightActions(work: Operation): SwipeAction[] { return [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) }]; }
+
+  protected fairTaskTitle(fairDL: FairTaskDeadline): string {
+    switch (fairDL.task.kind) {
+      case 'contact-organizer': {
+        const party = fairDL.task.partyId ? this.fairTaskContactsById().get(fairDL.task.partyId) : undefined;
+        return party ? "Contattare " + party.displayName : fairDL.task.title;
+      }
+      case 'await-reply': {
+        const party = fairDL.task.partyId ? this.fairTaskContactsById().get(fairDL.task.partyId) : undefined;
+        return party ? "Attendere risposta da " + party.displayName : fairDL.task.title;
+      }
+      case 'send-application': {
+        const party = fairDL.task.partyId ? this.fairTaskContactsById().get(fairDL.task.partyId) : undefined;
+        return party ? "Inviare iscrizione a " + party.displayName : fairDL.task.title;
+      }
+      case 'send-promo-material': {
+        const party = fairDL.task.partyId ? this.fairTaskContactsById().get(fairDL.task.partyId) : undefined;
+        return party ? "Inviare materiale promozionale a " + party.displayName : fairDL.task.title;
+      }
+      case 'hotel-cancellation-deadline': {
+        const hotel = fairDL.task.partyId ? this.fairTaskContactsById().get(fairDL.task.partyId) : undefined;
+        return hotel ? "Scadenza cancellazione hotel " + hotel.displayName : "Scadenza cancellazione hotel";
+      }
+      default: return fairDL.task.title;
+    }
+  }
+
   protected formatDateDay(value?: string): string { return value ? new Intl.DateTimeFormat('it-IT', { day: 'numeric' }).format(new Date(`${value}T00:00:00`)) : 'nd'; }
   protected formatDateMonth(value: string): string { return new Intl.DateTimeFormat('it-IT', { month: 'short' }).format(new Date(`${value}T00:00:00`)).replace('.', ''); }
   protected isOverdue(work: Operation): boolean { return Boolean(work.deliveryDate && work.deliveryDate < this.today()); }
