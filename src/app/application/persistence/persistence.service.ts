@@ -531,9 +531,18 @@ export class PersistenceService {
       try {
         if (effectiveOperation.action === 'delete') {
           await this.firestore.deleteLogical(effectiveOperation.collection, effectiveOperation.entityId, { expectedVersion: typeof effectiveOperation.before?.['version'] === 'number' ? effectiveOperation.before['version'] : undefined });
+          remoteByKey.delete(`${effectiveOperation.collection}:${effectiveOperation.entityId}`);
         } else if (effectiveOperation.after) {
           await this.firestore.put(effectiveOperation.collection, effectiveOperation.after);
+          // remoteByKey e' un'istantanea presa prima del ciclo: se due operazioni pendenti in questo stesso giro
+          // toccano la stessa entita, senza aggiornarla qui la seconda confronterebbe la versione ormai superata
+          // dalla prima (falso conflitto "+1" anche senza alcun reload).
+          const previousVersion = typeof remoteRecord?.['version'] === 'number' ? remoteRecord['version'] : 0;
+          remoteByKey.set(`${effectiveOperation.collection}:${effectiveOperation.entityId}`, { ...effectiveOperation.after, version: previousVersion + 1 });
         }
+        // Rimossa subito, non a fine funzione: se l'app viene ricaricata mentre altre operazioni sono ancora in
+        // elaborazione, questa non deve ripresentarsi al giro successivo con una versione ormai superata (falso conflitto).
+        await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, effectiveOperation.id);
       } catch (error) {
         if (this.isFirestoreConflict(error)) {
           await this.markSyncOperation(effectiveOperation, 'conflict', error instanceof Error ? error.message : 'Conflitto Firestore.');
@@ -556,13 +565,6 @@ export class PersistenceService {
     const merged = this.mergeLocalWithFirestore(local, synchronizedRemote, effectivePending);
     await this.syncStatus.suppress(() => this.writeLocalDataset(this.storage, merged));
     this.lastFirestoreFullSyncAt = Date.now();
-    for (const operation of effectivePending) {
-      const status = await this.storage.get<SyncOperation>(SYNC_OPERATIONS_COLLECTION, operation.id);
-      if (status?.status !== 'pending') continue;
-      const remoteRecord = (synchronizedRemote.collections[operation.collection] ?? []).find((record) => String(record['id']) === operation.entityId);
-      const synchronized = operation.action === 'delete' ? Boolean(remoteRecord?.['deletedAt']) : Boolean(remoteRecord) && this.sameData(operation.after, remoteRecord);
-      if (synchronized) await this.storage.deletePermanent(SYNC_OPERATIONS_COLLECTION, operation.id);
-    }
     await this.refreshSyncOperations();
     const unresolved = this.pendingSyncOperations().some((operation) => operation.status === 'conflict' || operation.status === 'error');
     this.syncStatus.setStatus(unresolved ? 'error' : 'synced');
