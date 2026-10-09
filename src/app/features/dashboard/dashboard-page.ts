@@ -26,6 +26,8 @@ import { ActiveFairService } from '../../core/event/active-fair.service';
 import { SyncStatusService } from '../../core/synchronization/sync-status.service';
 import { SwipeRowComponent } from '../../shared/components/swipe-row/swipe-row.component';
 import type { SwipeAction } from '../../shared/components/swipe-row/swipe-row.model';
+import { ContactActionSheetService } from '../../shared/components/contact-action-sheet/contact-action-sheet.service';
+import { partyContactOptions } from '../../shared/utils/contact-links';
 
 interface PaymentDraft {
   amount?: number;
@@ -54,6 +56,7 @@ export class DashboardPage implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly purchaseService = inject(PurchaseService);
   private readonly serviceService = inject(ServiceService);
+  private readonly contactSheet = inject(ContactActionSheetService);
 
   protected readonly activeFair = this.activeFairMode.activeFair;
   protected readonly operations = signal<readonly Operation[]>([]);
@@ -76,9 +79,14 @@ export class DashboardPage implements OnInit {
   protected saleRightActions(sale: Operation): SwipeAction[] {
     const actions: SwipeAction[] = [];
     if (!this.isFullyPaid(sale)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openPaymentDialog(sale) });
+    const party = this.customerParty(sale);
+    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.contactSheet.open(party) });
     actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.editOperation(sale) });
     return actions;
   }
+  protected customerParty(operation: Operation): Party | undefined { return operation.partyId ? this.parties().find((party) => party.id === operation.partyId) : undefined; }
+  protected hasContactOptions(party: Party): boolean { return partyContactOptions(party).length > 0; }
+  protected openContactSheet(party: Party): void { this.contactSheet.open(party); }
   protected readonly expandedWorks = signal<ReadonlySet<string>>(new Set());
   protected readonly expandedSales = signal<ReadonlySet<string>>(new Set());
   protected readonly statusDragX = signal(0);
@@ -218,9 +226,12 @@ export class DashboardPage implements OnInit {
   }
   protected workRightActions(work: Operation): SwipeAction[] {
     const actions: SwipeAction[] = [];
+    const party = this.customerParty(work);
+    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.contactSheet.open(party) });
+    if (!this.isFullyPaid(work)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openPaymentDialog(work) });
+    // il cambio di stato lavorazione resta prioritario rispetto ai contatti quando lo spazio non basta per mostrare tutto
     const next = this.workNextStatus(work);
     if (next) actions.push({ key: 'advance', icon: this.workStatusIconFor(next), label: this.workStatusLabelFor(next), variant: 'neutral', run: () => this.advanceWork(work) });
-    if (!this.isFullyPaid(work)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openPaymentDialog(work) });
     actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.editWork(work) });
     return actions;
   }

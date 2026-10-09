@@ -166,7 +166,7 @@ export class ContactsPage implements OnInit {
 
   protected contactRightActions(contact: Party): SwipeAction[] {
     const actions: SwipeAction[] = [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(contact) }];
-    if (this.hasContactOptions(contact)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.openContactSheet(contact) });
+    if (this.hasContactOptions(contact)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.openContactSheet(contact) });
     return actions;
   }
 

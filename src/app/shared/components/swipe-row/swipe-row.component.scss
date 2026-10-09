@@ -14,5 +14,15 @@
 .swipe-action-button.swipe-action-armed { filter: brightness(1.15); }
 .swipe-action-icon { font-size: 1.1rem; }
 .swipe-action-label { font-size: .65rem; white-space: nowrap; }
+.swipe-overflow-sheet { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-base); box-shadow: var(--shadow-xl); box-sizing: border-box; max-width: min(22rem, calc(100vw - 2rem)); padding: 1rem; width: 22rem; }
+.swipe-overflow-sheet::backdrop { background: rgba(31, 41, 38, .55); }
+.swipe-overflow-list { display: flex; flex-direction: column; gap: .4rem; list-style: none; margin: 0; padding: 0; }
+.swipe-overflow-item { align-items: center; background: var(--color-surface-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; display: flex; font: 500 .95rem var(--font-sans); gap: .6rem; min-height: 2.6rem; padding: .6rem .8rem; text-align: left; width: 100%; }
+.swipe-overflow-item.swipe-overflow-danger { color: var(--color-status-error, #c0392b); }
+.swipe-overflow-icon { font-size: 1.1rem; }
+.swipe-overflow-label { flex: 1; }
+.swipe-overflow-footer { display: flex; justify-content: flex-end; margin-top: .9rem; }
+.swipe-overflow-footer button { background: var(--color-surface-secondary); border: 0; border-radius: var(--radius-base); color: var(--color-text-primary); cursor: pointer; font: 600 .9rem var(--font-sans); min-height: 2.4rem; padding: .65rem .9rem; }
+@media (max-width: 699px) { .swipe-overflow-sheet { font-size: 16px; } }
 /* i pulsanti standard della pagina restano quelli reali: li nascondiamo solo quando lo swipe è realmente attivo (mobile + modalità swipe) */
 .swipe-active .swipe-content ::ng-deep .row-actions { display: none; }

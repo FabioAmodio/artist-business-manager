@@ -1,7 +1,7 @@
 <div class="swipe-row-inner" [class.swipe-active]="swipeEnabled()">
   @if (swipeEnabled()) {
     <div class="swipe-actions swipe-actions-start" [style.width.px]="containerWidth('right')" aria-hidden="true">
-      @for (action of rightActions(); track action.key) {
+      @for (action of visibleActions('right'); track action.key) {
         @if (!action.disabled) {
           <button type="button" class="swipe-action-button" [class.swipe-action-danger]="action.variant === 'danger'" [class.swipe-action-neutral]="action.variant === 'neutral'" [class.swipe-action-neutral-warning]="action.variant === 'neutral-warning'" [class.swipe-action-neutral-success]="action.variant === 'neutral-success'" [class.swipe-action-armed]="armedAction() === action" [style.width.px]="actionWidth('right', action)" [attr.aria-label]="action.label" [title]="action.label" (pointerdown)="$event.stopPropagation()" (click)="runAction(action)">
             <span class="swipe-action-icon" aria-hidden="true">{{ action.icon }}</span>
@@ -11,7 +11,7 @@
       }
     </div>
     <div class="swipe-actions swipe-actions-end" [style.width.px]="containerWidth('left')" aria-hidden="true">
-      @for (action of leftActions(); track action.key) {
+      @for (action of visibleActions('left'); track action.key) {
         @if (!action.disabled) {
           <button type="button" class="swipe-action-button" [class.swipe-action-danger]="action.variant === 'danger'" [class.swipe-action-neutral]="action.variant === 'neutral'" [class.swipe-action-neutral-warning]="action.variant === 'neutral-warning'" [class.swipe-action-neutral-success]="action.variant === 'neutral-success'" [class.swipe-action-armed]="armedAction() === action" [style.width.px]="actionWidth('left', action)" [attr.aria-label]="action.label" [title]="action.label" (pointerdown)="$event.stopPropagation()" (click)="runAction(action)">
             <span class="swipe-action-icon" aria-hidden="true">{{ action.icon }}</span>
@@ -25,3 +25,20 @@
     <ng-content />
   </div>
 </div>
+@if (overflowSide()) {
+  <dialog #overflowDialog class="swipe-overflow-sheet" (cancel)="cancelOverflow($event)">
+    <ul class="swipe-overflow-list">
+      @for (action of overflowActions(); track action.key) {
+        <li>
+          <button type="button" class="swipe-overflow-item" [class.swipe-overflow-danger]="action.variant === 'danger'" [disabled]="action.disabled" (click)="runOverflowAction(action)">
+            <span class="swipe-overflow-icon" aria-hidden="true">{{ action.icon }}</span>
+            <span class="swipe-overflow-label">{{ action.label }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+    <div class="swipe-overflow-footer">
+      <button type="button" class="text-button" (click)="closeOverflow()">Annulla</button>
+    </div>
+  </dialog>
+}

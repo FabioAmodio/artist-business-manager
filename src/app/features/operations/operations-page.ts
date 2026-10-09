@@ -681,12 +681,13 @@ export class OperationsPage implements OnInit {
   protected operationRightActions(operation: Operation): SwipeAction[] {
     const busy = this.transitioningWorkId() === operation.id;
     const actions: SwipeAction[] = [];
-    if (this.canAdvanceWork(operation)) actions.push({ key: 'advance', icon: this.workAdvanceIcon(operation), label: this.workStatusSwipeLabel(this.workNextStatus(operation)), variant: 'neutral', disabled: busy, run: () => this.advanceWork(operation) });
+    const party = this.customerParty(operation);
+    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.contactSheet.open(party) });
     if (this.canQuickPay(operation)) actions.push({ key: 'quick-payment', icon: '€', label: 'Paga', variant: 'neutral-success', run: () => this.openQuickPayment(operation) });
     if (this.salesOnly && this.hasWork(operation)) actions.push({ key: 'open-work', icon: '🛠️', label: 'Lavorazione', variant: 'neutral', run: () => this.openWork(operation) });
     if (this.worksOnly && this.hasLinkedSale(operation)) actions.push({ key: 'open-sale', icon: '💶', label: 'Vendita', variant: 'neutral', run: () => this.openSale(operation) });
-    const party = this.customerParty(operation);
-    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.contactSheet.open(party) });
+    // il cambio di stato lavorazione resta prioritario rispetto ai contatti quando lo spazio non basta per mostrare tutto
+    if (this.canAdvanceWork(operation)) actions.push({ key: 'advance', icon: this.workAdvanceIcon(operation), label: this.workStatusSwipeLabel(this.workNextStatus(operation)), variant: 'neutral', disabled: busy, run: () => this.advanceWork(operation) });
     actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.startEditing(operation) });
     return actions;
   }

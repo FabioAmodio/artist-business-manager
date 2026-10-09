@@ -77,7 +77,7 @@ export class DeadlinesPage implements OnInit {
   protected workRightActions(work: Operation): SwipeAction[] {
     const actions: SwipeAction[] = [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) }];
     const party = this.customerParty(work);
-    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.contactSheet.open(party) });
+    if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.contactSheet.open(party) });
     return actions;
   }
   protected customerParty(work: Operation): Party | undefined { return work.partyId ? this.parties().find((party) => party.id === work.partyId) : undefined; }
@@ -127,7 +127,13 @@ export class DeadlinesPage implements OnInit {
       if (this.statusFilter() === 'due-soon' && !this.isDueSoon(work)) return false;
       return !query || `${work.title} ${this.offerName(work)} ${this.customerName(work)}`.toLocaleLowerCase().includes(query);
     });
-    return [...works].sort((first, second) => { const value = (work: Operation): string => this.sortKey() === 'date' ? work.deliveryDate ?? '9999-12-31' : this.sortKey() === 'offer' ? this.offerName(work) : this.sortKey() === 'customer' ? this.customerName(work) : this.isOverdue(work) ? '0' : this.isDueSoon(work) ? '1' : '2'; const result = value(first).localeCompare(value(second), 'it', { numeric: true, sensitivity: 'base' }); return this.sortDirection() === 'asc' ? result : -result; });
+    return [...works].sort((first, second) => {
+      const value = (work: Operation): string => this.sortKey() === 'date' ? work.deliveryDate || '9999-12-31' : this.sortKey() === 'offer' ? this.offerName(work) : this.sortKey() === 'customer' ? this.customerName(work) : this.isOverdue(work) ? '0' : this.isDueSoon(work) ? '1' : '2';
+      const result = value(first).localeCompare(value(second), 'it', { numeric: true, sensitivity: 'base' });
+      // a parita' di chiave di ordinamento, le piu' vecchie per data di inserimento restano prima indipendentemente dalla direzione scelta
+      if (result === 0) return first.createdAt.localeCompare(second.createdAt);
+      return this.sortDirection() === 'asc' ? result : -result;
+    });
   }
 
   /** Attivita checklist fiera 'da fare'/'in corso' con scadenza, accanto alle lavorazioni: stessa logica scaduto/in-scadenza, ordinamento solo per data. */
@@ -156,13 +162,14 @@ export class DeadlinesPage implements OnInit {
   protected fairTaskRightActions(task: FairTask): SwipeAction[] {
     const links = this.fairTaskContactLinks(task);
     const actions: SwipeAction[] = [];
-    if (links.callHref) actions.push({ key: 'call', icon: '📞', label: 'Chiama', run: () => { window.location.href = links.callHref!; } });
-    if (links.mailHref) actions.push({ key: 'mail', icon: '✉️', label: 'Email', run: () => { window.location.href = links.mailHref!; } });
-    if (links.whatsappHref) actions.push({ key: 'whatsapp', icon: '💬', label: 'WhatsApp', run: () => window.open(links.whatsappHref, '_blank', 'noopener') });
-    if (links.websiteHref) actions.push({ key: 'website', icon: '🌐', label: 'Sito', run: () => window.open(links.websiteHref, '_blank', 'noopener') });
-    if (this.hasFairTaskContactSheet(task)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', run: () => this.openFairTaskContactSheet(task) });
+    if (this.hasFairTaskContactSheet(task)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.openFairTaskContactSheet(task) });
+    if (links.callHref) actions.push({ key: 'call', icon: '📞', label: 'Chiama', variant: 'neutral', run: () => { window.location.href = links.callHref!; } });
+    if (links.mailHref) actions.push({ key: 'mail', icon: '✉️', label: 'Email', variant: 'neutral', run: () => { window.location.href = links.mailHref!; } });
+    if (links.whatsappHref) actions.push({ key: 'whatsapp', icon: '💬', label: 'WhatsApp', variant: 'neutral', run: () => window.open(links.whatsappHref, '_blank', 'noopener') });
+    if (links.websiteHref) actions.push({ key: 'website', icon: '🌐', label: 'Sito', variant: 'neutral', run: () => window.open(links.websiteHref, '_blank', 'noopener') });
+    // il canale diretto e "Prenotazione" restano prioritari rispetto a Contatta quando lo spazio non basta
     const bookingUrl = this.hotelCancellationBookingUrl(task);
-    if (bookingUrl) actions.push({ key: 'booking', icon: '🏨', label: 'Apri prenotazione', run: () => window.open(bookingUrl, '_blank', 'noopener') });
+    if (bookingUrl) actions.push({ key: 'booking', icon: '🏨', label: 'Prenotazione', variant: 'neutral', run: () => window.open(bookingUrl, '_blank', 'noopener') });
     actions.push({ key: 'edit', icon: '✎', label: 'Apri fiera', kind: 'auto', run: () => this.openFairTask(task) });
     return actions;
   }
@@ -174,7 +181,16 @@ export class DeadlinesPage implements OnInit {
   }
   protected hasFairTaskContactSheet(task: FairTask): boolean {
     const party = this.fairTaskParty(task);
-    return Boolean(party) && (this.hasContactOptions(party!) || this.fairTaskExtraActions(task).length > 0);
+    if (!Boolean(party) || !(this.hasContactOptions(party!) || this.fairTaskExtraActions(task).length > 0)) return false;
+    return !this.isFairTaskContactSheetRedundant(task, party!);
+  }
+  /** Se "Contatta" mostrerebbe solo contenuti gia' presenti come pulsanti diretti (il canale scelto per il task e/o la prenotazione hotel), non aggiunge nulla: lo si nasconde. */
+  private isFairTaskContactSheetRedundant(task: FairTask, party: Party): boolean {
+    const options = partyContactOptions(party);
+    if (options.length > 1) return false;
+    if (options.length === 1 && options[0].channel !== task.contactChannel) return false;
+    const bookingUrl = this.hotelCancellationBookingUrl(task);
+    return this.fairTaskExtraActions(task).every((extra) => extra.key === 'booking' && Boolean(bookingUrl));
   }
   protected openFairTaskContactSheet(task: FairTask): void {
     const party = this.fairTaskParty(task);

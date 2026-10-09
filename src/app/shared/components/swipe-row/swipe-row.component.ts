@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, computed, effect, inject, input, output, signal } from '@angular/core';
 import { PersistenceService } from '../../../application/persistence/persistence.service';
 import type { SwipeAction } from './swipe-row.model';
 
@@ -8,6 +8,9 @@ const FLING_VELOCITY = 0.5;
 const OPEN_SNAP_RATIO = 0.5;
 const AXIS_LOCK_THRESHOLD = 6;
 const SNAP_ANIMATION_MS = 220;
+/** Stile iOS Mail: solo le 2 azioni piu' vicine al contenuto restano visibili, il resto va dietro il pulsante "Altro". */
+const MAX_VISIBLE_ACTIONS = 2;
+const MORE_ACTION_KEY = '__more__';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +30,9 @@ export class SwipeRowComponent {
   protected readonly dragX = signal(0);
   protected readonly snapping = signal(false);
   protected readonly armedAction = signal<SwipeAction | null>(null);
+  protected readonly overflowSide = signal<'right' | 'left' | null>(null);
+  protected readonly overflowActions = signal<readonly SwipeAction[]>([]);
+  @ViewChild('overflowDialog') private overflowDialogRef?: ElementRef<HTMLDialogElement>;
 
   protected readonly swipeEnabled = computed(() => this.persistence.listInteractionMode() === 'swipe' && this.isCoarsePointer());
 
@@ -37,8 +43,25 @@ export class SwipeRowComponent {
   private history: { x: number; t: number }[] = [];
 
   constructor() {
-    // close this row if another row in the same list is opened
-    effect(() => { if (this.openId() !== this.id() && this.dragX() !== 0) this.close(); });
+    // close this row (and its overflow menu) only when a DIFFERENT row genuinely takes over; our own close-to-open-overflow transition sets openId to null, not to another row's id
+    effect(() => {
+      const openId = this.openId();
+      if (openId === this.id()) return;
+      if (this.dragX() !== 0) this.close();
+      if (openId !== null && this.overflowSide()) this.closeOverflow();
+    });
+    // show/hide the native overflow dialog in sync with the signal, same pattern as the other sheet dialogs
+    effect(() => {
+      const side = this.overflowSide();
+      const dialog = this.overflowDialogRef?.nativeElement;
+      if (side) {
+        setTimeout(() => {
+          const renderedDialog = this.overflowDialogRef?.nativeElement;
+          if (this.overflowSide() && renderedDialog && !renderedDialog.open) renderedDialog.showModal();
+        });
+      }
+      if (!side && dialog?.open) dialog.close();
+    });
   }
 
   private isCoarsePointer(): boolean {
@@ -49,19 +72,28 @@ export class SwipeRowComponent {
     return actions.filter((action) => !action.disabled);
   }
 
-  private hasAutoAction(actions: readonly SwipeAction[]): boolean {
-    const list = this.enabledActions(actions);
+  /** Azioni effettivamente renderizzate per lato: solo le ultime 2 (le piu' vicine al contenuto, inclusa l'eventuale azione 'auto') restano pulsanti reali; le altre, piu' lontane, vengono bundlate dietro un pulsante "Altro" (stile iOS Mail). Con esattamente 3 azioni totali non si bundla nulla: l'ingombro sarebbe identico (2 reali + "Altro" = 3 pulsanti) ma con un tap in piu' per l'utente. */
+  protected visibleActions(side: 'right' | 'left'): SwipeAction[] {
+    const list = this.enabledActions(side === 'right' ? this.rightActions() : this.leftActions());
+    if (list.length <= MAX_VISIBLE_ACTIONS + 1) return list;
+    const hidden = list.slice(0, list.length - MAX_VISIBLE_ACTIONS);
+    const visible = list.slice(list.length - MAX_VISIBLE_ACTIONS);
+    const more: SwipeAction = { key: MORE_ACTION_KEY, icon: '⋯', label: 'Altro', variant: 'neutral', run: () => this.openOverflow(side, hidden) };
+    return [more, ...visible];
+  }
+
+  private hasAutoAction(side: 'right' | 'left'): boolean {
+    const list = this.visibleActions(side);
     return list.length > 0 && list[list.length - 1].kind === 'auto';
   }
 
   protected totalWidth(side: 'right' | 'left'): number {
-    return this.enabledActions(side === 'right' ? this.rightActions() : this.leftActions()).length * ACTION_WIDTH;
+    return this.visibleActions(side).length * ACTION_WIDTH;
   }
 
   /** Larghezza del contenitore: include lo spazio extra per l'over-drag dell'ultima azione 'auto', altrimenti verrebbe tagliata. */
   protected maxTotalWidth(side: 'right' | 'left'): number {
-    const actions = side === 'right' ? this.rightActions() : this.leftActions();
-    return this.totalWidth(side) + (this.hasAutoAction(actions) ? ACTION_WIDTH : 0);
+    return this.totalWidth(side) + (this.hasAutoAction(side) ? ACTION_WIDTH : 0);
   }
 
   /** Il lato non coinvolto dal drag corrente deve restare a larghezza 0: essendo posizionato in absolute (left/right: 0), altrimenti resterebbe sovrapposto all'altro lato e ne intercetterebbe i click quando le azioni combinate superano la larghezza della riga. */
@@ -73,8 +105,8 @@ export class SwipeRowComponent {
   protected actionWidth(side: 'right' | 'left', action: SwipeAction): number {
     const matchesDirection = side === 'right' ? this.dragX() > 0 : this.dragX() < 0;
     if (!matchesDirection) return 0;
-    const list = this.enabledActions(side === 'right' ? this.rightActions() : this.leftActions());
-    const index = list.indexOf(action);
+    const list = this.visibleActions(side);
+    const index = list.findIndex((item) => item.key === action.key);
     if (index < 0) return 0;
     const before = index * ACTION_WIDTH;
     const isLast = index === list.length - 1;
@@ -109,8 +141,8 @@ export class SwipeRowComponent {
     event.preventDefault();
     this.history.push({ x: event.clientX, t: performance.now() });
     if (this.history.length > 5) this.history.shift();
-    const maxRight = this.totalWidth('right') + (this.hasAutoAction(this.rightActions()) ? ACTION_WIDTH : 0);
-    const maxLeft = this.totalWidth('left') + (this.hasAutoAction(this.leftActions()) ? ACTION_WIDTH : 0);
+    const maxRight = this.maxTotalWidth('right');
+    const maxLeft = this.maxTotalWidth('left');
     this.dragX.set(Math.max(-maxLeft, Math.min(maxRight, dx)));
     this.updateArmedAction();
   }
@@ -144,7 +176,7 @@ export class SwipeRowComponent {
     const distance = this.dragX();
     const side = distance > 0 ? 'right' : distance < 0 ? 'left' : null;
     if (!side) { this.armedAction.set(null); return; }
-    const list = this.enabledActions(side === 'right' ? this.rightActions() : this.leftActions());
+    const list = this.visibleActions(side);
     const last = list[list.length - 1];
     if (last?.kind !== 'auto') { this.armedAction.set(null); return; }
     // l'azione si arma solo quando il pulsante ha raggiunto la sua larghezza doppia completa, non solo superato quella standard
@@ -199,5 +231,26 @@ export class SwipeRowComponent {
 
   protected close(): void {
     if (this.dragX() !== 0) this.snapTo(0);
+  }
+
+  private openOverflow(side: 'right' | 'left', actions: readonly SwipeAction[]): void {
+    this.overflowActions.set(actions);
+    this.overflowSide.set(side);
+  }
+
+  protected closeOverflow(): void {
+    this.overflowSide.set(null);
+    this.overflowActions.set([]);
+  }
+
+  protected cancelOverflow(event: Event): void {
+    event.preventDefault();
+    this.closeOverflow();
+  }
+
+  protected runOverflowAction(action: SwipeAction): void {
+    if (action.disabled) return;
+    this.closeOverflow();
+    action.run();
   }
 }

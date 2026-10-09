@@ -222,10 +222,10 @@ export class FairTaskListComponent {
   /** Unica azione di contatto "predefinita" proposta nello slide: priorita' chiamata > email > whatsapp > sito. */
   private primaryContactAction(task: FairTask): SwipeAction | null {
     const links = this.contactLinks(task);
-    if (links.callHref) return { key: 'call', icon: '📞', label: 'Chiama', run: () => { window.location.href = links.callHref!; } };
-    if (links.mailHref) return { key: 'mail', icon: '✉️', label: 'Email', run: () => { window.location.href = links.mailHref!; } };
-    if (links.whatsappHref) return { key: 'whatsapp', icon: '💬', label: 'WhatsApp', run: () => window.open(links.whatsappHref, '_blank', 'noopener') };
-    if (links.websiteHref) return { key: 'website', icon: '🌐', label: 'Sito', run: () => window.open(links.websiteHref, '_blank', 'noopener') };
+    if (links.callHref) return { key: 'call', icon: '📞', label: 'Chiama', variant: 'neutral', run: () => { window.location.href = links.callHref!; } };
+    if (links.mailHref) return { key: 'mail', icon: '✉️', label: 'Email', variant: 'neutral', run: () => { window.location.href = links.mailHref!; } };
+    if (links.whatsappHref) return { key: 'whatsapp', icon: '💬', label: 'WhatsApp', variant: 'neutral', run: () => window.open(links.whatsappHref, '_blank', 'noopener') };
+    if (links.websiteHref) return { key: 'website', icon: '🌐', label: 'Sito', variant: 'neutral', run: () => window.open(links.websiteHref, '_blank', 'noopener') };
     return null;
   }
 
