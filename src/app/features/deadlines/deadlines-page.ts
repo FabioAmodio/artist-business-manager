@@ -75,9 +75,10 @@ export class DeadlinesPage implements OnInit {
   protected customerName(work: Operation): string { return work.partyId ? this.parties().find((party) => party.id === work.partyId)?.displayName ?? 'Cliente non trovato' : work.customerName || 'Cliente non indicato'; }
   protected isMobileSwipeMode(): boolean { return this.persistence.listInteractionMode() === 'swipe' && typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true; }
   protected workRightActions(work: Operation): SwipeAction[] {
-    const actions: SwipeAction[] = [{ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) }];
+    const actions: SwipeAction[] = [];
     const party = this.customerParty(work);
     if (party && this.hasContactOptions(party)) actions.push({ key: 'contact', icon: '📇', label: 'Contatta', variant: 'neutral', run: () => this.contactSheet.open(party) });
+    actions.push({ key: 'edit', icon: '✎', label: 'Modifica', kind: 'auto', run: () => this.openWork(work) });
     return actions;
   }
   protected customerParty(work: Operation): Party | undefined { return work.partyId ? this.parties().find((party) => party.id === work.partyId) : undefined; }

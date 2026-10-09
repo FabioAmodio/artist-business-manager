@@ -14,8 +14,8 @@ interface FairContactRow {
   readonly contactRole: FairTaskContactRole;
 }
 
-const ROLE_LABELS: Record<FairTaskContactRole, string> = { organizer: 'Organizzatore', hotel: 'Hotel' };
-const ROLE_ICONS: Record<FairTaskContactRole, string> = { organizer: '🎪', hotel: '🏨' };
+const ROLE_LABELS: Record<FairTaskContactRole, string> = { organizer: 'Organizzatore', hotel: 'Hotel', publisher: 'Editore', collaborator: 'Collaboratore' };
+const ROLE_ICONS: Record<FairTaskContactRole, string> = { organizer: '🎪', hotel: '🏨', publisher: '📚', collaborator: '🤝' };
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,

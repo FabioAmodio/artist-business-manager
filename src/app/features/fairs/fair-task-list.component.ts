@@ -23,7 +23,7 @@ const KIND_LABELS: Record<FairTaskKind, string> = {
   custom: 'Attivita libera',
 };
 
-const CONTACT_ROLE_LABELS: Record<FairTaskContactRole, string> = { organizer: 'Organizzatore', hotel: 'Hotel' };
+const CONTACT_ROLE_LABELS: Record<FairTaskContactRole, string> = { organizer: 'Organizzatore', hotel: 'Hotel', publisher: 'Editore', collaborator: 'Collaboratore' };
 const STATUS_OPTIONS: readonly { readonly status: FairTaskStatus; readonly icon: string; readonly label: string }[] = [
   { status: 'pending', icon: '📝', label: 'Da fare' },
   { status: 'done', icon: '✓', label: 'Fatta' },
@@ -68,6 +68,8 @@ export class FairTaskListComponent {
   protected readonly tasks = signal<readonly FairTask[]>([]);
   protected readonly organizerContacts = signal<readonly Party[]>([]);
   protected readonly hotelContacts = signal<readonly Party[]>([]);
+  protected readonly publisherContacts = signal<readonly Party[]>([]);
+  protected readonly collaboratorContacts = signal<readonly Party[]>([]);
   protected readonly contactRoleLabels = CONTACT_ROLE_LABELS;
   protected readonly channelLabels = PARTY_CHANNEL_LABELS;
   protected readonly channelKinds: readonly PartyContactChannel[] = ['email', 'phone', 'whatsapp', 'website'];
@@ -98,7 +100,7 @@ export class FairTaskListComponent {
       return firstOrder - secondOrder;
     });
   });
-  private readonly contactsById = computed(() => new Map([...this.organizerContacts(), ...this.hotelContacts()].map((party) => [party.id, party])));
+  private readonly contactsById = computed(() => new Map([...this.organizerContacts(), ...this.hotelContacts(), ...this.publisherContacts(), ...this.collaboratorContacts()].map((party) => [party.id, party])));
 
   constructor() {
     effect(() => { const id = this.fairEditionId(); void this.load(id); });
@@ -119,7 +121,7 @@ export class FairTaskListComponent {
 
   /** Pool di contatti per il tipo scelto sul task: organizzatori e hotel non vengono mai mischiati nella stessa combo. */
   protected contactOptions(task: FairTask): readonly Party[] {
-    return this.draft(task).contactRole === 'hotel' ? this.hotelContacts() : this.organizerContacts();
+    return this.draft(task).contactRole === 'hotel' ? this.hotelContacts() : this.draft(task).contactRole === 'publisher' ? this.publisherContacts() : this.draft(task).contactRole === 'collaborator' ? this.collaboratorContacts() : this.organizerContacts();
   }
 
   /** Usa la bozza non ancora salvata, cosi' le icone di contatto (mail/telefono/whatsapp) compaiono subito mentre si digita/seleziona, non solo dopo il salvataggio. */
@@ -264,7 +266,7 @@ export class FairTaskListComponent {
 
   /** Cambiare il tipo di contatto svuota la selezione se il contatto scelto non appartiene al nuovo pool (organizzatore/hotel non si mischiano). */
   protected changeDraftContactRole(task: FairTask, contactRole: FairTaskContactRole): void {
-    const pool = contactRole === 'hotel' ? this.hotelContacts() : this.organizerContacts();
+    const pool = contactRole === 'hotel' ? this.hotelContacts() : contactRole === 'publisher' ? this.publisherContacts() : contactRole === 'collaborator' ? this.collaboratorContacts() : this.organizerContacts();
     const draft = this.draft(task);
     const stillValid = pool.some((party) => party.id === draft.partyId);
     this.updateDraft(task, { contactRole, partyId: stillValid ? draft.partyId : '', contactChannel: stillValid ? draft.contactChannel : '' });
@@ -345,9 +347,11 @@ export class FairTaskListComponent {
   private async loadContacts(): Promise<void> {
     /* I contatti di un'attivita organizzativa sono Party con ruolo organizer o hotel: le due combo restano separate, mai mischiate. */
     try {
-      const [organizers, hotels] = await Promise.all([this.contactService.list({ role: 'organizer' }), this.contactService.list({ role: 'hotel' })]);
+      const [organizers, hotels, publishers, collaborators] = await Promise.all([this.contactService.list({ role: 'organizer' }), this.contactService.list({ role: 'hotel' }), this.contactService.list({ role: 'publisher' }), this.contactService.list({ role: 'collaborator' })]);
       this.organizerContacts.set(organizers);
       this.hotelContacts.set(hotels);
+      this.publisherContacts.set(publishers);
+      this.collaboratorContacts.set(collaborators);
     } catch { /* la checklist resta usabile con il solo testo libero se l'anagrafica non e disponibile */ }
   }
 

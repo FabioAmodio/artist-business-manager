@@ -4,7 +4,7 @@ import type { PartyContactChannel } from './party';
 
 export type FairTaskStatus = 'pending' | 'done' | 'not-needed';
 /** Tipo di contatto da proporre nella checklist: le combo non mischiano mai organizzatori e hotel. */
-export type FairTaskContactRole = 'organizer' | 'hotel';
+export type FairTaskContactRole = 'organizer' | 'hotel' | 'publisher' | 'collaborator';
 
 export interface FairTask {
   readonly id: EntityId;

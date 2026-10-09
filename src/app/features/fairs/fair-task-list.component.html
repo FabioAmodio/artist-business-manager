@@ -34,6 +34,8 @@
               <select [ngModel]="draft(task).contactRole" (ngModelChange)="changeDraftContactRole(task, $event)" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode()">
                 <option value="organizer">{{ contactRoleLabels.organizer }}</option>
                 <option value="hotel">{{ contactRoleLabels.hotel }}</option>
+                <option value="publisher">{{ contactRoleLabels.publisher }}</option>
+                <option value="collaborator">{{ contactRoleLabels.collaborator }}</option>
               </select>
             </label>
             <label>{{ contactRoleLabels[draft(task).contactRole] }}
