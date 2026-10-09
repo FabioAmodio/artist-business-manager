@@ -137,11 +137,11 @@ export class DeadlinesPage implements OnInit {
     });
   }
 
-  /** Attivita checklist fiera 'da fare'/'in corso' con scadenza, accanto alle lavorazioni: stessa logica scaduto/in-scadenza, ordinamento solo per data. */
+  /** Attivita checklist fiera 'da fare'/'in corso', accanto alle lavorazioni: stessa logica scaduto/in-scadenza, ordinamento solo per data. */
   protected visibleFairTaskDeadlines(): readonly FairTaskDeadline[] {
     const query = this.query().trim().toLocaleLowerCase();
     const items = this.fairTasks()
-      .filter((task) => Boolean(task.dueDate) && task.status === 'pending')
+      .filter((task) => task.status === 'pending')
       .map((task) => this.toFairTaskDeadline(task));
     return items
       .filter((item) => {
@@ -149,7 +149,7 @@ export class DeadlinesPage implements OnInit {
         if (this.statusFilter() === 'due-soon' && !item.dueSoon) return false;
         return !query || `${item.task.title} ${item.fairName}`.toLocaleLowerCase().includes(query);
       })
-      .sort((first, second) => (first.task.dueDate ?? '9999-12-31').localeCompare(second.task.dueDate ?? '9999-12-31'));
+      .sort((first, second) => (first.task.dueDate || '9999-12-31').localeCompare(second.task.dueDate || '9999-12-31'));
   }
   protected openFairTask(task: FairTask): void { void this.router.navigate(['/events'], { queryParams: { open: task.fairEditionId } }); }
   /** Azione predefinita della checklist (contatto collegato o testo libero): stessa risoluzione usata nella checklist della fiera. */
